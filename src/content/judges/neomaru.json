@@ -2,8 +2,10 @@
   "name": "ねおまる",
   "nameKana": "ねおまる",
   "age": 24,
-  "area": "新宿",
-  "store": "FOURTY FIVE TOKYO",
-  "bio": "新宿FOURTY FIVE TOKYOのトップキャバ嬢。",
-  "sns": {}
+  "area": "歌舞伎町",
+  "store": "POSEIDON CLUB SHINJUKU",
+  "bio": "歌舞伎町「POSEIDON CLUB SHINJUKU」メディアプロデューサー。21歳で卵巣癌を経験。",
+  "sns": {
+    "instagram": "https://www.instagram.com/neomaru_7/"
+  }
 }

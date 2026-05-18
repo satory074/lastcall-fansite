@@ -2,6 +2,10 @@
   "name": "ヤマトリノ",
   "nameKana": "やまとりの",
   "age": 29,
-  "bio": "現役キャバ嬢。",
-  "sns": {}
+  "area": "歌舞伎町",
+  "store": "ジャングル東京",
+  "bio": "歌舞伎町「ジャングル東京」在籍の現役キャバ嬢。",
+  "sns": {
+    "instagram": "https://www.instagram.com/rinoworld_875/"
+  }
 }

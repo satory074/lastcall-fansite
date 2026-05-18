@@ -1,7 +1,11 @@
 {
   "name": "あいり",
   "nameKana": "あいり",
-  "area": "銀座・六本木",
-  "bio": "銀座・六本木で活躍するキャバ嬢。",
-  "sns": {}
+  "age": 25,
+  "area": "銀座",
+  "store": "J-VOGUE",
+  "bio": "2000年10月22日生まれ。銀座「J-VOGUE」在籍。元ブレイキングダウンガール。",
+  "sns": {
+    "instagram": "https://www.instagram.com/airi_el12/"
+  }
 }
