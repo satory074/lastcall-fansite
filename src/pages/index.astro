@@ -9,7 +9,7 @@ const episodes = (await getCollection("episodes")).sort(
 );
 
 const latest = episodes[0];
-const recent = episodes.slice(1, 7);
+const rest = episodes.slice(1);
 ---
 
 <Layout>
@@ -30,7 +30,7 @@ const recent = episodes.slice(1, 7);
       </p>
       <div class="mt-6 flex flex-wrap gap-3 text-sm">
         <a
-          href={siteLink("/episodes/")}
+          href="#episodes"
           class="px-4 py-2 rounded bg-[var(--color-gold)] text-black font-semibold hover:bg-[var(--color-gold-bright)] transition"
         >
           各回を見る
@@ -48,25 +48,20 @@ const recent = episodes.slice(1, 7);
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-12">
     {latest && (
       <section class="space-y-4">
-        <header class="flex items-end justify-between gap-3">
-          <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-            Latest Episode
-          </h2>
-          <a href={siteLink("/episodes/")} class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-gold-bright)]">
-            すべて見る →
-          </a>
-        </header>
+        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+          Latest Episode
+        </h2>
         <EpisodeCard episode={latest} variant="feature" />
       </section>
     )}
 
-    {recent.length > 0 && (
-      <section class="space-y-4">
+    {rest.length > 0 && (
+      <section id="episodes" class="space-y-4 scroll-mt-24">
         <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-          Recent Episodes
+          All Episodes <span class="text-[var(--color-text-muted)] normal-case tracking-normal text-xs">— 全 {episodes.length} 回</span>
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recent.map((ep) => (
+          {rest.map((ep) => (
             <EpisodeCard episode={ep} />
           ))}
         </div>

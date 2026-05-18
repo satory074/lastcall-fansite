@@ -22,8 +22,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImageUrl = ogImage ? new URL(ogImage, Astro.site).toString() : undefined;
 
 const nav = [
-  { href: "/", label: "ホーム" },
-  { href: "/episodes/", label: "各回" },
   { href: "/people/", label: "出演者・審査一覧" },
   { href: "/about/", label: "このサイトについて" },
 ];
