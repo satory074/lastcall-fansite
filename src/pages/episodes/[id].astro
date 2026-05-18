@@ -40,7 +40,7 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
         {cinderella && (
           <span
             class:list={[
-              "px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+              "spoiler px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
               cinderella.data.result === "pass"
                 ? "bg-[var(--color-gold)] text-black"
                 : "bg-[var(--color-fail)] text-white",
@@ -68,7 +68,7 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
     </header>
 
     {episode.data.summary && (
-      <p class="text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
+      <p class="spoiler-block text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
         {episode.data.summary}
       </p>
     )}
@@ -100,7 +100,7 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
             </h3>
             <span
               class:list={[
-                "px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+                "spoiler px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
                 cinderella.data.result === "pass"
                   ? "bg-[var(--color-gold)] text-black"
                   : "bg-[var(--color-fail)] text-white",
@@ -110,7 +110,7 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
             </span>
           </div>
           {cinderella.data.background && (
-            <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
+            <p class="spoiler-block text-sm text-[var(--color-text-muted)] leading-relaxed">
               {cinderella.data.background}
             </p>
           )}

@@ -4,6 +4,8 @@ import Layout from "../../components/Layout.astro";
 import PersonCard from "../../components/PersonCard.astro";
 import { siteLink } from "../../lib/url";
 
+// 出演回順（古い順）でソート。グルーピング（合格/不合格）自体がネタバレなので
+// 既定では単一リストとして並べ、`html.show-spoilers` 時のみ別グループも併記する。
 const all = (await getCollection("cinderellas")).sort((a, b) =>
   a.data.episodeId.localeCompare(b.data.episodeId)
 );
@@ -11,58 +13,87 @@ const passers = all.filter((c) => c.data.result === "pass");
 const failers = all.filter((c) => c.data.result === "fail");
 ---
 
-<Layout title="シンデレラ一覧" description="LAST CALL に出演した全シンデレラ（合格者・不合格者）の一覧とSNS。">
+<Layout title="シンデレラ一覧" description="LAST CALL に出演した全シンデレラの一覧とSNS。">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-10">
     <header class="space-y-2">
       <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">CINDERELLAS</p>
       <h1 class="text-2xl sm:text-3xl font-bold">シンデレラ一覧</h1>
       <p class="text-sm text-[var(--color-text-muted)]">
-        全 {all.length} 名（合格 {passers.length} ／ 不合格 {failers.length}）
+        全 {all.length} 名
+        <span class="spoiler ml-1 inline-block">（合格 {passers.length} ／ 不合格 {failers.length}）</span>
       </p>
     </header>
 
     <section class="space-y-4">
-      <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-gold)]">
-        Passed
+      <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
+        出演回順
       </h2>
-      {passers.length > 0 ? (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {passers.map((c) => (
-            <PersonCard
-              name={c.data.name}
-              href={siteLink(`/cinderellas/${c.id}/`)}
-              subtitle={c.data.age ? `${c.data.age}歳` : undefined}
-              meta={`#${c.data.episodeId} 出演`}
-              badge={{ label: "LAST CALL", tone: "pass" }}
-              sns={c.data.sns}
-            />
-          ))}
-        </div>
-      ) : (
-        <p class="text-sm text-[var(--color-text-muted)]">合格者データを準備中です。</p>
-      )}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {all.map((c) => (
+          <PersonCard
+            name={c.data.name}
+            href={siteLink(`/cinderellas/${c.id}/`)}
+            subtitle={c.data.age ? `${c.data.age}歳` : undefined}
+            meta={`#${c.data.episodeId} 出演`}
+            badge={{
+              label: c.data.result === "pass" ? "LAST CALL" : "NOTHING",
+              tone: c.data.result === "pass" ? "pass" : "fail",
+            }}
+            sns={c.data.sns}
+          />
+        ))}
+      </div>
     </section>
 
-    <section class="space-y-4">
-      <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
-        Nothing
-      </h2>
-      {failers.length > 0 ? (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {failers.map((c) => (
-            <PersonCard
-              name={c.data.name}
-              href={siteLink(`/cinderellas/${c.id}/`)}
-              subtitle={c.data.age ? `${c.data.age}歳` : undefined}
-              meta={`#${c.data.episodeId} 出演`}
-              badge={{ label: "NOTHING", tone: "fail" }}
-              sns={c.data.sns}
-            />
-          ))}
-        </div>
-      ) : (
-        <p class="text-sm text-[var(--color-text-muted)]">データを準備中です。</p>
-      )}
-    </section>
+    <details class="rounded-lg border border-dashed border-[var(--color-border)] p-4">
+      <summary class="text-sm text-[var(--color-text-muted)] cursor-pointer">
+        合否別に並べ替えて見る（ネタバレ注意）
+      </summary>
+      <div class="mt-4 space-y-8">
+        <section class="space-y-3">
+          <h3 class="font-display tracking-widest text-sm uppercase text-[var(--color-gold)]">
+            Passed <span class="spoiler text-[var(--color-text-muted)]">({passers.length})</span>
+          </h3>
+          {passers.length > 0 ? (
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {passers.map((c) => (
+                <PersonCard
+                  name={c.data.name}
+                  href={siteLink(`/cinderellas/${c.id}/`)}
+                  subtitle={c.data.age ? `${c.data.age}歳` : undefined}
+                  meta={`#${c.data.episodeId} 出演`}
+                  badge={{ label: "LAST CALL", tone: "pass" }}
+                  sns={c.data.sns}
+                />
+              ))}
+            </div>
+          ) : (
+            <p class="text-sm text-[var(--color-text-muted)]">データ準備中です。</p>
+          )}
+        </section>
+
+        <section class="space-y-3">
+          <h3 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
+            Nothing <span class="spoiler text-[var(--color-text-muted)]">({failers.length})</span>
+          </h3>
+          {failers.length > 0 ? (
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {failers.map((c) => (
+                <PersonCard
+                  name={c.data.name}
+                  href={siteLink(`/cinderellas/${c.id}/`)}
+                  subtitle={c.data.age ? `${c.data.age}歳` : undefined}
+                  meta={`#${c.data.episodeId} 出演`}
+                  badge={{ label: "NOTHING", tone: "fail" }}
+                  sns={c.data.sns}
+                />
+              ))}
+            </div>
+          ) : (
+            <p class="text-sm text-[var(--color-text-muted)]">データ準備中です。</p>
+          )}
+        </section>
+      </div>
+    </details>
   </div>
 </Layout>

@@ -34,7 +34,7 @@ const appearance = episodes.find((ep) => ep.data.cinderella.id === cinderella.id
         </h1>
         <span
           class:list={[
-            "px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+            "spoiler px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
             cinderella.data.result === "pass"
               ? "bg-[var(--color-gold)] text-black"
               : "bg-[var(--color-fail)] text-white",
@@ -57,7 +57,7 @@ const appearance = episodes.find((ep) => ep.data.cinderella.id === cinderella.id
         <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
           Background
         </h2>
-        <p class="text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
+        <p class="spoiler-block text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
           {cinderella.data.background}
         </p>
       </section>

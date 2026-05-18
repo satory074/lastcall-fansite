@@ -55,6 +55,14 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
     />
+    <script is:inline>
+      // ネタバレ表示モードの初期化（FOUC回避のため body より先に html へ class を付与）
+      try {
+        if (localStorage.getItem("lc-spoilers") === "show") {
+          document.documentElement.classList.add("show-spoilers");
+        }
+      } catch (_) {}
+    </script>
   </head>
   <body class="min-h-screen flex flex-col">
     <header class="border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-[color-mix(in_oklab,var(--color-bg-elevated)_85%,transparent)]">
@@ -67,22 +75,39 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
             非公式ファンサイト
           </span>
         </a>
-        <nav class="hidden md:flex items-center gap-5 text-sm">
-          {nav.map((item) => {
-            const active = item.href === "/" ? currentPath === "/" : currentPath.startsWith(item.href);
-            return (
-              <a
-                href={linkOf(item.href)}
-                class:list={[
-                  "transition",
-                  active ? "text-[var(--color-gold)]" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
-                ]}
-              >
-                {item.label}
-              </a>
-            );
-          })}
-        </nav>
+        <div class="flex items-center gap-4">
+          <nav class="hidden md:flex items-center gap-5 text-sm">
+            {nav.map((item) => {
+              const active = item.href === "/" ? currentPath === "/" : currentPath.startsWith(item.href);
+              return (
+                <a
+                  href={linkOf(item.href)}
+                  class:list={[
+                    "transition",
+                    active ? "text-[var(--color-gold)]" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
+                  ]}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
+          </nav>
+          <button
+            type="button"
+            id="lc-spoiler-toggle"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--color-border)] text-[10px] sm:text-xs text-[var(--color-text-muted)] hover:text-[var(--color-gold-bright)] hover:border-[var(--color-gold)] transition"
+            aria-pressed="false"
+            title="ネタバレ（合否・投票結果）の表示を切替"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-lc-eye="off">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-lc-eye="on" class="hidden">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span data-lc-spoiler-label>ネタバレ非表示</span>
+          </button>
+        </div>
       </div>
       <nav class="md:hidden border-t border-[var(--color-border)]">
         <div class="max-w-6xl mx-auto px-4 py-2 flex gap-4 overflow-x-auto text-sm">
@@ -122,5 +147,42 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
         </p>
       </div>
     </footer>
+
+    <script>
+      const root = document.documentElement;
+      const btn = document.getElementById("lc-spoiler-toggle");
+      const label = btn?.querySelector<HTMLSpanElement>("[data-lc-spoiler-label]");
+      const eyeOff = btn?.querySelector<SVGSVGElement>('[data-lc-eye="off"]');
+      const eyeOn = btn?.querySelector<SVGSVGElement>('[data-lc-eye="on"]');
+
+      function syncUi() {
+        const showing = root.classList.contains("show-spoilers");
+        if (label) label.textContent = showing ? "ネタバレ表示中" : "ネタバレ非表示";
+        if (btn) btn.setAttribute("aria-pressed", String(showing));
+        eyeOff?.classList.toggle("hidden", showing);
+        eyeOn?.classList.toggle("hidden", !showing);
+      }
+      syncUi();
+
+      btn?.addEventListener("click", () => {
+        const next = !root.classList.contains("show-spoilers");
+        root.classList.toggle("show-spoilers", next);
+        try {
+          localStorage.setItem("lc-spoilers", next ? "show" : "hide");
+        } catch (_) {}
+        syncUi();
+      });
+
+      // 個別の .spoiler をクリックすると、そのブロックだけ一時的に表示
+      document.addEventListener("click", (ev) => {
+        if (root.classList.contains("show-spoilers")) return;
+        const target = ev.target as HTMLElement | null;
+        const el = target?.closest<HTMLElement>(".spoiler");
+        if (!el) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        el.classList.add("spoiler-revealed");
+      });
+    </script>
   </body>
 </html>

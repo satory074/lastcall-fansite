@@ -40,3 +40,40 @@ a:hover {
   background: var(--color-gold);
   color: #000;
 }
+
+/* ネタバレ配慮: 既定では .spoiler 内容をぼかす。
+   html.show-spoilers が付くと全サイトで表示。
+   個別 .spoiler 要素をクリックすると .spoiler-revealed が付き、その要素だけ表示。 */
+html:not(.show-spoilers) .spoiler:not(.spoiler-revealed) {
+  filter: blur(8px);
+  cursor: pointer;
+  user-select: none;
+  transition: filter 0.15s ease;
+  position: relative;
+}
+html:not(.show-spoilers) .spoiler:not(.spoiler-revealed):hover {
+  filter: blur(4px);
+}
+html:not(.show-spoilers) .spoiler:not(.spoiler-revealed)::after {
+  content: "タップで表示";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  filter: blur(0);
+  background: color-mix(in oklab, var(--color-bg) 30%, transparent);
+  pointer-events: none;
+  border-radius: inherit;
+}
+html:not(.show-spoilers) .spoiler-block:not(.spoiler-revealed) {
+  filter: blur(6px);
+  cursor: pointer;
+  user-select: none;
+  transition: filter 0.15s ease;
+}
+html:not(.show-spoilers) .spoiler-block:not(.spoiler-revealed):hover {
+  filter: blur(3px);
+}

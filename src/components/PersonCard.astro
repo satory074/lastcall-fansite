@@ -38,6 +38,7 @@ const { name, href, subtitle, meta, badge, sns } = Astro.props;
       <span
         class:list={[
           "shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider",
+          badge.tone === "neutral" ? "" : "spoiler",
           badge.tone === "pass"
             ? "bg-[var(--color-gold)] text-black"
             : badge.tone === "fail"

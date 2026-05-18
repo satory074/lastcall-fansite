@@ -73,16 +73,16 @@ const displayResult = cinderellaResult ?? calcResult;
       Judges &amp; Vote
     </h2>
     <div class="flex flex-wrap items-center gap-3 text-sm">
-      <span class="inline-flex items-center gap-1.5">
+      <span class="spoiler inline-flex items-center gap-1.5">
         <span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--color-gold)]"></span>
         LAST CALL <span class="font-semibold text-[var(--color-gold)]">{pass}</span>
       </span>
-      <span class="inline-flex items-center gap-1.5">
+      <span class="spoiler inline-flex items-center gap-1.5">
         <span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--color-fail)]"></span>
         NOTHING <span class="font-semibold text-[var(--color-text-muted)]">{fail}</span>
       </span>
       {absent > 0 && (
-        <span class="inline-flex items-center gap-1.5 text-[var(--color-text-muted)]">
+        <span class="spoiler inline-flex items-center gap-1.5 text-[var(--color-text-muted)]">
           欠席 {absent}
         </span>
       )}
@@ -94,7 +94,7 @@ const displayResult = cinderellaResult ?? calcResult;
       {displayResult && (
         <span
           class:list={[
-            "px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+            "spoiler px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
             displayResult === "pass"
               ? "bg-[var(--color-gold)] text-black"
               : "bg-[var(--color-fail)] text-white",
@@ -132,17 +132,17 @@ const displayResult = cinderellaResult ?? calcResult;
             </td>
             <td class="px-3 py-2 whitespace-nowrap">
               {row.vote === "LAST CALL" && (
-                <span class="inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-gold)] text-black text-xs font-semibold tracking-wider">
+                <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-gold)] text-black text-xs font-semibold tracking-wider">
                   LAST CALL
                 </span>
               )}
               {row.vote === "NOTHING" && (
-                <span class="inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-fail)] text-white text-xs font-semibold tracking-wider">
+                <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-fail)] text-white text-xs font-semibold tracking-wider">
                   NOTHING
                 </span>
               )}
               {row.vote === "ABSENT" && (
-                <span class="inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
+                <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
                   欠席
                 </span>
               )}
@@ -153,7 +153,7 @@ const displayResult = cinderellaResult ?? calcResult;
               )}
             </td>
             <td class="px-3 py-2 text-[var(--color-text-muted)]">
-              {row.comment ?? "—"}
+              {row.comment ? <span class="spoiler-block inline-block">{row.comment}</span> : "—"}
             </td>
           </tr>
         ))}

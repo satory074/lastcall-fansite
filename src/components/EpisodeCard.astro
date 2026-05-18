@@ -14,7 +14,8 @@ const cinderella = await getEntry(episode.data.cinderella);
 const pass = episode.data.votes.filter((v) => v.vote === "LAST CALL").length;
 const fail = episode.data.votes.filter((v) => v.vote === "NOTHING").length;
 const total = pass + fail;
-const result = total > 0 ? (pass >= Math.ceil(total / 2) ? "pass" : "fail") : null;
+const voteResult = total > 0 ? (pass >= Math.ceil(total / 2) ? "pass" : "fail") : null;
+const result = voteResult ?? cinderella?.data.result ?? null;
 
 const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
 ---
@@ -45,7 +46,7 @@ const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
     {result && (
       <span
         class:list={[
-          "absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+          "spoiler absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
           result === "pass"
             ? "bg-[var(--color-gold)] text-black"
             : "bg-black/70 text-[var(--color-text-muted)] border border-[var(--color-border)]",
@@ -72,12 +73,12 @@ const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
       {episode.data.title}
     </h3>
     {episode.data.summary && variant === "feature" && (
-      <p class="text-sm text-[var(--color-text-muted)] line-clamp-3">
+      <p class="spoiler-block text-sm text-[var(--color-text-muted)] line-clamp-3">
         {episode.data.summary}
       </p>
     )}
     {total > 0 && (
-      <div class="text-xs text-[var(--color-text-muted)]">
+      <div class="spoiler text-xs text-[var(--color-text-muted)] inline-block">
         LAST CALL {pass} ／ NOTHING {fail}
       </div>
     )}
