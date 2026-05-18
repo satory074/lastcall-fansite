@@ -7,9 +7,6 @@ import { siteLink } from "../lib/url";
 const episodes = (await getCollection("episodes")).sort(
   (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
 );
-const judges = (await getCollection("judges")).sort((a, b) =>
-  a.data.name.localeCompare(b.data.name, "ja")
-);
 
 const latest = episodes[0];
 const recent = episodes.slice(1, 7);
@@ -39,10 +36,10 @@ const recent = episodes.slice(1, 7);
           各回を見る
         </a>
         <a
-          href={siteLink("/judges/")}
+          href={siteLink("/people/")}
           class="px-4 py-2 rounded border border-[var(--color-border)] hover:border-[var(--color-gold)] transition"
         >
-          審査員 {judges.length}名
+          出演者・審査一覧
         </a>
       </div>
     </div>

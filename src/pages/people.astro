@@ -1,0 +1,231 @@
+---
+import { getCollection, getEntry } from "astro:content";
+import Layout from "../components/Layout.astro";
+import PersonCard from "../components/PersonCard.astro";
+import { siteLink } from "../lib/url";
+
+// 14名固定の審査員（マトリックス列順）
+const judges = (await getCollection("judges")).sort((a, b) =>
+  a.data.name.localeCompare(b.data.name, "ja")
+);
+
+// シンデレラ（出演回順）
+const cinderellas = (await getCollection("cinderellas")).sort((a, b) =>
+  a.data.episodeId.localeCompare(b.data.episodeId)
+);
+
+// エピソード（新しい順）と各回の投票マップ
+const episodes = (await getCollection("episodes")).sort(
+  (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
+);
+
+type Cell = {
+  vote: "LAST CALL" | "NOTHING" | "ABSENT" | "UNKNOWN";
+  comment?: string;
+};
+
+const matrix = await Promise.all(
+  episodes.map(async (ep) => {
+    const cinderella = await getEntry(ep.data.cinderella);
+    const voteByJudge = new Map(ep.data.votes.map((v) => [v.judge.id, v]));
+    const cells: Cell[] = judges.map((j) => {
+      const v = voteByJudge.get(j.id);
+      return v
+        ? { vote: v.vote, comment: v.comment }
+        : { vote: "UNKNOWN" };
+    });
+    const passCount = cells.filter((c) => c.vote === "LAST CALL").length;
+    const failCount = cells.filter((c) => c.vote === "NOTHING").length;
+    return {
+      episode: ep,
+      cinderella,
+      cells,
+      passCount,
+      failCount,
+    };
+  })
+);
+---
+
+<Layout
+  title="出演者・審査一覧"
+  description="LAST CALL の全シンデレラ・14名審査員・各回の審査結果マトリックスを一覧。"
+>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+    <header class="space-y-2">
+      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">PEOPLE &amp; VOTES</p>
+      <h1 class="text-2xl sm:text-3xl font-bold">出演者・審査一覧</h1>
+      <p class="text-sm text-[var(--color-text-muted)]">
+        シンデレラ {cinderellas.length} 名 ／ 審査員 {judges.length} 名 ／ 配信回 {episodes.length} 回
+      </p>
+      <nav class="flex flex-wrap gap-3 text-sm pt-2">
+        <a href="#cinderellas" class="px-3 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] transition">
+          シンデレラ
+        </a>
+        <a href="#judges" class="px-3 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] transition">
+          審査員
+        </a>
+        <a href="#matrix" class="px-3 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] transition">
+          審査マトリックス
+        </a>
+      </nav>
+    </header>
+
+    <section id="cinderellas" class="space-y-4 scroll-mt-24">
+      <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
+        Cinderellas <span class="text-[var(--color-text-muted)] normal-case tracking-normal text-xs">— 出演回順</span>
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {cinderellas.map((c) => (
+          <PersonCard
+            name={c.data.name}
+            href={siteLink(`/cinderellas/${c.id}/`)}
+            subtitle={c.data.age ? `${c.data.age}歳` : undefined}
+            meta={`#${c.data.episodeId} 出演`}
+            badge={{
+              label: c.data.result === "pass" ? "LAST CALL" : "NOTHING",
+              tone: c.data.result === "pass" ? "pass" : "fail",
+            }}
+            sns={c.data.sns}
+          />
+        ))}
+      </div>
+    </section>
+
+    <section id="judges" class="space-y-4 scroll-mt-24">
+      <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
+        Judges <span class="text-[var(--color-text-muted)] normal-case tracking-normal text-xs">— 固定 14 名</span>
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {judges.map((j) => (
+          <PersonCard
+            name={j.data.name}
+            href={siteLink(`/judges/${j.id}/`)}
+            subtitle={j.data.area ?? j.data.store}
+            meta={j.data.age ? `${j.data.age}歳` : undefined}
+            sns={j.data.sns}
+          />
+        ))}
+      </div>
+    </section>
+
+    <section id="matrix" class="space-y-4 scroll-mt-24">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
+          Voting Matrix <span class="text-[var(--color-text-muted)] normal-case tracking-normal text-xs">— 全 {episodes.length} 回 × {judges.length} 名</span>
+        </h2>
+      </div>
+      <p class="text-xs text-[var(--color-text-muted)]">
+        縦軸=各回（新しい順）、横軸=審査員。空セルは本編未視聴で投票が記録されていない箇所。
+      </p>
+      <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+        <table class="text-xs sm:text-sm">
+          <thead class="bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
+            <tr>
+              <th scope="col" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 bg-[var(--color-bg-elevated)] z-10">回</th>
+              <th scope="col" class="text-left font-medium px-3 py-2 whitespace-nowrap">シンデレラ</th>
+              <th scope="col" class="text-center font-medium px-2 py-2 whitespace-nowrap">結果</th>
+              {judges.map((j) => (
+                <th scope="col" class="text-center font-medium px-2 py-2 whitespace-nowrap">
+                  <a href={siteLink(`/judges/${j.id}/`)} class="hover:text-[var(--color-gold-bright)] transition">
+                    {j.data.name}
+                  </a>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {matrix.map(({ episode, cinderella, cells, passCount, failCount }) => {
+              const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
+              const recorded = passCount + failCount;
+              const calcResult: "pass" | "fail" | null =
+                recorded > 0 ? (passCount >= Math.ceil(recorded / 2) ? "pass" : "fail") : null;
+              const result = calcResult ?? cinderella?.data.result ?? null;
+              return (
+                <tr class="border-t border-[var(--color-border)]">
+                  <td class="px-3 py-2 whitespace-nowrap sticky left-0 bg-[var(--color-bg-card)] z-10">
+                    <a
+                      href={siteLink(`/episodes/${episode.data.id}/`)}
+                      class="text-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition"
+                    >
+                      #{episode.data.id}
+                    </a>
+                    <div class="text-[10px] text-[var(--color-text-muted)]">{dateLabel}</div>
+                  </td>
+                  <td class="px-3 py-2 whitespace-nowrap">
+                    {cinderella ? (
+                      <a
+                        href={siteLink(`/cinderellas/${cinderella.id}/`)}
+                        class="hover:text-[var(--color-gold-bright)] transition"
+                      >
+                        {cinderella.data.name}
+                      </a>
+                    ) : "—"}
+                  </td>
+                  <td class="px-2 py-2 text-center whitespace-nowrap">
+                    {result ? (
+                      <span
+                        class:list={[
+                          "spoiler inline-flex items-center justify-center w-12 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider",
+                          result === "pass"
+                            ? "bg-[var(--color-gold)] text-black"
+                            : "bg-[var(--color-fail)] text-white",
+                        ]}
+                      >
+                        {result === "pass" ? "PASS" : "NO"}
+                      </span>
+                    ) : (
+                      <span class="text-[var(--color-text-muted)]">—</span>
+                    )}
+                  </td>
+                  {cells.map((cell) => (
+                    <td class="px-2 py-2 text-center whitespace-nowrap" title={cell.comment}>
+                      {cell.vote === "LAST CALL" && (
+                        <span class="spoiler inline-flex items-center justify-center w-8 h-5 rounded bg-[var(--color-gold)] text-black text-[10px] font-bold">
+                          LC
+                        </span>
+                      )}
+                      {cell.vote === "NOTHING" && (
+                        <span class="spoiler inline-flex items-center justify-center w-8 h-5 rounded bg-[var(--color-fail)] text-white text-[10px] font-bold">
+                          NO
+                        </span>
+                      )}
+                      {cell.vote === "ABSENT" && (
+                        <span class="spoiler inline-flex items-center justify-center w-8 h-5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px]">
+                          —
+                        </span>
+                      )}
+                      {cell.vote === "UNKNOWN" && (
+                        <span class="inline-flex items-center justify-center w-8 h-5 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px]">
+                          ?
+                        </span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-wrap items-center gap-4 text-xs text-[var(--color-text-muted)]">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center justify-center w-8 h-5 rounded bg-[var(--color-gold)] text-black text-[10px] font-bold">LC</span>
+          = LAST CALL
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center justify-center w-8 h-5 rounded bg-[var(--color-fail)] text-white text-[10px] font-bold">NO</span>
+          = NOTHING
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center justify-center w-8 h-5 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px]">?</span>
+          = 未確認
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center justify-center w-8 h-5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px]">—</span>
+          = 欠席
+        </span>
+      </div>
+    </section>
+  </div>
+</Layout>
