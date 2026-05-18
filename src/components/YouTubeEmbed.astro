@@ -1,0 +1,55 @@
+---
+interface Props {
+  videoId: string;
+  title: string;
+}
+
+const { videoId, title } = Astro.props;
+const thumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+---
+
+<div class="lc-yt aspect-video w-full overflow-hidden rounded-lg border border-[var(--color-border)] bg-black relative" data-yt-id={videoId} data-yt-title={title}>
+  <button
+    type="button"
+    class="lc-yt-button absolute inset-0 w-full h-full flex items-center justify-center group cursor-pointer"
+    aria-label={`「${title}」をYouTubeで再生`}
+  >
+    <img
+      src={thumb}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition"
+    />
+    <span class="relative z-10 flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[var(--color-gold)] text-black shadow-lg group-hover:scale-110 transition">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
+        <path d="M8 5v14l11-7z" />
+      </svg>
+    </span>
+    <span class="sr-only">{title}</span>
+  </button>
+</div>
+
+<script>
+  for (const el of document.querySelectorAll<HTMLElement>(".lc-yt")) {
+    const id = el.dataset.ytId;
+    const title = el.dataset.ytTitle ?? "";
+    if (!id) continue;
+    const btn = el.querySelector<HTMLButtonElement>(".lc-yt-button");
+    btn?.addEventListener(
+      "click",
+      () => {
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+        iframe.title = title;
+        iframe.allow =
+          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+        iframe.referrerPolicy = "strict-origin-when-cross-origin";
+        iframe.allowFullscreen = true;
+        iframe.className = "absolute inset-0 w-full h-full border-0";
+        el.replaceChildren(iframe);
+      },
+      { once: true }
+    );
+  }
+</script>

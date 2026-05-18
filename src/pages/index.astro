@@ -1,0 +1,85 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../components/Layout.astro";
+import EpisodeCard from "../components/EpisodeCard.astro";
+import { siteLink } from "../lib/url";
+
+const episodes = (await getCollection("episodes")).sort(
+  (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
+);
+const judges = (await getCollection("judges")).sort((a, b) =>
+  a.data.name.localeCompare(b.data.name, "ja")
+);
+
+const latest = episodes[0];
+const recent = episodes.slice(1, 7);
+---
+
+<Layout>
+  <section class="border-b border-[var(--color-border)] bg-gradient-to-b from-[#1a1410] to-[var(--color-bg)]">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+      <p class="text-xs sm:text-sm tracking-[0.3em] text-[var(--color-gold)] mb-3 font-display">
+        UNOFFICIAL FAN ARCHIVE
+      </p>
+      <h1 class="text-3xl sm:text-5xl font-bold leading-tight font-display tracking-wide">
+        LAST CALL
+        <span class="block text-base sm:text-lg text-[var(--color-text-muted)] mt-2 font-sans tracking-normal">
+          ラストコール 非公式ファンサイト
+        </span>
+      </h1>
+      <p class="mt-5 max-w-2xl text-sm sm:text-base text-[var(--color-text-muted)] leading-relaxed">
+        YouTube配信中のキャバ嬢オーディション番組「LAST CALL」の各回・出演者（シンデレラ）・14名審査員による投票結果を体系的にまとめます。
+        本サイトは非公式のファンによる索引であり、番組・出演者・運営とは無関係です。
+      </p>
+      <div class="mt-6 flex flex-wrap gap-3 text-sm">
+        <a
+          href={siteLink("/episodes/")}
+          class="px-4 py-2 rounded bg-[var(--color-gold)] text-black font-semibold hover:bg-[var(--color-gold-bright)] transition"
+        >
+          各回を見る
+        </a>
+        <a
+          href={siteLink("/judges/")}
+          class="px-4 py-2 rounded border border-[var(--color-border)] hover:border-[var(--color-gold)] transition"
+        >
+          審査員 {judges.length}名
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+    {latest && (
+      <section class="space-y-4">
+        <header class="flex items-end justify-between gap-3">
+          <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+            Latest Episode
+          </h2>
+          <a href={siteLink("/episodes/")} class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-gold-bright)]">
+            すべて見る →
+          </a>
+        </header>
+        <EpisodeCard episode={latest} variant="feature" />
+      </section>
+    )}
+
+    {recent.length > 0 && (
+      <section class="space-y-4">
+        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+          Recent Episodes
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {recent.map((ep) => (
+            <EpisodeCard episode={ep} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {episodes.length === 0 && (
+      <section class="rounded-lg border border-dashed border-[var(--color-border)] p-10 text-center text-[var(--color-text-muted)]">
+        エピソードデータが未投入です。<code>src/content/episodes/</code> にJSONを追加してください。
+      </section>
+    )}
+  </div>
+</Layout>

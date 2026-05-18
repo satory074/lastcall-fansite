@@ -1,0 +1,124 @@
+---
+import { getCollection, getEntry } from "astro:content";
+import Layout from "../../components/Layout.astro";
+import YouTubeEmbed from "../../components/YouTubeEmbed.astro";
+import VoteTable from "../../components/VoteTable.astro";
+import SnsLinks from "../../components/SnsLinks.astro";
+import { siteLink, youtubeUrl } from "../../lib/url";
+
+export async function getStaticPaths() {
+  const episodes = await getCollection("episodes");
+  return episodes.map((episode) => ({
+    params: { id: episode.data.id },
+    props: { episode },
+  }));
+}
+
+const { episode } = Astro.props;
+const cinderella = await getEntry(episode.data.cinderella);
+const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
+---
+
+<Layout
+  title={`#${episode.data.id} ${episode.data.title}`}
+  description={episode.data.summary ?? episode.data.title}
+>
+  <article class="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+    <header class="space-y-3">
+      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">
+        EPISODE #{episode.data.id}
+      </p>
+      <h1 class="text-2xl sm:text-3xl font-bold leading-snug">
+        {episode.data.title}
+      </h1>
+      <div class="text-sm text-[var(--color-text-muted)]">
+        配信日: {dateLabel}
+        <span class="mx-2">·</span>
+        <a
+          href={youtubeUrl(episode.data.youtubeId)}
+          target="_blank"
+          rel="noopener"
+          class="underline hover:text-[var(--color-gold-bright)]"
+        >
+          YouTubeで見る
+        </a>
+      </div>
+    </header>
+
+    <YouTubeEmbed videoId={episode.data.youtubeId} title={episode.data.title} />
+
+    {episode.data.summary && (
+      <section class="space-y-2">
+        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+          Summary
+        </h2>
+        <p class="text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
+          {episode.data.summary}
+        </p>
+      </section>
+    )}
+
+    {cinderella && (
+      <section class="space-y-3">
+        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+          Cinderella
+        </h2>
+        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 space-y-3">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h3 class="text-xl font-semibold">
+              <a
+                href={siteLink(`/cinderellas/${cinderella.id}/`)}
+                class="hover:text-[var(--color-gold-bright)] transition"
+              >
+                {cinderella.data.name}
+              </a>
+              {cinderella.data.age && (
+                <span class="text-sm text-[var(--color-text-muted)] ml-2">{cinderella.data.age}歳</span>
+              )}
+            </h3>
+            <span
+              class:list={[
+                "px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+                cinderella.data.result === "pass"
+                  ? "bg-[var(--color-gold)] text-black"
+                  : "bg-[var(--color-fail)] text-white",
+              ]}
+            >
+              {cinderella.data.result === "pass" ? "合格" : "不合格"}
+            </span>
+          </div>
+          {cinderella.data.background && (
+            <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
+              {cinderella.data.background}
+            </p>
+          )}
+          <SnsLinks sns={cinderella.data.sns} size="sm" />
+        </div>
+      </section>
+    )}
+
+    <VoteTable votes={episode.data.votes} />
+
+    {episode.data.sources.length > 0 && (
+      <section class="space-y-2 pt-4 border-t border-[var(--color-border)]">
+        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+          Sources
+        </h2>
+        <ul class="text-sm space-y-1">
+          {episode.data.sources.map((url) => (
+            <li>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener nofollow"
+                class="text-[var(--color-text-muted)] underline hover:text-[var(--color-gold-bright)] break-all"
+              >
+                {url}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </article>
+</Layout>

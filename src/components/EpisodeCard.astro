@@ -1,0 +1,85 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getEntry } from "astro:content";
+import { siteLink, youtubeThumb } from "../lib/url";
+
+interface Props {
+  episode: CollectionEntry<"episodes">;
+  variant?: "default" | "feature";
+}
+
+const { episode, variant = "default" } = Astro.props;
+const cinderella = await getEntry(episode.data.cinderella);
+
+const pass = episode.data.votes.filter((v) => v.vote === "LAST CALL").length;
+const fail = episode.data.votes.filter((v) => v.vote === "NOTHING").length;
+const total = pass + fail;
+const result = total > 0 ? (pass >= Math.ceil(total / 2) ? "pass" : "fail") : null;
+
+const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
+---
+
+<a
+  href={siteLink(`/episodes/${episode.data.id}/`)}
+  class:list={[
+    "group block overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-gold)] transition",
+    variant === "feature" ? "md:flex md:gap-0" : "",
+  ]}
+>
+  <div
+    class:list={[
+      "relative aspect-video overflow-hidden bg-black",
+      variant === "feature" ? "md:w-1/2 md:aspect-auto" : "",
+    ]}
+  >
+    <img
+      src={youtubeThumb(episode.data.youtubeId)}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      class="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition duration-500"
+    />
+    <span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[var(--color-gold)] text-xs font-display tracking-widest">
+      #{episode.data.id}
+    </span>
+    {result && (
+      <span
+        class:list={[
+          "absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+          result === "pass"
+            ? "bg-[var(--color-gold)] text-black"
+            : "bg-black/70 text-[var(--color-text-muted)] border border-[var(--color-border)]",
+        ]}
+      >
+        {result === "pass" ? "LAST CALL" : "NOTHING"}
+      </span>
+    )}
+  </div>
+  <div class:list={["p-4 space-y-2", variant === "feature" ? "md:w-1/2 md:p-6" : ""]}>
+    <div class="text-xs text-[var(--color-text-muted)]">
+      {dateLabel}{cinderella && (
+        <>
+          {" "}・ シンデレラ <span class="text-[var(--color-text)]">{cinderella.data.name}</span>
+        </>
+      )}
+    </div>
+    <h3
+      class:list={[
+        "font-semibold leading-snug group-hover:text-[var(--color-gold-bright)] transition",
+        variant === "feature" ? "text-lg md:text-xl" : "text-sm",
+      ]}
+    >
+      {episode.data.title}
+    </h3>
+    {episode.data.summary && variant === "feature" && (
+      <p class="text-sm text-[var(--color-text-muted)] line-clamp-3">
+        {episode.data.summary}
+      </p>
+    )}
+    {total > 0 && (
+      <div class="text-xs text-[var(--color-text-muted)]">
+        LAST CALL {pass} ／ NOTHING {fail}
+      </div>
+    )}
+  </div>
+</a>

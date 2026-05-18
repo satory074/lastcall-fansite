@@ -1,0 +1,53 @@
+---
+import Layout from "../components/Layout.astro";
+---
+
+<Layout title="このサイトについて" description="LAST CALL 非公式ファンサイトの運営方針と削除依頼について。">
+  <article class="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8 text-sm sm:text-base leading-relaxed">
+    <header class="space-y-2">
+      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">ABOUT</p>
+      <h1 class="text-2xl sm:text-3xl font-bold">このサイトについて</h1>
+    </header>
+
+    <section class="space-y-3">
+      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">非公式であることの明示</h2>
+      <p>
+        本サイト「LAST CALL 非公式ファンサイト」は、YouTube配信中のオーディション番組
+        <a href="https://lastcall.jp/" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">LAST CALL（ラストコール）</a>
+        に関する情報を、ファンが個人的にまとめた非公式の索引サイトです。
+        番組制作・出演者・所属事務所・スポンサー各社とは一切関係ありません。
+      </p>
+    </section>
+
+    <section class="space-y-3">
+      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">掲載情報の方針</h2>
+      <ul class="list-disc list-outside pl-5 space-y-2 text-[var(--color-text-muted)]">
+        <li>動画・画像は公式YouTubeの埋め込みおよびリンクのみを使用し、ホスティングは行いません。</li>
+        <li>各回の投票結果・コメントは公開放送回からの引用範囲で記載し、出典を併記します。</li>
+        <li>SNSリンクは本人が公開しているアカウントのみを掲載対象とします。</li>
+        <li>掲載内容の正確性に努めますが、公式発表と齟齬がある場合は公式情報を優先してください。</li>
+      </ul>
+    </section>
+
+    <section class="space-y-3">
+      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">修正・削除依頼</h2>
+      <p>
+        記載内容の誤り、SNSリンクの追加・削除、ご本人による掲載拒否のご要望は、
+        GitHubリポジトリの Issue にてご連絡ください。本人確認可能な方法でご連絡いただいた場合、原則として速やかに対応します。
+      </p>
+      <p class="text-[var(--color-text-muted)]">
+        ※ Issue のURLはリポジトリ公開後に追記します。
+      </p>
+    </section>
+
+    <section class="space-y-3">
+      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">主なデータソース</h2>
+      <ul class="list-disc list-outside pl-5 space-y-1 text-[var(--color-text-muted)]">
+        <li><a href="https://lastcall.jp/" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">公式サイト lastcall.jp</a></li>
+        <li><a href="https://www.youtube.com/@LASTCALL_OFFICIAL" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">公式YouTube @LASTCALL_OFFICIAL</a></li>
+        <li><a href="https://x.com/LASTCALL_ofcl" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">公式X @LASTCALL_ofcl</a></li>
+        <li><a href="https://www.instagram.com/lastcall_ofcl/" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">公式Instagram @lastcall_ofcl</a></li>
+      </ul>
+    </section>
+  </article>
+</Layout>

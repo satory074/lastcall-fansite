@@ -1,0 +1,157 @@
+---
+import { getCollection, getEntry } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import Layout from "../../components/Layout.astro";
+import SnsLinks from "../../components/SnsLinks.astro";
+import { siteLink } from "../../lib/url";
+
+export async function getStaticPaths() {
+  const judges = await getCollection("judges");
+  return judges.map((j) => ({
+    params: { slug: j.id },
+    props: { judge: j },
+  }));
+}
+
+const { judge } = Astro.props;
+const episodes = (await getCollection("episodes")).sort(
+  (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
+);
+
+type HistoryRow = {
+  episode: CollectionEntry<"episodes">;
+  cinderellaName: string;
+  vote: "LAST CALL" | "NOTHING" | "ABSENT";
+  comment?: string;
+};
+
+const history: HistoryRow[] = [];
+for (const ep of episodes) {
+  const v = ep.data.votes.find((vv) => vv.judge.id === judge.id);
+  if (!v) continue;
+  const c = await getEntry(ep.data.cinderella);
+  history.push({
+    episode: ep,
+    cinderellaName: c?.data.name ?? "—",
+    vote: v.vote,
+    comment: v.comment,
+  });
+}
+
+const passCount = history.filter((h) => h.vote === "LAST CALL").length;
+const failCount = history.filter((h) => h.vote === "NOTHING").length;
+const total = passCount + failCount;
+const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
+---
+
+<Layout
+  title={judge.data.name}
+  description={`LAST CALL 審査員「${judge.data.name}」のプロフィール、SNS、全回投票履歴。`}
+>
+  <article class="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+    <header class="space-y-3">
+      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">JUDGE</p>
+      <h1 class="text-2xl sm:text-3xl font-bold">
+        {judge.data.name}
+        {judge.data.nameKana && (
+          <span class="text-sm text-[var(--color-text-muted)] ml-2 font-normal">
+            {judge.data.nameKana}
+          </span>
+        )}
+      </h1>
+      <div class="text-sm text-[var(--color-text-muted)] space-x-2">
+        {judge.data.age && <span>{judge.data.age}歳</span>}
+        {judge.data.area && <span>· {judge.data.area}</span>}
+        {judge.data.store && <span>· {judge.data.store}</span>}
+      </div>
+    </header>
+
+    {judge.data.bio && (
+      <section class="space-y-2">
+        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+          Profile
+        </h2>
+        <p class="text-sm sm:text-base leading-relaxed">{judge.data.bio}</p>
+      </section>
+    )}
+
+    <section class="space-y-2">
+      <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+        SNS
+      </h2>
+      <SnsLinks sns={judge.data.sns} />
+    </section>
+
+    <section class="space-y-3">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+          Voting History
+        </h2>
+        {total > 0 && (
+          <div class="text-sm text-[var(--color-text-muted)]">
+            投票 {total} 回 · LAST CALL <span class="text-[var(--color-gold)] font-semibold">{passCount}</span>
+            / NOTHING <span class="font-semibold">{failCount}</span>
+            {passRate !== null && <span class="ml-2">（合格率 {passRate}%）</span>}
+          </div>
+        )}
+      </div>
+
+      <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+        <table class="min-w-full text-sm">
+          <thead class="bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
+            <tr>
+              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">回</th>
+              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">シンデレラ</th>
+              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">投票</th>
+              <th class="text-left font-medium px-3 py-2">コメント</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((h) => (
+              <tr class="border-t border-[var(--color-border)]">
+                <td class="px-3 py-2 whitespace-nowrap">
+                  <a
+                    href={siteLink(`/episodes/${h.episode.data.id}/`)}
+                    class="hover:text-[var(--color-gold-bright)] transition"
+                  >
+                    #{h.episode.data.id}
+                  </a>
+                </td>
+                <td class="px-3 py-2 whitespace-nowrap text-[var(--color-text-muted)]">
+                  {h.cinderellaName}
+                </td>
+                <td class="px-3 py-2 whitespace-nowrap">
+                  {h.vote === "LAST CALL" && (
+                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-gold)] text-black text-xs font-semibold tracking-wider">
+                      LAST CALL
+                    </span>
+                  )}
+                  {h.vote === "NOTHING" && (
+                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-fail)] text-white text-xs font-semibold tracking-wider">
+                      NOTHING
+                    </span>
+                  )}
+                  {h.vote === "ABSENT" && (
+                    <span class="inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
+                      欠席
+                    </span>
+                  )}
+                </td>
+                <td class="px-3 py-2 text-[var(--color-text-muted)]">
+                  {h.comment ?? "—"}
+                </td>
+              </tr>
+            ))}
+            {history.length === 0 && (
+              <tr>
+                <td colspan="4" class="px-3 py-6 text-center text-[var(--color-text-muted)]">
+                  投票履歴データを準備中です。
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </article>
+</Layout>

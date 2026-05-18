@@ -1,0 +1,41 @@
+---
+import { getCollection, getEntry } from "astro:content";
+import Layout from "../../components/Layout.astro";
+import EpisodeCard from "../../components/EpisodeCard.astro";
+
+const episodes = (await getCollection("episodes")).sort(
+  (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
+);
+
+// Pre-resolve cinderella references for filtering display (avoids N+1 in template)
+const enriched = await Promise.all(
+  episodes.map(async (ep) => ({
+    ep,
+    cinderella: await getEntry(ep.data.cinderella),
+  }))
+);
+---
+
+<Layout title="各回一覧" description="LAST CALL の全エピソード一覧。投稿日・シンデレラ・最終結果が一覧できます。">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+    <header class="space-y-2">
+      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">EPISODES</p>
+      <h1 class="text-2xl sm:text-3xl font-bold">各回一覧</h1>
+      <p class="text-sm text-[var(--color-text-muted)]">
+        全 {episodes.length} 回。新しい順。
+      </p>
+    </header>
+
+    {enriched.length > 0 ? (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {enriched.map(({ ep }) => (
+          <EpisodeCard episode={ep} />
+        ))}
+      </div>
+    ) : (
+      <div class="rounded-lg border border-dashed border-[var(--color-border)] p-10 text-center text-[var(--color-text-muted)]">
+        エピソードデータが未投入です。
+      </div>
+    )}
+  </div>
+</Layout>

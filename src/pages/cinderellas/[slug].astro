@@ -1,0 +1,73 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../components/Layout.astro";
+import SnsLinks from "../../components/SnsLinks.astro";
+import { siteLink } from "../../lib/url";
+
+export async function getStaticPaths() {
+  const cinderellas = await getCollection("cinderellas");
+  return cinderellas.map((c) => ({
+    params: { slug: c.id },
+    props: { cinderella: c },
+  }));
+}
+
+const { cinderella } = Astro.props;
+
+const episodes = await getCollection("episodes");
+const appearance = episodes.find((ep) => ep.data.cinderella.id === cinderella.id);
+---
+
+<Layout
+  title={cinderella.data.name}
+  description={`LAST CALL #${cinderella.data.episodeId} に出演したシンデレラ「${cinderella.data.name}」のプロフィールとSNS。`}
+>
+  <article class="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+    <header class="space-y-3">
+      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">CINDERELLA</p>
+      <div class="flex flex-wrap items-baseline justify-between gap-3">
+        <h1 class="text-2xl sm:text-3xl font-bold">
+          {cinderella.data.name}
+          {cinderella.data.age && (
+            <span class="text-base text-[var(--color-text-muted)] ml-2">{cinderella.data.age}歳</span>
+          )}
+        </h1>
+        <span
+          class:list={[
+            "px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+            cinderella.data.result === "pass"
+              ? "bg-[var(--color-gold)] text-black"
+              : "bg-[var(--color-fail)] text-white",
+          ]}
+        >
+          {cinderella.data.result === "pass" ? "合格" : "不合格"}
+        </span>
+      </div>
+      <div class="text-sm text-[var(--color-text-muted)]">
+        出演回:
+        <a href={siteLink(`/episodes/${cinderella.data.episodeId}/`)} class="underline hover:text-[var(--color-gold-bright)]">
+          #{cinderella.data.episodeId}
+          {appearance && ` ${appearance.data.title}`}
+        </a>
+      </div>
+    </header>
+
+    {cinderella.data.background && (
+      <section class="space-y-2">
+        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+          Background
+        </h2>
+        <p class="text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
+          {cinderella.data.background}
+        </p>
+      </section>
+    )}
+
+    <section class="space-y-2">
+      <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+        SNS
+      </h2>
+      <SnsLinks sns={cinderella.data.sns} />
+    </section>
+  </article>
+</Layout>

@@ -1,0 +1,11 @@
+{
+  "name": "進撃のノア",
+  "nameKana": "しんげきのノア",
+  "age": 31,
+  "area": "歌舞伎町",
+  "bio": "歌舞伎町を代表するカリスマキャバ嬢。SNSでの発信力で全国的に知られる。",
+  "sns": {
+    "instagram": "https://www.instagram.com/shingeki_noa/",
+    "x": "https://x.com/shingeki_noa"
+  }
+}
