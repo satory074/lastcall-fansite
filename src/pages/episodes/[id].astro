@@ -17,6 +17,14 @@ export async function getStaticPaths() {
 const { episode } = Astro.props;
 const cinderella = await getEntry(episode.data.cinderella);
 const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
+
+// 前後回のナビゲーション
+const allEpisodes = (await getCollection("episodes")).sort(
+  (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
+);
+const idx = allEpisodes.findIndex((e) => e.data.id === episode.data.id);
+const prev = idx > 0 ? allEpisodes[idx - 1] : null;
+const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : null;
 ---
 
 <Layout
@@ -25,9 +33,23 @@ const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
 >
   <article class="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
     <header class="space-y-3">
-      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">
-        EPISODE #{episode.data.id}
-      </p>
+      <div class="flex flex-wrap items-center gap-3">
+        <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">
+          EPISODE #{episode.data.id}
+        </p>
+        {cinderella && (
+          <span
+            class:list={[
+              "px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+              cinderella.data.result === "pass"
+                ? "bg-[var(--color-gold)] text-black"
+                : "bg-[var(--color-fail)] text-white",
+            ]}
+          >
+            {cinderella.data.result === "pass" ? "結果: LAST CALL（合格）" : "結果: NOTHING（不合格）"}
+          </span>
+        )}
+      </div>
       <h1 class="text-2xl sm:text-3xl font-bold leading-snug">
         {episode.data.title}
       </h1>
@@ -45,18 +67,18 @@ const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
       </div>
     </header>
 
-    <YouTubeEmbed videoId={episode.data.youtubeId} title={episode.data.title} />
-
     {episode.data.summary && (
-      <section class="space-y-2">
-        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-          Summary
-        </h2>
-        <p class="text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
-          {episode.data.summary}
-        </p>
-      </section>
+      <p class="text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
+        {episode.data.summary}
+      </p>
     )}
+
+    <section class="space-y-3">
+      <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+        Video
+      </h2>
+      <YouTubeEmbed videoId={episode.data.youtubeId} title={episode.data.title} />
+    </section>
 
     {cinderella && (
       <section class="space-y-3">
@@ -97,7 +119,7 @@ const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
       </section>
     )}
 
-    <VoteTable votes={episode.data.votes} />
+    <VoteTable votes={episode.data.votes} cinderellaResult={cinderella?.data.result} />
 
     {episode.data.sources.length > 0 && (
       <section class="space-y-2 pt-4 border-t border-[var(--color-border)]">
@@ -120,5 +142,26 @@ const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
         </ul>
       </section>
     )}
+
+    <nav class="pt-4 border-t border-[var(--color-border)] flex flex-col sm:flex-row gap-3 sm:justify-between text-sm">
+      {prev ? (
+        <a
+          href={siteLink(`/episodes/${prev.data.id}/`)}
+          class="group flex-1 min-w-0 rounded-lg border border-[var(--color-border)] p-3 hover:border-[var(--color-gold)] transition"
+        >
+          <div class="text-xs text-[var(--color-text-muted)]">← 前の回 #{prev.data.id}</div>
+          <div class="truncate group-hover:text-[var(--color-gold-bright)]">{prev.data.title}</div>
+        </a>
+      ) : <span />}
+      {next ? (
+        <a
+          href={siteLink(`/episodes/${next.data.id}/`)}
+          class="group flex-1 min-w-0 rounded-lg border border-[var(--color-border)] p-3 hover:border-[var(--color-gold)] transition text-right"
+        >
+          <div class="text-xs text-[var(--color-text-muted)]">次の回 #{next.data.id} →</div>
+          <div class="truncate group-hover:text-[var(--color-gold-bright)]">{next.data.title}</div>
+        </a>
+      ) : <span />}
+    </nav>
   </article>
 </Layout>

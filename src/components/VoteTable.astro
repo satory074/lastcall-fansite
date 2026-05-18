@@ -1,36 +1,78 @@
 ---
-import { getEntries } from "astro:content";
+import { getCollection, getEntries } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import { siteLink } from "../lib/url";
 
 interface Props {
   votes: CollectionEntry<"episodes">["data"]["votes"];
+  cinderellaResult?: "pass" | "fail";
 }
 
-const { votes } = Astro.props;
+const { votes, cinderellaResult } = Astro.props;
 
-const judgeEntries = await getEntries(votes.map((v) => v.judge));
-const judgeMap = new Map(judgeEntries.map((j) => [j.id, j]));
+// 全審査員（固定14名）を取得し、各審査員に対する投票を引き当てる。
+// 投票データが未入力の審査員は "UNKNOWN" として表示。
+const allJudges = (await getCollection("judges")).sort((a, b) =>
+  a.data.name.localeCompare(b.data.name, "ja")
+);
 
-const rows = votes.map((v) => ({
-  vote: v.vote,
-  comment: v.comment,
-  judge: judgeMap.get(v.judge.id),
-}));
+const recordedJudges = await getEntries(votes.map((v) => v.judge));
+const judgeMap = new Map(recordedJudges.map((j) => [j.id, j]));
+// votes に含まれているが judges コレクションに無い投票（追加メンバー等）は別途扱う
+const extraVotes = votes.filter((v) => !allJudges.some((j) => j.id === v.judge.id));
+
+const voteByJudgeId = new Map(votes.map((v) => [v.judge.id, v]));
+
+type Row = {
+  judgeId: string;
+  judgeName: string;
+  judgeHref: string | null;
+  vote: "LAST CALL" | "NOTHING" | "ABSENT" | "UNKNOWN";
+  comment?: string;
+};
+
+const baseRows: Row[] = allJudges.map((j) => {
+  const v = voteByJudgeId.get(j.id);
+  return {
+    judgeId: j.id,
+    judgeName: j.data.name,
+    judgeHref: siteLink(`/judges/${j.id}/`),
+    vote: v ? v.vote : "UNKNOWN",
+    comment: v?.comment,
+  };
+});
+
+const extraRows: Row[] = [];
+for (const v of extraVotes) {
+  const j = judgeMap.get(v.judge.id);
+  extraRows.push({
+    judgeId: v.judge.id,
+    judgeName: j?.data.name ?? "ゲスト審査員",
+    judgeHref: j ? siteLink(`/judges/${j.id}/`) : null,
+    vote: v.vote,
+    comment: v.comment,
+  });
+}
+
+const rows = [...baseRows, ...extraRows];
 
 const pass = votes.filter((v) => v.vote === "LAST CALL").length;
 const fail = votes.filter((v) => v.vote === "NOTHING").length;
 const absent = votes.filter((v) => v.vote === "ABSENT").length;
-const total = pass + fail;
-const result = total > 0 && pass >= Math.ceil(total / 2) ? "pass" : "fail";
+const unknown = rows.filter((r) => r.vote === "UNKNOWN").length;
+const totalRecorded = pass + fail;
+const calcResult: "pass" | "fail" | null =
+  totalRecorded > 0 ? (pass >= Math.ceil(totalRecorded / 2) ? "pass" : "fail") : null;
+// シンデレラJSONの合否を優先（投票データが未入力でも結果は確定済みの想定）
+const displayResult = cinderellaResult ?? calcResult;
 ---
 
 <section class="space-y-4">
   <div class="flex flex-wrap items-end justify-between gap-3">
     <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-      Vote
+      Judges &amp; Vote
     </h2>
-    <div class="flex items-center gap-3 text-sm">
+    <div class="flex flex-wrap items-center gap-3 text-sm">
       <span class="inline-flex items-center gap-1.5">
         <span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--color-gold)]"></span>
         LAST CALL <span class="font-semibold text-[var(--color-gold)]">{pass}</span>
@@ -44,16 +86,21 @@ const result = total > 0 && pass >= Math.ceil(total / 2) ? "pass" : "fail";
           欠席 {absent}
         </span>
       )}
-      {total > 0 && (
+      {unknown > 0 && (
+        <span class="inline-flex items-center gap-1.5 text-[var(--color-text-muted)]">
+          未確認 {unknown}
+        </span>
+      )}
+      {displayResult && (
         <span
           class:list={[
             "px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
-            result === "pass"
+            displayResult === "pass"
               ? "bg-[var(--color-gold)] text-black"
               : "bg-[var(--color-fail)] text-white",
           ]}
         >
-          {result === "pass" ? "合格" : "不合格"}
+          {displayResult === "pass" ? "合格" : "不合格"}
         </span>
       )}
     </div>
@@ -72,15 +119,15 @@ const result = total > 0 && pass >= Math.ceil(total / 2) ? "pass" : "fail";
         {rows.map((row) => (
           <tr class="border-t border-[var(--color-border)]">
             <td class="px-3 py-2 whitespace-nowrap">
-              {row.judge ? (
+              {row.judgeHref ? (
                 <a
-                  href={siteLink(`/judges/${row.judge.id}/`)}
+                  href={row.judgeHref}
                   class="hover:text-[var(--color-gold-bright)] transition"
                 >
-                  {row.judge.data.name}
+                  {row.judgeName}
                 </a>
               ) : (
-                <span class="text-[var(--color-text-muted)]">未登録</span>
+                <span>{row.judgeName}</span>
               )}
             </td>
             <td class="px-3 py-2 whitespace-nowrap">
@@ -99,20 +146,25 @@ const result = total > 0 && pass >= Math.ceil(total / 2) ? "pass" : "fail";
                   欠席
                 </span>
               )}
+              {row.vote === "UNKNOWN" && (
+                <span class="inline-flex items-center px-2 py-0.5 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
+                  未確認
+                </span>
+              )}
             </td>
             <td class="px-3 py-2 text-[var(--color-text-muted)]">
               {row.comment ?? "—"}
             </td>
           </tr>
         ))}
-        {rows.length === 0 && (
-          <tr>
-            <td colspan="3" class="px-3 py-6 text-center text-[var(--color-text-muted)]">
-              投票データを準備中です。
-            </td>
-          </tr>
-        )}
       </tbody>
     </table>
   </div>
+  {unknown > 0 && (
+    <p class="text-xs text-[var(--color-text-muted)]">
+      「未確認」は本編未視聴により個別投票が記録されていない審査員です。視聴後に
+      <code class="text-[var(--color-text)]">src/content/episodes/{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1]}.json</code>
+      の <code class="text-[var(--color-text)]">votes</code> 配列を埋めると反映されます。
+    </p>
+  )}
 </section>
