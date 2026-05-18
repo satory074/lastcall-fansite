@@ -1,19 +1,44 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0a0a0a;
-  --color-bg-elevated: #161616;
-  --color-bg-card: #1c1c1c;
-  --color-border: #2a2a2a;
-  --color-text: #f5f5f5;
-  --color-text-muted: #a3a3a3;
-  --color-gold: #d4af37;
-  --color-gold-bright: #f5d76e;
-  --color-pass: #d4af37;
-  --color-fail: #525252;
+  /* Surface — Material/Apple HIG 準拠の lifted black。
+     elevation を bg < surface < card < raised の順に明るく上げて深さを出す */
+  --color-bg: #0c0c0d;
+  --color-surface: #131316;
+  --color-card: #18181c;
+  --color-raised: #1f1f24;
+  --color-border: #2a2a30;
+  --color-border-strong: #3a3a42;
 
-  --font-sans: "Noto Sans JP", "Inter", system-ui, sans-serif;
+  /* Text */
+  --color-text: #f5f5f7;
+  --color-text-muted: #a1a1aa;
+  --color-text-subtle: #6b6b75;
+
+  /* Brand accent — gold (luxury cabaret) */
+  --color-gold: #d4af37;
+  --color-gold-bright: #f0d264;
+  --color-gold-deep: #8a7022;
+
+  /* Semantic */
+  --color-pass: #d4af37;
+  --color-fail: #4a4a52;
+  --color-pass-bg: rgba(212, 175, 55, 0.08);
+  --color-fail-bg: rgba(74, 74, 82, 0.08);
+
+  /* Typography */
+  --font-sans: "Noto Sans JP", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Noto Serif JP", "Times New Roman", "游明朝", "Yu Mincho", serif;
   --font-display: "Inter", "Noto Sans JP", system-ui, sans-serif;
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-short: 180ms;
+  --duration-base: 260ms;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html {
@@ -21,15 +46,24 @@ html {
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* dark mode best practice: slight letter-spacing + lifted line-height */
+  letter-spacing: 0.01em;
+  line-height: 1.65;
+  scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212, 175, 55, 0.04), transparent 60%),
+    var(--color-bg);
 }
 
 a {
   color: inherit;
   text-decoration: none;
+  transition: color var(--duration-short) var(--ease-out-soft);
 }
 
 a:hover {
@@ -41,9 +75,65 @@ a:hover {
   color: #000;
 }
 
-/* ネタバレ配慮: 既定では .spoiler 内容をぼかす。
-   html.show-spoilers が付くと全サイトで表示。
-   個別 .spoiler 要素をクリックすると .spoiler-revealed が付き、その要素だけ表示。 */
+/* Display typography utility — for hero / section heroes */
+.font-display-serif {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+/* Eyebrow / kicker — small uppercase label */
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  font-weight: 500;
+}
+
+/* Section header — uppercase muted label with hairline */
+.section-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.section-eyebrow::before {
+  content: "";
+  width: 1.75rem;
+  height: 1px;
+  background: var(--color-border-strong);
+}
+
+/* Card — base surface elevated above bg */
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 0.625rem;
+  transition: border-color var(--duration-base) var(--ease-out-soft),
+              transform var(--duration-base) var(--ease-out-soft),
+              box-shadow var(--duration-base) var(--ease-out-soft);
+}
+.card:hover {
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow: 0 4px 24px -8px rgba(212, 175, 55, 0.15);
+}
+
+/* Focus ring — accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* ネタバレ配慮 (既存ロジックそのまま) */
 html:not(.show-spoilers) .spoiler:not(.spoiler-revealed) {
   filter: blur(8px);
   cursor: pointer;
@@ -76,4 +166,10 @@ html:not(.show-spoilers) .spoiler-block:not(.spoiler-revealed) {
 }
 html:not(.show-spoilers) .spoiler-block:not(.spoiler-revealed):hover {
   filter: blur(3px);
+}
+
+/* 旧 var(--color-bg-elevated/card) 互換 — 既存コンポーネントで参照されているため alias を残す */
+:root {
+  --color-bg-elevated: var(--color-surface);
+  --color-bg-card: var(--color-card);
 }

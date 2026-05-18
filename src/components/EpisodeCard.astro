@@ -23,14 +23,15 @@ const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
 <a
   href={siteLink(`/episodes/${episode.data.id}/`)}
   class:list={[
-    "group block overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-gold)] transition",
-    variant === "feature" ? "md:flex md:gap-0" : "",
+    "group block relative overflow-hidden card",
+    variant === "feature" ? "md:grid md:grid-cols-[1.4fr_1fr] md:gap-0" : "",
   ]}
 >
+  {/* Image — wider for feature, square-ish for grid */}
   <div
     class:list={[
-      "relative aspect-video overflow-hidden bg-black",
-      variant === "feature" ? "md:w-1/2 md:aspect-auto" : "",
+      "relative overflow-hidden bg-black",
+      variant === "feature" ? "aspect-video md:aspect-auto md:min-h-[340px]" : "aspect-video",
     ]}
   >
     <img
@@ -38,49 +39,76 @@ const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
       alt=""
       loading="lazy"
       decoding="async"
-      class="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition duration-500"
+      class="w-full h-full object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
     />
-    <span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[var(--color-gold)] text-xs font-display tracking-widest">
-      #{episode.data.id}
-    </span>
-    {result && (
-      <span
-        class:list={[
-          "spoiler absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
-          result === "pass"
-            ? "bg-[var(--color-gold)] text-black"
-            : "bg-black/70 text-[var(--color-text-muted)] border border-[var(--color-border)]",
-        ]}
-      >
-        {result === "pass" ? "LAST CALL" : "NOTHING"}
+    {/* Bottom-up gradient for text legibility on thumbnails */}
+    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
+    {/* Episode badge — top left */}
+    <div class="absolute top-3 left-3 flex items-center gap-2">
+      <span class="font-display tracking-[0.24em] text-[10px] text-[var(--color-gold)] bg-black/60 backdrop-blur px-2.5 py-1 rounded-full border border-[var(--color-gold)]/30">
+        EP #{episode.data.id}
       </span>
-    )}
-  </div>
-  <div class:list={["p-4 space-y-2", variant === "feature" ? "md:w-1/2 md:p-6" : ""]}>
-    <div class="text-xs text-[var(--color-text-muted)]">
-      {dateLabel}{cinderella && (
-        <>
-          {" "}・ シンデレラ <span class="text-[var(--color-text)]">{cinderella.data.name}</span>
-        </>
-      )}
     </div>
-    <h3
-      class:list={[
-        "font-semibold leading-snug group-hover:text-[var(--color-gold-bright)] transition",
-        variant === "feature" ? "text-lg md:text-xl" : "text-sm",
-      ]}
-    >
-      {episode.data.title}
-    </h3>
-    {episode.data.summary && variant === "feature" && (
-      <p class="spoiler-block text-sm text-[var(--color-text-muted)] line-clamp-3">
-        {episode.data.summary}
-      </p>
+    {/* Result badge — top right */}
+    {result && (
+      <div class="absolute top-3 right-3">
+        <span
+          class:list={[
+            "spoiler font-display tracking-[0.18em] text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur",
+            result === "pass"
+              ? "bg-[var(--color-gold)] text-black"
+              : "bg-black/70 text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
+          ]}
+        >
+          {result === "pass" ? "LAST CALL" : "NOTHING"}
+        </span>
+      </div>
     )}
-    {total > 0 && (
-      <div class="spoiler text-xs text-[var(--color-text-muted)] inline-block">
-        LAST CALL {pass} ／ NOTHING {fail}
+    {/* Title overlay — bottom */}
+    {variant === "default" && (
+      <div class="absolute bottom-0 left-0 right-0 p-4 space-y-1.5">
+        <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--color-text-subtle)]">
+          {dateLabel}
+        </div>
+        <h3 class="text-[15px] font-semibold leading-snug text-[var(--color-text)] line-clamp-2 group-hover:text-[var(--color-gold-bright)] transition">
+          {episode.data.title}
+        </h3>
       </div>
     )}
   </div>
+
+  {/* Side panel — feature only */}
+  {variant === "feature" && (
+    <div class="p-6 sm:p-8 md:p-10 flex flex-col justify-between gap-6">
+      <div class="space-y-4">
+        <div class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)]">
+          {dateLabel}
+          {cinderella && (
+            <>
+              <span class="mx-2 text-[var(--color-border-strong)]">/</span>
+              <span class="text-[var(--color-text-muted)]">Cinderella · {cinderella.data.name}</span>
+            </>
+          )}
+        </div>
+        <h3 class="font-display-serif text-2xl sm:text-3xl text-[var(--color-text)] leading-tight group-hover:text-[var(--color-gold-bright)] transition">
+          {episode.data.title.replace(/【LAST.*$/, "").trim()}
+        </h3>
+      </div>
+      <div class="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
+        {total > 0 ? (
+          <div class="spoiler inline-block">
+            LAST CALL <span class="text-[var(--color-gold)] font-semibold">{pass}</span>
+            <span class="mx-1.5 text-[var(--color-border-strong)]">·</span>
+            NOTHING <span class="font-semibold">{fail}</span>
+          </div>
+        ) : <span></span>}
+        <span class="inline-flex items-center gap-1.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-gold-bright)] transition">
+          詳細
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+  )}
 </a>

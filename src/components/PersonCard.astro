@@ -21,29 +21,30 @@ interface Props {
 const { name, href, subtitle, meta, badge, sns } = Astro.props;
 ---
 
-<article class="group rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 hover:border-[var(--color-gold)] transition">
+<article class="group relative card p-5 sm:p-6">
   <div class="flex items-start justify-between gap-3">
-    <div class="min-w-0">
-      <h3 class="font-semibold text-base">
+    <div class="min-w-0 space-y-1">
+      <h3 class="font-display-serif text-lg sm:text-xl text-[var(--color-text)]">
         <a href={href} class="group-hover:text-[var(--color-gold-bright)] transition before:absolute before:inset-0">
           {name}
         </a>
       </h3>
-      {subtitle && (
-        <div class="text-xs text-[var(--color-text-muted)] mt-0.5">{subtitle}</div>
-      )}
-      {meta && <div class="text-xs text-[var(--color-text-muted)] mt-1">{meta}</div>}
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] tracking-wider text-[var(--color-text-subtle)]">
+        {subtitle && <span>{subtitle}</span>}
+        {subtitle && meta && <span class="text-[var(--color-border-strong)]">·</span>}
+        {meta && <span>{meta}</span>}
+      </div>
     </div>
     {badge && (
       <span
         class:list={[
-          "shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider",
+          "shrink-0 font-display tracking-[0.18em] text-[10px] font-semibold px-2 py-0.5 rounded-full",
           badge.tone === "neutral" ? "" : "spoiler",
           badge.tone === "pass"
             ? "bg-[var(--color-gold)] text-black"
             : badge.tone === "fail"
-              ? "bg-[var(--color-fail)] text-white"
-              : "bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] border border-[var(--color-border)]",
+              ? "bg-transparent text-[var(--color-text-subtle)] border border-[var(--color-border-strong)]"
+              : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border)]",
         ]}
       >
         {badge.label}
@@ -51,14 +52,8 @@ const { name, href, subtitle, meta, badge, sns } = Astro.props;
     )}
   </div>
   {sns && (
-    <div class="mt-3 relative z-10">
+    <div class="mt-4 relative z-10">
       <SnsLinks sns={sns} size="sm" />
     </div>
   )}
 </article>
-
-<style>
-  article {
-    position: relative;
-  }
-</style>

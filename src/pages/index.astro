@@ -13,54 +13,76 @@ const rest = episodes.slice(1);
 ---
 
 <Layout>
-  <section class="border-b border-[var(--color-border)] bg-gradient-to-b from-[#1a1410] to-[var(--color-bg)]">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-      <p class="text-xs sm:text-sm tracking-[0.3em] text-[var(--color-gold)] mb-3 font-display">
-        UNOFFICIAL FAN ARCHIVE
-      </p>
-      <h1 class="text-3xl sm:text-5xl font-bold leading-tight font-display tracking-wide">
-        LAST CALL
-        <span class="block text-base sm:text-lg text-[var(--color-text-muted)] mt-2 font-sans tracking-normal">
-          ラストコール 非公式ファンサイト
-        </span>
-      </h1>
-      <p class="mt-5 max-w-2xl text-sm sm:text-base text-[var(--color-text-muted)] leading-relaxed">
-        YouTube配信中のキャバ嬢オーディション番組「LAST CALL」の各回・出演者（シンデレラ）・14名審査員による投票結果を体系的にまとめます。
-        本サイトは非公式のファンによる索引であり、番組・出演者・運営とは無関係です。
-      </p>
-      <div class="mt-6 flex flex-wrap gap-3 text-sm">
-        <a
-          href="#episodes"
-          class="px-4 py-2 rounded bg-[var(--color-gold)] text-black font-semibold hover:bg-[var(--color-gold-bright)] transition"
-        >
-          各回を見る
-        </a>
-        <a
-          href={siteLink("/people/")}
-          class="px-4 py-2 rounded border border-[var(--color-border)] hover:border-[var(--color-gold)] transition"
-        >
-          出演者・審査一覧
-        </a>
+  {/* Hero — editorial layout: oversize serif, breathing room, side meta */}
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[60%] rounded-full blur-[120px] opacity-30 bg-[var(--color-gold-deep)]"></div>
+    </div>
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-16 sm:pt-24 pb-12 sm:pb-20 relative">
+      <div class="flex flex-col gap-10 md:flex-row md:items-end md:justify-between md:gap-16">
+        <div class="space-y-6 max-w-2xl">
+          <p class="eyebrow">Unofficial Fan Archive · Since 2026</p>
+          <h1 class="font-display-serif text-[2.5rem] sm:text-[4.5rem] leading-[0.95]">
+            <span class="block text-[var(--color-text)]">LAST</span>
+            <span class="block text-[var(--color-gold)] italic">CALL</span>
+          </h1>
+          <p class="text-sm sm:text-base text-[var(--color-text-muted)] leading-relaxed max-w-xl">
+            YouTube 配信のキャバ嬢オーディション番組
+            <a href="https://lastcall.jp/" target="_blank" rel="noopener" class="text-[var(--color-text)] underline decoration-[var(--color-border-strong)] hover:decoration-[var(--color-gold)]">LAST CALL</a>
+            の各回・シンデレラ・14名のレジェンドキャバ嬢による審査結果を、回ごとに横断できる索引として整理。
+          </p>
+          <div class="flex flex-wrap gap-3 pt-2">
+            <a
+              href="#episodes"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--color-gold)] text-black text-sm font-semibold tracking-wide hover:bg-[var(--color-gold-bright)] transition"
+            >
+              各回を辿る
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <a
+              href={siteLink("/people/")}
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--color-border-strong)] text-sm hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition"
+            >
+              出演者・審査マトリックス
+            </a>
+          </div>
+        </div>
+        <dl class="grid grid-cols-3 gap-6 md:gap-10 text-left md:text-right md:flex-shrink-0">
+          <div>
+            <dt class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)]">Episodes</dt>
+            <dd class="font-display-serif text-3xl sm:text-4xl text-[var(--color-text)] mt-1">{episodes.length}</dd>
+          </div>
+          <div>
+            <dt class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)]">Cinderellas</dt>
+            <dd class="font-display-serif text-3xl sm:text-4xl text-[var(--color-text)] mt-1">17</dd>
+          </div>
+          <div>
+            <dt class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)]">Judges</dt>
+            <dd class="font-display-serif text-3xl sm:text-4xl text-[var(--color-text)] mt-1">14</dd>
+          </div>
+        </dl>
       </div>
     </div>
+    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-border-strong)] to-transparent"></div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-16 space-y-20">
     {latest && (
-      <section class="space-y-4">
-        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-          Latest Episode
-        </h2>
+      <section class="space-y-6">
+        <h2 class="section-eyebrow">Latest Episode</h2>
         <EpisodeCard episode={latest} variant="feature" />
       </section>
     )}
 
     {rest.length > 0 && (
-      <section id="episodes" class="space-y-4 scroll-mt-24">
-        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-          All Episodes <span class="text-[var(--color-text-muted)] normal-case tracking-normal text-xs">— 全 {episodes.length} 回</span>
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section id="episodes" class="space-y-6 scroll-mt-24">
+        <div class="flex items-end justify-between gap-4">
+          <h2 class="section-eyebrow">Archive</h2>
+          <span class="text-xs text-[var(--color-text-subtle)] tracking-wider">全 {episodes.length} 回</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {rest.map((ep) => (
             <EpisodeCard episode={ep} />
           ))}

@@ -51,30 +51,32 @@ const matrix = await Promise.all(
   title="出演者・審査一覧"
   description="LAST CALL の全シンデレラ・14名審査員・各回の審査結果マトリックスを一覧。"
 >
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-12">
-    <header class="space-y-2">
-      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">PEOPLE &amp; VOTES</p>
-      <h1 class="text-2xl sm:text-3xl font-bold">出演者・審査一覧</h1>
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-16">
+    <header class="space-y-5">
+      <p class="eyebrow">People &amp; Votes</p>
+      <h1 class="font-display-serif text-3xl sm:text-5xl text-[var(--color-text)]">出演者・審査一覧</h1>
       <p class="text-sm text-[var(--color-text-muted)]">
-        シンデレラ {cinderellas.length} 名 ／ 審査員 {judges.length} 名 ／ 配信回 {episodes.length} 回
+        シンデレラ <span class="text-[var(--color-text)]">{cinderellas.length}</span> 名
+        <span class="text-[var(--color-border-strong)] mx-2">/</span>
+        審査員 <span class="text-[var(--color-text)]">{judges.length}</span> 名
+        <span class="text-[var(--color-border-strong)] mx-2">/</span>
+        配信回 <span class="text-[var(--color-text)]">{episodes.length}</span> 回
       </p>
-      <nav class="flex flex-wrap gap-3 text-sm pt-2">
-        <a href="#cinderellas" class="px-3 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] transition">
+      <nav class="flex flex-wrap gap-2 text-xs pt-2">
+        <a href="#cinderellas" class="px-3 py-1.5 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">
           シンデレラ
         </a>
-        <a href="#judges" class="px-3 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] transition">
+        <a href="#judges" class="px-3 py-1.5 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">
           審査員
         </a>
-        <a href="#matrix" class="px-3 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] transition">
+        <a href="#matrix" class="px-3 py-1.5 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">
           審査マトリックス
         </a>
       </nav>
     </header>
 
-    <section id="cinderellas" class="space-y-4 scroll-mt-24">
-      <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
-        Cinderellas <span class="text-[var(--color-text-muted)] normal-case tracking-normal text-xs">— 出演回順</span>
-      </h2>
+    <section id="cinderellas" class="space-y-6 scroll-mt-24">
+      <h2 class="section-eyebrow">Cinderellas <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">出演回順</span></h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cinderellas.map((c) => (
           <PersonCard
@@ -92,10 +94,8 @@ const matrix = await Promise.all(
       </div>
     </section>
 
-    <section id="judges" class="space-y-4 scroll-mt-24">
-      <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
-        Judges <span class="text-[var(--color-text-muted)] normal-case tracking-normal text-xs">— 固定 14 名</span>
-      </h2>
+    <section id="judges" class="space-y-6 scroll-mt-24">
+      <h2 class="section-eyebrow">Judges <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">固定 14 名</span></h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {judges.map((j) => (
           <PersonCard
@@ -109,11 +109,9 @@ const matrix = await Promise.all(
       </div>
     </section>
 
-    <section id="matrix" class="space-y-4 scroll-mt-24">
+    <section id="matrix" class="space-y-6 scroll-mt-24">
       <div class="flex flex-wrap items-end justify-between gap-3">
-        <h2 class="font-display tracking-widest text-sm uppercase text-[var(--color-text-muted)]">
-          Voting Matrix <span class="text-[var(--color-text-muted)] normal-case tracking-normal text-xs">— 全 {episodes.length} 回 × {judges.length} 名</span>
-        </h2>
+        <h2 class="section-eyebrow">Voting Matrix <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{episodes.length} × {judges.length}</span></h2>
       </div>
       <p class="text-xs text-[var(--color-text-muted)]">
         縦軸=各回（新しい順）、横軸=審査員。空セルは本編未視聴で投票が記録されていない箇所。

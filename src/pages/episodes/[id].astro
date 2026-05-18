@@ -31,36 +31,34 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
   title={`#${episode.data.id} ${episode.data.title}`}
   description={episode.data.summary ?? episode.data.title}
 >
-  <article class="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
-    <header class="space-y-3">
+  <article class="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12">
+    <header class="space-y-4">
       <div class="flex flex-wrap items-center gap-3">
-        <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">
-          EPISODE #{episode.data.id}
-        </p>
+        <p class="eyebrow">Episode #{episode.data.id}</p>
         {cinderella && (
           <span
             class:list={[
-              "spoiler px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+              "spoiler font-display tracking-[0.18em] text-[10px] font-semibold px-2.5 py-1 rounded-full",
               cinderella.data.result === "pass"
                 ? "bg-[var(--color-gold)] text-black"
-                : "bg-[var(--color-fail)] text-white",
+                : "bg-transparent text-[var(--color-text-subtle)] border border-[var(--color-border-strong)]",
             ]}
           >
-            {cinderella.data.result === "pass" ? "結果: LAST CALL（合格）" : "結果: NOTHING（不合格）"}
+            {cinderella.data.result === "pass" ? "LAST CALL · 合格" : "NOTHING · 不合格"}
           </span>
         )}
       </div>
-      <h1 class="text-2xl sm:text-3xl font-bold leading-snug">
+      <h1 class="font-display-serif text-2xl sm:text-4xl leading-tight text-[var(--color-text)]">
         {episode.data.title}
       </h1>
-      <div class="text-sm text-[var(--color-text-muted)]">
-        配信日: {dateLabel}
-        <span class="mx-2">·</span>
+      <div class="text-xs text-[var(--color-text-subtle)] tracking-wider">
+        {dateLabel}
+        <span class="mx-2 text-[var(--color-border-strong)]">/</span>
         <a
           href={youtubeUrl(episode.data.youtubeId)}
           target="_blank"
           rel="noopener"
-          class="underline hover:text-[var(--color-gold-bright)]"
+          class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]"
         >
           YouTubeで見る
         </a>
@@ -73,19 +71,15 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
       </p>
     )}
 
-    <section class="space-y-3">
-      <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-        Video
-      </h2>
+    <section class="space-y-4">
+      <h2 class="section-eyebrow">Video</h2>
       <YouTubeEmbed videoId={episode.data.youtubeId} title={episode.data.title} />
     </section>
 
     {cinderella && (
-      <section class="space-y-3">
-        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-          Cinderella
-        </h2>
-        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 space-y-3">
+      <section class="space-y-4">
+        <h2 class="section-eyebrow">Cinderella</h2>
+        <div class="card p-6 space-y-4">
           <div class="flex flex-wrap items-baseline justify-between gap-3">
             <h3 class="text-xl font-semibold">
               <a
@@ -122,10 +116,8 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
     <VoteTable votes={episode.data.votes} cinderellaResult={cinderella?.data.result} />
 
     {episode.data.sources.length > 0 && (
-      <section class="space-y-2 pt-4 border-t border-[var(--color-border)]">
-        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-          Sources
-        </h2>
+      <section class="space-y-3 pt-6 border-t border-[var(--color-border)]">
+        <h2 class="section-eyebrow">Sources</h2>
         <ul class="text-sm space-y-1">
           {episode.data.sources.map((url) => (
             <li>
@@ -143,25 +135,25 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
       </section>
     )}
 
-    <nav class="pt-4 border-t border-[var(--color-border)] flex flex-col sm:flex-row gap-3 sm:justify-between text-sm">
+    <nav class="pt-6 border-t border-[var(--color-border)] grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
       {prev ? (
         <a
           href={siteLink(`/episodes/${prev.data.id}/`)}
-          class="group flex-1 min-w-0 rounded-lg border border-[var(--color-border)] p-3 hover:border-[var(--color-gold)] transition"
+          class="group card p-4 sm:p-5 min-w-0"
         >
-          <div class="text-xs text-[var(--color-text-muted)]">← 前の回 #{prev.data.id}</div>
-          <div class="truncate group-hover:text-[var(--color-gold-bright)]">{prev.data.title}</div>
+          <div class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] mb-1">← Prev · #{prev.data.id}</div>
+          <div class="truncate group-hover:text-[var(--color-gold-bright)] transition">{prev.data.title}</div>
         </a>
-      ) : <span />}
+      ) : <span class="hidden sm:block" />}
       {next ? (
         <a
           href={siteLink(`/episodes/${next.data.id}/`)}
-          class="group flex-1 min-w-0 rounded-lg border border-[var(--color-border)] p-3 hover:border-[var(--color-gold)] transition text-right"
+          class="group card p-4 sm:p-5 min-w-0 sm:text-right"
         >
-          <div class="text-xs text-[var(--color-text-muted)]">次の回 #{next.data.id} →</div>
-          <div class="truncate group-hover:text-[var(--color-gold-bright)]">{next.data.title}</div>
+          <div class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] mb-1">Next · #{next.data.id} →</div>
+          <div class="truncate group-hover:text-[var(--color-gold-bright)] transition">{next.data.title}</div>
         </a>
-      ) : <span />}
+      ) : <span class="hidden sm:block" />}
     </nav>
   </article>
 </Layout>

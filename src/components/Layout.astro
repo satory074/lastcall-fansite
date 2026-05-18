@@ -50,7 +50,7 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;700;900&display=swap"
     />
     <script is:inline>
       // ネタバレ表示モードの初期化（FOUC回避のため body より先に html へ class を付与）
@@ -62,26 +62,29 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
     </script>
   </head>
   <body class="min-h-screen flex flex-col">
-    <header class="border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-[color-mix(in_oklab,var(--color-bg-elevated)_85%,transparent)]">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+    <header class="border-b border-[var(--color-border)] sticky top-0 z-50 backdrop-blur-xl bg-[color-mix(in_oklab,var(--color-bg)_75%,transparent)]">
+      <div class="max-w-6xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
         <a href={linkOf("/")} class="flex items-center gap-3 group">
-          <span class="font-display tracking-[0.2em] text-lg sm:text-xl font-bold text-[var(--color-gold)] group-hover:text-[var(--color-gold-bright)] transition">
-            LAST CALL
+          <span class="font-display tracking-[0.32em] text-base sm:text-lg font-bold text-[var(--color-text)] group-hover:text-[var(--color-gold-bright)] transition">
+            LAST<span class="text-[var(--color-gold)]">·</span>CALL
           </span>
-          <span class="text-[10px] sm:text-xs text-[var(--color-text-muted)] px-2 py-0.5 border border-[var(--color-border)] rounded-full">
-            非公式ファンサイト
+          <span class="hidden sm:inline text-[10px] tracking-[0.2em] uppercase text-[var(--color-text-subtle)] px-2 py-0.5 border border-[var(--color-border)] rounded-full">
+            Unofficial Archive
           </span>
         </a>
-        <div class="flex items-center gap-4">
-          <nav class="hidden md:flex items-center gap-5 text-sm">
+        <div class="flex items-center gap-5">
+          <nav class="hidden md:flex items-center gap-6 text-[13px]">
             {nav.map((item) => {
               const active = item.href === "/" ? currentPath === "/" : currentPath.startsWith(item.href);
               return (
                 <a
                   href={linkOf(item.href)}
                   class:list={[
-                    "transition",
-                    active ? "text-[var(--color-gold)]" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
+                    "transition relative py-1",
+                    active
+                      ? "text-[var(--color-gold)]"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
+                    active && "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-[var(--color-gold)]",
                   ]}
                 >
                   {item.label}
@@ -92,7 +95,7 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
           <button
             type="button"
             id="lc-spoiler-toggle"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--color-border)] text-[10px] sm:text-xs text-[var(--color-text-muted)] hover:text-[var(--color-gold-bright)] hover:border-[var(--color-gold)] transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--color-border)] text-[10px] sm:text-xs text-[var(--color-text-muted)] hover:text-[var(--color-gold-bright)] hover:border-[var(--color-gold)] transition"
             aria-pressed="false"
             title="ネタバレ（合否・投票結果）の表示を切替"
           >
@@ -130,18 +133,21 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
       <slot />
     </main>
 
-    <footer class="mt-16 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 text-sm text-[var(--color-text-muted)] space-y-3">
-        <p>
-          本サイトは <a href="https://lastcall.jp/" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">LAST CALL（ラストコール）</a>
-          の非公式ファンサイトです。番組・出演者・運営とは無関係です。
-        </p>
-        <p>
-          画像・動画は公式YouTube（<a href="https://www.youtube.com/@LASTCALL_OFFICIAL" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">@LASTCALL_OFFICIAL</a>）の埋め込み・リンクのみを使用しています。
-        </p>
-        <p>
-          掲載情報の修正・削除依頼は <a href={linkOf("/about/")} class="underline hover:text-[var(--color-gold-bright)]">このサイトについて</a> をご覧ください。
-        </p>
+    <footer class="mt-24 border-t border-[var(--color-border)]">
+      <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 text-xs text-[var(--color-text-subtle)] grid gap-6 md:grid-cols-3">
+        <div class="md:col-span-2 space-y-2">
+          <p class="font-display tracking-[0.32em] text-[var(--color-text-muted)] uppercase text-[10px]">Disclaimer</p>
+          <p class="text-[var(--color-text-muted)] leading-relaxed">
+            本サイトは <a href="https://lastcall.jp/" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">LAST CALL（ラストコール）</a>
+            の非公式ファンサイトです。番組・出演者・運営とは無関係。画像・動画は公式YouTube（<a href="https://www.youtube.com/@LASTCALL_OFFICIAL" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">@LASTCALL_OFFICIAL</a>）の埋め込み・リンクのみ。
+          </p>
+        </div>
+        <div class="space-y-2">
+          <p class="font-display tracking-[0.32em] text-[var(--color-text-muted)] uppercase text-[10px]">Contact</p>
+          <p>
+            修正・削除依頼は <a href={linkOf("/about/")} class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]">このサイトについて</a> へ。
+          </p>
+        </div>
       </div>
     </footer>
 
