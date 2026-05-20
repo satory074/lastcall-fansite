@@ -21,25 +21,33 @@ const episodes = (await getCollection("episodes")).sort(
 type HistoryRow = {
   episode: CollectionEntry<"episodes">;
   cinderellaName: string;
-  vote: "LAST CALL" | "NOTHING" | "ABSENT";
+  round: "first" | "final";
+  vote: "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT";
   comment?: string;
 };
 
 const history: HistoryRow[] = [];
 for (const ep of episodes) {
-  const v = ep.data.votes.find((vv) => vv.judge.id === judge.id);
-  if (!v) continue;
+  const votesForJudge = ep.data.votes.filter((vv) => vv.judge.id === judge.id);
+  if (votesForJudge.length === 0) continue;
   const c = await getEntry(ep.data.cinderella);
-  history.push({
-    episode: ep,
-    cinderellaName: c?.data.name ?? "—",
-    vote: v.vote,
-    comment: v.comment,
-  });
+  for (const round of ["first", "final"] as const) {
+    const v = votesForJudge.find((vv) => vv.round === round);
+    if (!v) continue;
+    history.push({
+      episode: ep,
+      cinderellaName: c?.data.name ?? "—",
+      round,
+      vote: v.vote,
+      comment: v.comment,
+    });
+  }
 }
 
-const passCount = history.filter((h) => h.vote === "LAST CALL").length;
-const failCount = history.filter((h) => h.vote === "NOTHING").length;
+// 合格率は最終ジャッジのみで集計
+const finalHistory = history.filter((h) => h.round === "final");
+const passCount = finalHistory.filter((h) => h.vote === "LAST CALL").length;
+const failCount = finalHistory.filter((h) => h.vote === "NOTHING" || h.vote === "NO CALL").length;
 const total = passCount + failCount;
 const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
 ---
@@ -89,8 +97,8 @@ const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
         </h2>
         {total > 0 && (
           <div class="spoiler text-sm text-[var(--color-text-muted)] inline-block">
-            投票 {total} 回 · LAST CALL <span class="text-[var(--color-gold)] font-semibold">{passCount}</span>
-            / NOTHING <span class="font-semibold">{failCount}</span>
+            最終ジャッジ {total} 回 · LAST CALL <span class="text-[var(--color-gold)] font-semibold">{passCount}</span>
+            / NOTHING/NO CALL <span class="font-semibold">{failCount}</span>
             {passRate !== null && <span class="ml-2">（合格率 {passRate}%）</span>}
           </div>
         )}
@@ -102,6 +110,7 @@ const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
             <tr>
               <th class="text-left font-medium px-3 py-2 whitespace-nowrap">回</th>
               <th class="text-left font-medium px-3 py-2 whitespace-nowrap">シンデレラ</th>
+              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">ラウンド</th>
               <th class="text-left font-medium px-3 py-2 whitespace-nowrap">投票</th>
               <th class="text-left font-medium px-3 py-2">コメント</th>
             </tr>
@@ -120,6 +129,9 @@ const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
                 <td class="px-3 py-2 whitespace-nowrap text-[var(--color-text-muted)]">
                   {h.cinderellaName}
                 </td>
+                <td class="px-3 py-2 whitespace-nowrap text-xs text-[var(--color-text-muted)]">
+                  {h.round === "first" ? "ファーストコール" : "最終ジャッジ"}
+                </td>
                 <td class="px-3 py-2 whitespace-nowrap">
                   {h.vote === "LAST CALL" && (
                     <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-gold)] text-black text-xs font-semibold tracking-wider">
@@ -129,6 +141,11 @@ const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
                   {h.vote === "NOTHING" && (
                     <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-fail)] text-white text-xs font-semibold tracking-wider">
                       NOTHING
+                    </span>
+                  )}
+                  {h.vote === "NO CALL" && (
+                    <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-fail)] text-[var(--color-fail)] text-xs font-semibold tracking-wider">
+                      NO CALL
                     </span>
                   )}
                   {h.vote === "ABSENT" && (
@@ -144,7 +161,7 @@ const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
             ))}
             {history.length === 0 && (
               <tr>
-                <td colspan="4" class="px-3 py-6 text-center text-[var(--color-text-muted)]">
+                <td colspan="5" class="px-3 py-6 text-center text-[var(--color-text-muted)]">
                   投票履歴データを準備中です。
                 </td>
               </tr>

@@ -19,23 +19,28 @@ const episodes = (await getCollection("episodes")).sort(
   (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
 );
 
+type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
 type Cell = {
-  vote: "LAST CALL" | "NOTHING" | "ABSENT" | "UNKNOWN";
-  comment?: string;
+  first: { vote: VoteValue; comment?: string };
+  final: { vote: VoteValue; comment?: string };
 };
 
 const matrix = await Promise.all(
   episodes.map(async (ep) => {
     const cinderella = await getEntry(ep.data.cinderella);
-    const voteByJudge = new Map(ep.data.votes.map((v) => [v.judge.id, v]));
     const cells: Cell[] = judges.map((j) => {
-      const v = voteByJudge.get(j.id);
-      return v
-        ? { vote: v.vote, comment: v.comment }
-        : { vote: "UNKNOWN" };
+      const f = ep.data.votes.find((v) => v.judge.id === j.id && v.round === "first");
+      const l = ep.data.votes.find((v) => v.judge.id === j.id && v.round === "final");
+      return {
+        first: { vote: f ? f.vote : "UNKNOWN", comment: f?.comment },
+        final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
+      };
     });
-    const passCount = cells.filter((c) => c.vote === "LAST CALL").length;
-    const failCount = cells.filter((c) => c.vote === "NOTHING").length;
+    // 合否タリーは最終ジャッジのみ
+    const passCount = cells.filter((c) => c.final.vote === "LAST CALL").length;
+    const failCount = cells.filter(
+      (c) => c.final.vote === "NOTHING" || c.final.vote === "NO CALL"
+    ).length;
     return {
       episode: ep,
       cinderella,
@@ -114,7 +119,7 @@ const matrix = await Promise.all(
         <h2 class="section-eyebrow">Voting Matrix <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{episodes.length} × {judges.length}</span></h2>
       </div>
       <p class="text-xs text-[var(--color-text-muted)]">
-        縦軸=各回（新しい順）、横軸=審査員。空セルは本編未視聴で投票が記録されていない箇所。
+        縦軸=各回（新しい順）、横軸=審査員。各セルは上=<span class="text-[var(--color-text)]">ファーストコール</span> / 下=<span class="text-[var(--color-text)]">最終ジャッジ</span>。空セルは本編未視聴で投票が記録されていない箇所。
       </p>
       <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
         <table class="text-xs sm:text-sm">
@@ -176,30 +181,39 @@ const matrix = await Promise.all(
                       <span class="text-[var(--color-text-muted)]">—</span>
                     )}
                   </td>
-                  {cells.map((cell) => (
-                    <td class="px-2 py-2 text-center whitespace-nowrap" title={cell.comment}>
-                      {cell.vote === "LAST CALL" && (
-                        <span class="spoiler inline-flex items-center justify-center w-8 h-5 rounded bg-[var(--color-gold)] text-black text-[10px] font-bold">
-                          LC
-                        </span>
-                      )}
-                      {cell.vote === "NOTHING" && (
-                        <span class="spoiler inline-flex items-center justify-center w-8 h-5 rounded bg-[var(--color-fail)] text-white text-[10px] font-bold">
-                          NO
-                        </span>
-                      )}
-                      {cell.vote === "ABSENT" && (
-                        <span class="spoiler inline-flex items-center justify-center w-8 h-5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px]">
-                          —
-                        </span>
-                      )}
-                      {cell.vote === "UNKNOWN" && (
-                        <span class="inline-flex items-center justify-center w-8 h-5 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px]">
-                          ?
-                        </span>
-                      )}
-                    </td>
-                  ))}
+                  {cells.map((cell) => {
+                    const titleParts: string[] = [];
+                    if (cell.first.comment) titleParts.push(`ファースト: ${cell.first.comment}`);
+                    if (cell.final.comment) titleParts.push(`最終: ${cell.final.comment}`);
+                    return (
+                      <td class="px-2 py-2 text-center whitespace-nowrap align-middle" title={titleParts.join(" / ") || undefined}>
+                        <div class="inline-flex flex-col items-center gap-0.5">
+                          {(["first", "final"] as const).map((round) => {
+                            const v = cell[round].vote;
+                            return (
+                              <>
+                                {v === "LAST CALL" && (
+                                  <span class="spoiler inline-flex items-center justify-center w-8 h-4 rounded bg-[var(--color-gold)] text-black text-[10px] font-bold leading-none">LC</span>
+                                )}
+                                {v === "NOTHING" && (
+                                  <span class="spoiler inline-flex items-center justify-center w-8 h-4 rounded bg-[var(--color-fail)] text-white text-[10px] font-bold leading-none">NO</span>
+                                )}
+                                {v === "NO CALL" && (
+                                  <span class="spoiler inline-flex items-center justify-center w-8 h-4 rounded border border-[var(--color-fail)] text-[var(--color-fail)] text-[10px] font-bold leading-none">NC</span>
+                                )}
+                                {v === "ABSENT" && (
+                                  <span class="spoiler inline-flex items-center justify-center w-8 h-4 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px] leading-none">—</span>
+                                )}
+                                {v === "UNKNOWN" && (
+                                  <span class="inline-flex items-center justify-center w-8 h-4 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px] leading-none">?</span>
+                                )}
+                              </>
+                            );
+                          })}
+                        </div>
+                      </td>
+                    );
+                  })}
                 </tr>
               );
             })}
@@ -208,21 +222,26 @@ const matrix = await Promise.all(
       </div>
       <div class="flex flex-wrap items-center gap-4 text-xs text-[var(--color-text-muted)]">
         <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-5 rounded bg-[var(--color-gold)] text-black text-[10px] font-bold">LC</span>
+          <span class="inline-flex items-center justify-center w-8 h-4 rounded bg-[var(--color-gold)] text-black text-[10px] font-bold leading-none">LC</span>
           = LAST CALL
         </span>
         <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-5 rounded bg-[var(--color-fail)] text-white text-[10px] font-bold">NO</span>
+          <span class="inline-flex items-center justify-center w-8 h-4 rounded bg-[var(--color-fail)] text-white text-[10px] font-bold leading-none">NO</span>
           = NOTHING
         </span>
         <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-5 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px]">?</span>
+          <span class="inline-flex items-center justify-center w-8 h-4 rounded border border-[var(--color-fail)] text-[var(--color-fail)] text-[10px] font-bold leading-none">NC</span>
+          = NO CALL
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center justify-center w-8 h-4 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px] leading-none">?</span>
           = 未確認
         </span>
         <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px]">—</span>
+          <span class="inline-flex items-center justify-center w-8 h-4 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px] leading-none">—</span>
           = 欠席
         </span>
+        <span class="text-[var(--color-text-muted)]">セル上=ファーストコール / 下=最終ジャッジ</span>
       </div>
     </section>
   </div>

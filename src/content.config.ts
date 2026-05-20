@@ -49,7 +49,10 @@ const episodes = defineCollection({
       .array(
         z.object({
           judge: reference("judges"),
-          vote: z.enum(["LAST CALL", "NOTHING", "ABSENT"]),
+          // ファーストコール = 番組前半の暫定判定、最終ジャッジ = 合否確定の最終判定。
+          // round 未指定の票は最終ジャッジ扱い（後方互換）。
+          round: z.enum(["first", "final"]).default("final"),
+          vote: z.enum(["LAST CALL", "NOTHING", "NO CALL", "ABSENT"]),
           comment: z.string().optional(),
         })
       )

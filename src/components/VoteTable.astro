@@ -10,61 +10,67 @@ interface Props {
 
 const { votes, cinderellaResult } = Astro.props;
 
-// 全審査員（固定14名）を取得し、各審査員に対する投票を引き当てる。
-// 投票データが未入力の審査員は "UNKNOWN" として表示。
+type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
+
 const allJudges = (await getCollection("judges")).sort((a, b) =>
   a.data.name.localeCompare(b.data.name, "ja")
 );
 
 const recordedJudges = await getEntries(votes.map((v) => v.judge));
 const judgeMap = new Map(recordedJudges.map((j) => [j.id, j]));
-// votes に含まれているが judges コレクションに無い投票（追加メンバー等）は別途扱う
 const extraVotes = votes.filter((v) => !allJudges.some((j) => j.id === v.judge.id));
 
-const voteByJudgeId = new Map(votes.map((v) => [v.judge.id, v]));
+const lookup = (judgeId: string, round: "first" | "final") =>
+  votes.find((v) => v.judge.id === judgeId && v.round === round);
 
 type Row = {
   judgeId: string;
   judgeName: string;
   judgeHref: string | null;
-  vote: "LAST CALL" | "NOTHING" | "ABSENT" | "UNKNOWN";
-  comment?: string;
+  first: { vote: VoteValue; comment?: string };
+  final: { vote: VoteValue; comment?: string };
 };
 
 const baseRows: Row[] = allJudges.map((j) => {
-  const v = voteByJudgeId.get(j.id);
+  const f = lookup(j.id, "first");
+  const l = lookup(j.id, "final");
   return {
     judgeId: j.id,
     judgeName: j.data.name,
     judgeHref: siteLink(`/judges/${j.id}/`),
-    vote: v ? v.vote : "UNKNOWN",
-    comment: v?.comment,
+    first: { vote: f ? f.vote : "UNKNOWN", comment: f?.comment },
+    final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
   };
 });
 
-const extraRows: Row[] = [];
-for (const v of extraVotes) {
-  const j = judgeMap.get(v.judge.id);
-  extraRows.push({
-    judgeId: v.judge.id,
+const extraJudgeIds = Array.from(new Set(extraVotes.map((v) => v.judge.id)));
+const extraRows: Row[] = extraJudgeIds.map((id) => {
+  const j = judgeMap.get(id);
+  const f = lookup(id, "first");
+  const l = lookup(id, "final");
+  return {
+    judgeId: id,
     judgeName: j?.data.name ?? "ゲスト審査員",
     judgeHref: j ? siteLink(`/judges/${j.id}/`) : null,
-    vote: v.vote,
-    comment: v.comment,
-  });
-}
+    first: { vote: f ? f.vote : "UNKNOWN", comment: f?.comment },
+    final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
+  };
+});
 
 const rows = [...baseRows, ...extraRows];
 
-const pass = votes.filter((v) => v.vote === "LAST CALL").length;
-const fail = votes.filter((v) => v.vote === "NOTHING").length;
-const absent = votes.filter((v) => v.vote === "ABSENT").length;
-const unknown = rows.filter((r) => r.vote === "UNKNOWN").length;
+// 合否判定・タリーは「最終ジャッジ」のみで集計（ファーストコールは中間結果）
+const finalVotes = votes.filter((v) => v.round === "final");
+const pass = finalVotes.filter((v) => v.vote === "LAST CALL").length;
+const fail = finalVotes.filter((v) => v.vote === "NOTHING" || v.vote === "NO CALL").length;
+const absent = finalVotes.filter((v) => v.vote === "ABSENT").length;
+const unknownFinal = rows.filter((r) => r.final.vote === "UNKNOWN").length;
 const totalRecorded = pass + fail;
 const calcResult: "pass" | "fail" | null =
   totalRecorded > 0 ? (pass >= Math.ceil(totalRecorded / 2) ? "pass" : "fail") : null;
-// シンデレラJSONの合否を優先（投票データが未入力でも結果は確定済みの想定）
 const displayResult = cinderellaResult ?? calcResult;
+
+const renderBadge = (vote: VoteValue) => vote;
 ---
 
 <section class="space-y-4">
@@ -79,16 +85,16 @@ const displayResult = cinderellaResult ?? calcResult;
       </span>
       <span class="spoiler inline-flex items-center gap-1.5">
         <span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--color-fail)]"></span>
-        NOTHING <span class="font-semibold text-[var(--color-text-muted)]">{fail}</span>
+        NOTHING/NO CALL <span class="font-semibold text-[var(--color-text-muted)]">{fail}</span>
       </span>
       {absent > 0 && (
         <span class="spoiler inline-flex items-center gap-1.5 text-[var(--color-text-muted)]">
           欠席 {absent}
         </span>
       )}
-      {unknown > 0 && (
+      {unknownFinal > 0 && (
         <span class="inline-flex items-center gap-1.5 text-[var(--color-text-muted)]">
-          未確認 {unknown}
+          未確認 {unknownFinal}
         </span>
       )}
       {displayResult && (
@@ -111,60 +117,86 @@ const displayResult = cinderellaResult ?? calcResult;
       <thead class="bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
         <tr>
           <th class="text-left font-medium px-3 py-2 whitespace-nowrap">審査員</th>
-          <th class="text-left font-medium px-3 py-2 whitespace-nowrap">投票</th>
+          <th class="text-left font-medium px-3 py-2 whitespace-nowrap">
+            ファーストコール
+            <span class="block text-[10px] font-normal text-[var(--color-text-subtle)] normal-case">First Call</span>
+          </th>
+          <th class="text-left font-medium px-3 py-2 whitespace-nowrap">
+            最終ジャッジ
+            <span class="block text-[10px] font-normal text-[var(--color-text-subtle)] normal-case">Final Judgment</span>
+          </th>
           <th class="text-left font-medium px-3 py-2">コメント</th>
         </tr>
       </thead>
       <tbody>
-        {rows.map((row) => (
-          <tr class="border-t border-[var(--color-border)]">
-            <td class="px-3 py-2 whitespace-nowrap">
-              {row.judgeHref ? (
-                <a
-                  href={row.judgeHref}
-                  class="hover:text-[var(--color-gold-bright)] transition"
-                >
-                  {row.judgeName}
-                </a>
-              ) : (
-                <span>{row.judgeName}</span>
-              )}
-            </td>
-            <td class="px-3 py-2 whitespace-nowrap">
-              {row.vote === "LAST CALL" && (
-                <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-gold)] text-black text-xs font-semibold tracking-wider">
-                  LAST CALL
-                </span>
-              )}
-              {row.vote === "NOTHING" && (
-                <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-fail)] text-white text-xs font-semibold tracking-wider">
-                  NOTHING
-                </span>
-              )}
-              {row.vote === "ABSENT" && (
-                <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
-                  欠席
-                </span>
-              )}
-              {row.vote === "UNKNOWN" && (
-                <span class="inline-flex items-center px-2 py-0.5 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
-                  未確認
-                </span>
-              )}
-            </td>
-            <td class="px-3 py-2 text-[var(--color-text-muted)]">
-              {row.comment ? <span class="spoiler-block inline-block">{row.comment}</span> : "—"}
-            </td>
-          </tr>
-        ))}
+        {rows.map((row) => {
+          const comments: string[] = [];
+          if (row.first.comment) comments.push(`（ファースト）${row.first.comment}`);
+          if (row.final.comment) comments.push(`（最終）${row.final.comment}`);
+          return (
+            <tr class="border-t border-[var(--color-border)]">
+              <td class="px-3 py-2 whitespace-nowrap">
+                {row.judgeHref ? (
+                  <a
+                    href={row.judgeHref}
+                    class="hover:text-[var(--color-gold-bright)] transition"
+                  >
+                    {row.judgeName}
+                  </a>
+                ) : (
+                  <span>{row.judgeName}</span>
+                )}
+              </td>
+              {(["first", "final"] as const).map((round) => {
+                const cell = row[round];
+                return (
+                  <td class="px-3 py-2 whitespace-nowrap">
+                    {cell.vote === "LAST CALL" && (
+                      <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-gold)] text-black text-xs font-semibold tracking-wider">
+                        {renderBadge(cell.vote)}
+                      </span>
+                    )}
+                    {cell.vote === "NOTHING" && (
+                      <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-fail)] text-white text-xs font-semibold tracking-wider">
+                        {renderBadge(cell.vote)}
+                      </span>
+                    )}
+                    {cell.vote === "NO CALL" && (
+                      <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-fail)] text-[var(--color-fail)] text-xs font-semibold tracking-wider">
+                        {renderBadge(cell.vote)}
+                      </span>
+                    )}
+                    {cell.vote === "ABSENT" && (
+                      <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
+                        欠席
+                      </span>
+                    )}
+                    {cell.vote === "UNKNOWN" && (
+                      <span class="inline-flex items-center px-2 py-0.5 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
+                        未確認
+                      </span>
+                    )}
+                  </td>
+                );
+              })}
+              <td class="px-3 py-2 text-[var(--color-text-muted)]">
+                {comments.length > 0
+                  ? <span class="spoiler-block inline-block">{comments.join(" / ")}</span>
+                  : "—"}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   </div>
-  {unknown > 0 && (
+  {unknownFinal > 0 && (
     <p class="text-xs text-[var(--color-text-muted)]">
       「未確認」は本編未視聴により個別投票が記録されていない審査員です。視聴後に
       <code class="text-[var(--color-text)]">src/content/episodes/{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1]}.json</code>
-      の <code class="text-[var(--color-text)]">votes</code> 配列を埋めると反映されます。
+      の <code class="text-[var(--color-text)]">votes</code> 配列に
+      <code class="text-[var(--color-text)]">round: "first"</code> / <code class="text-[var(--color-text)]">round: "final"</code>
+      を指定して埋めると反映されます。
     </p>
   )}
 </section>
