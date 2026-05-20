@@ -50,6 +50,22 @@ const matrix = await Promise.all(
     };
   })
 );
+
+// 審査員ごとの累計（最終ジャッジ）と合格率
+type JudgeTotals = { lastCall: number; nothing: number; noCall: number; recorded: number };
+const judgeTotals: JudgeTotals[] = judges.map((_, idx) => {
+  const lastCall = matrix.filter((m) => m.cells[idx].final.vote === "LAST CALL").length;
+  const nothing = matrix.filter((m) => m.cells[idx].final.vote === "NOTHING").length;
+  const noCall = matrix.filter((m) => m.cells[idx].final.vote === "NO CALL").length;
+  return { lastCall, nothing, noCall, recorded: lastCall + nothing + noCall };
+});
+
+// 全体集計（最終ジャッジ）
+const overallEpisodes = matrix.length;
+const overallPass = matrix.reduce((acc, m) => acc + m.passCount, 0);
+const overallFail = matrix.reduce((acc, m) => acc + m.failCount, 0);
+const overallRecorded = overallPass + overallFail;
+const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallRecorded) * 100) : null;
 ---
 
 <Layout
@@ -121,6 +137,15 @@ const matrix = await Promise.all(
       <p class="text-xs text-[var(--color-text-muted)]">
         縦軸=各回（新しい順）、横軸=審査員。各セルは上=<span class="text-[var(--color-text)]">ファーストコール</span> / 下=<span class="text-[var(--color-text)]">最終ジャッジ</span>。空セルは本編未視聴で投票が記録されていない箇所。
       </p>
+      {overallRecorded > 0 && (
+        <div class="spoiler flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--color-text-muted)] rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2">
+          <span class="font-semibold text-[var(--color-text)]">全体集計（最終ジャッジ）:</span>
+          <span>全 {overallEpisodes} 回</span>
+          <span>LAST CALL <span class="font-semibold text-[var(--color-gold)]">{overallPass}</span></span>
+          <span>NOTHING/NO CALL <span class="font-semibold text-[var(--color-text)]">{overallFail}</span></span>
+          {overallPassRate !== null && <span>合格率 <span class="font-semibold text-[var(--color-text)]">{overallPassRate}%</span></span>}
+        </div>
+      )}
       <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
         <table class="text-xs sm:text-sm">
           <thead class="bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
@@ -218,6 +243,37 @@ const matrix = await Promise.all(
               );
             })}
           </tbody>
+          {judgeTotals.some((t) => t.recorded > 0) && (
+            <tfoot class="border-t-2 border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
+              <tr>
+                <th scope="row" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 bg-[var(--color-bg-elevated)] z-10">
+                  累計
+                  <div class="text-[10px] text-[var(--color-text-subtle)] font-normal">最終ジャッジ</div>
+                </th>
+                <td class="px-3 py-2 text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap">審査員別 LC / NO / NC</td>
+                <td class="px-2 py-2 text-center text-[10px]">
+                  <span class="spoiler">
+                    <span class="text-[var(--color-gold)] font-semibold">{overallPass}</span>
+                    /
+                    <span class="font-semibold">{overallFail}</span>
+                  </span>
+                </td>
+                {judgeTotals.map((t) => (
+                  <td class="px-2 py-2 text-center align-middle">
+                    {t.recorded === 0 ? (
+                      <span class="text-[10px] text-[var(--color-text-subtle)]">—</span>
+                    ) : (
+                      <div class="spoiler inline-flex flex-col items-center gap-0 text-[10px] leading-tight">
+                        <span class="text-[var(--color-gold)] font-bold">{t.lastCall}</span>
+                        <span class="text-[var(--color-text-subtle)]">/</span>
+                        <span>{t.nothing}{t.noCall > 0 && <span class="text-[var(--color-fail)]">+{t.noCall}</span>}</span>
+                      </div>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
       <div class="flex flex-wrap items-center gap-4 text-xs text-[var(--color-text-muted)]">

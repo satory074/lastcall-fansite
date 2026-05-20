@@ -44,12 +44,44 @@ for (const ep of episodes) {
   }
 }
 
-// 合格率は最終ジャッジのみで集計
-const finalHistory = history.filter((h) => h.round === "final");
-const passCount = finalHistory.filter((h) => h.vote === "LAST CALL").length;
-const failCount = finalHistory.filter((h) => h.vote === "NOTHING" || h.vote === "NO CALL").length;
+// ラウンド別の集計
+const roundTally = (round: "first" | "final") => {
+  const list = history.filter((h) => h.round === round);
+  return {
+    lastCall: list.filter((h) => h.vote === "LAST CALL").length,
+    nothing: list.filter((h) => h.vote === "NOTHING").length,
+    noCall: list.filter((h) => h.vote === "NO CALL").length,
+    absent: list.filter((h) => h.vote === "ABSENT").length,
+    total: list.length,
+  };
+};
+const firstTally = roundTally("first");
+const finalTally = roundTally("final");
+
+// 合格率は最終ジャッジのみ
+const passCount = finalTally.lastCall;
+const failCount = finalTally.nothing + finalTally.noCall;
 const total = passCount + failCount;
 const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
+
+// ファースト→最終で判定を変えた回数
+const flipped = (() => {
+  // group history by episode id
+  const byEp = new Map<string, { first?: HistoryRow; final?: HistoryRow }>();
+  for (const h of history) {
+    const slot = byEp.get(h.episode.data.id) ?? {};
+    slot[h.round] = h;
+    byEp.set(h.episode.data.id, slot);
+  }
+  let count = 0;
+  for (const slot of byEp.values()) {
+    if (!slot.first || !slot.final) continue;
+    const firstPass = slot.first.vote === "LAST CALL";
+    const finalPass = slot.final.vote === "LAST CALL";
+    if (firstPass !== finalPass) count++;
+  }
+  return count;
+})();
 ---
 
 <Layout
@@ -91,18 +123,48 @@ const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
     </section>
 
     <section class="space-y-3">
-      <div class="flex flex-wrap items-end justify-between gap-3">
-        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-          Voting History
-        </h2>
-        {total > 0 && (
-          <div class="spoiler text-sm text-[var(--color-text-muted)] inline-block">
-            最終ジャッジ {total} 回 · LAST CALL <span class="text-[var(--color-gold)] font-semibold">{passCount}</span>
-            / NOTHING/NO CALL <span class="font-semibold">{failCount}</span>
-            {passRate !== null && <span class="ml-2">（合格率 {passRate}%）</span>}
-          </div>
-        )}
-      </div>
+      <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
+        Voting History
+      </h2>
+
+      {(firstTally.total > 0 || finalTally.total > 0) && (
+        <div class="grid sm:grid-cols-2 gap-2 text-xs">
+          {([
+            { label: "ファーストコール", sub: "First Call", t: firstTally },
+            { label: "最終ジャッジ", sub: "Final Judgment", t: finalTally },
+          ]).map(({ label, sub, t }) => (
+            <div class="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-semibold text-[var(--color-text)]">{label}</span>
+                <span class="text-[10px] text-[var(--color-text-subtle)] uppercase tracking-wider">{sub} · {t.total} 票</span>
+              </div>
+              <div class="spoiler flex flex-wrap items-center gap-x-3 gap-y-1 text-[var(--color-text-muted)]">
+                <span class="inline-flex items-center gap-1">
+                  <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-gold)]"></span>
+                  LC <span class="font-semibold text-[var(--color-gold)]">{t.lastCall}</span>
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-fail)]"></span>
+                  NOTHING <span class="font-semibold text-[var(--color-text)]">{t.nothing}</span>
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <span class="inline-block w-2 h-2 rounded-full border border-[var(--color-fail)]"></span>
+                  NO CALL <span class="font-semibold text-[var(--color-text)]">{t.noCall}</span>
+                </span>
+                {t.absent > 0 && <span>欠席 {t.absent}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {total > 0 && passRate !== null && (
+        <p class="spoiler text-xs text-[var(--color-text-muted)]">
+          合格率（最終ジャッジ） <span class="text-[var(--color-text)] font-semibold">{passRate}%</span>
+          （{passCount} / {total}）
+          {flipped > 0 && <span class="ml-2">· ファースト→最終で判定変更 <span class="text-[var(--color-text)] font-semibold">{flipped}</span> 回</span>}
+        </p>
+      )}
 
       <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
         <table class="min-w-full text-sm">

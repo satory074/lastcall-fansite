@@ -59,16 +59,35 @@ const extraRows: Row[] = extraJudgeIds.map((id) => {
 
 const rows = [...baseRows, ...extraRows];
 
-// 合否判定・タリーは「最終ジャッジ」のみで集計（ファーストコールは中間結果）
-const finalVotes = votes.filter((v) => v.round === "final");
-const pass = finalVotes.filter((v) => v.vote === "LAST CALL").length;
-const fail = finalVotes.filter((v) => v.vote === "NOTHING" || v.vote === "NO CALL").length;
-const absent = finalVotes.filter((v) => v.vote === "ABSENT").length;
-const unknownFinal = rows.filter((r) => r.final.vote === "UNKNOWN").length;
+// 各ラウンドごとに集計
+const tally = (round: "first" | "final") => {
+  const list = votes.filter((v) => v.round === round);
+  return {
+    lastCall: list.filter((v) => v.vote === "LAST CALL").length,
+    nothing: list.filter((v) => v.vote === "NOTHING").length,
+    noCall: list.filter((v) => v.vote === "NO CALL").length,
+    absent: list.filter((v) => v.vote === "ABSENT").length,
+    unknown: rows.filter((r) => r[round].vote === "UNKNOWN").length,
+  };
+};
+const firstTally = tally("first");
+const finalTally = tally("final");
+
+// 合否判定は最終ジャッジのみで集計
+const pass = finalTally.lastCall;
+const fail = finalTally.nothing + finalTally.noCall;
 const totalRecorded = pass + fail;
 const calcResult: "pass" | "fail" | null =
   totalRecorded > 0 ? (pass >= Math.ceil(totalRecorded / 2) ? "pass" : "fail") : null;
 const displayResult = cinderellaResult ?? calcResult;
+
+// ファースト → 最終で判定が変わった審査員数（両ラウンドとも記録があるもののみ）
+const flipped = rows.filter((r) => {
+  if (r.first.vote === "UNKNOWN" || r.final.vote === "UNKNOWN") return false;
+  const firstPass = r.first.vote === "LAST CALL";
+  const finalPass = r.final.vote === "LAST CALL";
+  return firstPass !== finalPass;
+}).length;
 
 const renderBadge = (vote: VoteValue) => vote;
 ---
@@ -78,39 +97,62 @@ const renderBadge = (vote: VoteValue) => vote;
     <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
       Judges &amp; Vote
     </h2>
-    <div class="flex flex-wrap items-center gap-3 text-sm">
-      <span class="spoiler inline-flex items-center gap-1.5">
-        <span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--color-gold)]"></span>
-        LAST CALL <span class="font-semibold text-[var(--color-gold)]">{pass}</span>
+    {displayResult && (
+      <span
+        class:list={[
+          "spoiler px-3 py-1 rounded text-sm font-semibold tracking-wider",
+          displayResult === "pass"
+            ? "bg-[var(--color-gold)] text-black"
+            : "bg-[var(--color-fail)] text-white",
+        ]}
+      >
+        {displayResult === "pass" ? "合格" : "不合格"}
       </span>
-      <span class="spoiler inline-flex items-center gap-1.5">
-        <span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--color-fail)]"></span>
-        NOTHING/NO CALL <span class="font-semibold text-[var(--color-text-muted)]">{fail}</span>
-      </span>
-      {absent > 0 && (
-        <span class="spoiler inline-flex items-center gap-1.5 text-[var(--color-text-muted)]">
-          欠席 {absent}
-        </span>
-      )}
-      {unknownFinal > 0 && (
-        <span class="inline-flex items-center gap-1.5 text-[var(--color-text-muted)]">
-          未確認 {unknownFinal}
-        </span>
-      )}
-      {displayResult && (
-        <span
-          class:list={[
-            "spoiler px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
-            displayResult === "pass"
-              ? "bg-[var(--color-gold)] text-black"
-              : "bg-[var(--color-fail)] text-white",
-          ]}
-        >
-          {displayResult === "pass" ? "合格" : "不合格"}
-        </span>
-      )}
-    </div>
+    )}
   </div>
+
+  <div class="grid sm:grid-cols-2 gap-2 text-xs">
+    {([
+      { key: "first" as const, label: "ファーストコール", t: firstTally },
+      { key: "final" as const, label: "最終ジャッジ", t: finalTally },
+    ]).map(({ key, label, t }) => (
+      <div class="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2">
+        <div class="flex items-center justify-between mb-1">
+          <span class="font-semibold text-[var(--color-text)]">{label}</span>
+          <span class="text-[10px] text-[var(--color-text-subtle)] uppercase tracking-wider">
+            {key === "first" ? "First Call" : "Final Judgment"}
+          </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[var(--color-text-muted)]">
+          <span class="spoiler inline-flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-gold)]"></span>
+            LC <span class="font-semibold text-[var(--color-gold)]">{t.lastCall}</span>
+          </span>
+          <span class="spoiler inline-flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-fail)]"></span>
+            NOTHING <span class="font-semibold text-[var(--color-text)]">{t.nothing}</span>
+          </span>
+          <span class="spoiler inline-flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full border border-[var(--color-fail)]"></span>
+            NO CALL <span class="font-semibold text-[var(--color-text)]">{t.noCall}</span>
+          </span>
+          {t.absent > 0 && (
+            <span class="spoiler inline-flex items-center gap-1">欠席 {t.absent}</span>
+          )}
+          {t.unknown > 0 && (
+            <span class="inline-flex items-center gap-1">未確認 {t.unknown}</span>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {flipped > 0 && (
+    <p class="spoiler text-xs text-[var(--color-text-muted)]">
+      ファースト→最終で判定を変えた審査員：
+      <span class="font-semibold text-[var(--color-text)]">{flipped}</span> 名
+    </p>
+  )}
 
   <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
     <table class="min-w-full text-sm">
@@ -190,7 +232,7 @@ const renderBadge = (vote: VoteValue) => vote;
       </tbody>
     </table>
   </div>
-  {unknownFinal > 0 && (
+  {finalTally.unknown > 0 && (
     <p class="text-xs text-[var(--color-text-muted)]">
       「未確認」は本編未視聴により個別投票が記録されていない審査員です。視聴後に
       <code class="text-[var(--color-text)]">src/content/episodes/{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1]}.json</code>
