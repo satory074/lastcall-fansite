@@ -2,7 +2,7 @@
 import { getCollection, getEntry } from "astro:content";
 import Layout from "../components/Layout.astro";
 import PersonCard from "../components/PersonCard.astro";
-import { siteLink } from "../lib/url";
+import { siteLink, youtubeThumb } from "../lib/url";
 
 // 14名固定の審査員（マトリックス列順）
 const judges = (await getCollection("judges")).sort((a, b) =>
@@ -125,6 +125,7 @@ const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallR
             subtitle={j.data.area ?? j.data.store}
             meta={j.data.age ? `${j.data.age}歳` : undefined}
             sns={j.data.sns}
+            thumbnailUrl={j.data.thumbnailVideoId ? youtubeThumb(j.data.thumbnailVideoId) : undefined}
           />
         ))}
       </div>
