@@ -3,7 +3,7 @@ import { getCollection, getEntry } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import Layout from "../../components/Layout.astro";
 import SnsLinks from "../../components/SnsLinks.astro";
-import { siteLink, youtubeThumb, youtubeUrl } from "../../lib/url";
+import { siteLink } from "../../lib/url";
 
 export async function getStaticPaths() {
   const judges = await getCollection("judges");
@@ -89,27 +89,6 @@ const flipped = (() => {
   description={`LAST CALL 審査員「${judge.data.name}」のプロフィール、SNS、全回投票履歴。`}
 >
   <article class="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
-    {judge.data.thumbnailVideoId && (
-      <figure class="space-y-2">
-        <a
-          href={youtubeUrl(judge.data.thumbnailVideoId)}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="block aspect-video overflow-hidden rounded-lg border border-[var(--color-border)] bg-black"
-        >
-          <img
-            src={youtubeThumb(judge.data.thumbnailVideoId)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            class="w-full h-full object-cover transition duration-500 hover:scale-[1.02]"
-          />
-        </a>
-        <figcaption class="text-[10px] tracking-wider text-[var(--color-text-subtle)] uppercase">
-          画像出典: 本人 YouTube チャンネル（クリックで動画へ）
-        </figcaption>
-      </figure>
-    )}
     <header class="space-y-3">
       <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">JUDGE</p>
       <h1 class="text-2xl sm:text-3xl font-bold">

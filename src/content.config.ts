@@ -20,9 +20,6 @@ const judges = defineCollection({
     area: z.string().optional(),
     store: z.string().optional(),
     bio: z.string().optional(),
-    // 本人が自ら運営する YouTube チャンネルの代表動画 ID（11 文字）。
-    // hqdefault.jpg を判事アイコンとして表示する。他者・所属店チャンネルは不可。
-    thumbnailVideoId: z.string().length(11).optional(),
     sns: snsSchema,
   }),
 });
