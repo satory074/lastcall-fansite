@@ -2,88 +2,159 @@
 import { getCollection } from "astro:content";
 import Layout from "../components/Layout.astro";
 import EpisodeCard from "../components/EpisodeCard.astro";
+import StatCard from "../components/StatCard.astro";
+import DivergingBar from "../components/DivergingBar.astro";
 import { siteLink } from "../lib/url";
 
 const episodes = (await getCollection("episodes")).sort(
   (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
 );
+const cinderellas = await getCollection("cinderellas");
+const judges = await getCollection("judges");
 
 const latest = episodes[0];
 const rest = episodes.slice(1);
+
+// Aggregate stats across all final votes
+const finalVotes = episodes.flatMap((ep) => ep.data.votes.filter((v) => v.round === "final"));
+const totalPass = finalVotes.filter((v) => v.vote === "LAST CALL").length;
+const totalFail = finalVotes.filter((v) => v.vote === "NOTHING" || v.vote === "NO CALL").length;
+
+// Latest update date
+const latestUpdate = latest
+  ? latest.data.airedAt.toISOString().slice(0, 10).replace(/-/g, ".")
+  : null;
+
+// Editorial split: feature card + 2 small + remaining grid
+const sub = rest.slice(0, 2);
+const archive = rest.slice(2);
 ---
 
 <Layout>
-  {/* Hero — editorial layout: oversize serif, breathing room, side meta */}
+  {/* Hero — oversized editorial type */}
   <section class="relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none">
-      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[60%] rounded-full blur-[120px] opacity-30 bg-[var(--color-gold-deep)]"></div>
+      <div class="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[90%] h-[70%] rounded-full blur-[140px] opacity-40 bg-[var(--color-gold-deep)]"></div>
     </div>
-    <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-16 sm:pt-24 pb-12 sm:pb-20 relative">
-      <div class="flex flex-col gap-10 md:flex-row md:items-end md:justify-between md:gap-16">
-        <div class="space-y-6 max-w-2xl">
-          <p class="eyebrow">Unofficial Fan Archive · Since 2026</p>
-          <h1 class="font-display-serif text-[2.5rem] sm:text-[4.5rem] leading-[0.95]">
-            <span class="block text-[var(--color-text)]">LAST</span>
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-20 sm:pt-28 pb-16 sm:pb-24 relative">
+      <div class="space-y-8 sm:space-y-10">
+        <div class="space-y-3 sm:space-y-4">
+          <p class="eyebrow">
+            Unofficial Fan Archive
+            <span class="mx-2 text-[var(--color-border-strong)]">·</span>
+            {latestUpdate ? `Last update ${latestUpdate}` : "Since 2026"}
+            <span class="mx-2 text-[var(--color-border-strong)]">·</span>
+            {episodes.length} Episodes
+          </p>
+          <h1
+            class="font-display-serif text-[var(--color-text)] leading-[0.9] tracking-tight"
+            style="font-size: clamp(3.5rem, 12vw, 9rem);"
+          >
+            <span class="block">LAST</span>
             <span class="block text-[var(--color-gold)] italic">CALL</span>
           </h1>
-          <p class="text-sm sm:text-base text-[var(--color-text-muted)] leading-relaxed max-w-xl">
+        </div>
+        <div class="max-w-2xl space-y-5">
+          <p class="text-sm sm:text-base text-[var(--color-text-muted)] leading-[1.85]">
             YouTube 配信のキャバ嬢オーディション番組
             <a href="https://lastcall.jp/" target="_blank" rel="noopener" class="text-[var(--color-text)] underline decoration-[var(--color-border-strong)] hover:decoration-[var(--color-gold)]">LAST CALL</a>
-            の各回・シンデレラ・14名のレジェンドキャバ嬢による審査結果を、回ごとに横断できる索引として整理。
+            の各回・シンデレラ・14 名のレジェンドキャバ嬢による審査結果を、
+            <span class="text-[var(--color-text)]">回ごと</span>・<span class="text-[var(--color-text)]">審査員ごと</span>に横断できる索引として整理。
           </p>
-          <div class="flex flex-wrap gap-3 pt-2">
+          <div class="flex flex-wrap gap-3 pt-1">
             <a
-              href="#episodes"
+              href="#latest"
               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--color-gold)] text-black text-sm font-semibold tracking-wide hover:bg-[var(--color-gold-bright)] transition"
             >
-              各回を辿る
+              最新回を見る
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
               </svg>
             </a>
             <a
-              href={siteLink("/people/")}
+              href={siteLink("/people/#matrix")}
               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--color-border-strong)] text-sm hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition"
             >
-              出演者・審査マトリックス
+              審査マトリックスを開く
             </a>
           </div>
         </div>
-        <dl class="grid grid-cols-3 gap-6 md:gap-10 text-left md:text-right md:flex-shrink-0">
-          <div>
-            <dt class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)]">Episodes</dt>
-            <dd class="font-display-serif text-3xl sm:text-4xl text-[var(--color-text)] mt-1">{episodes.length}</dd>
-          </div>
-          <div>
-            <dt class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)]">Cinderellas</dt>
-            <dd class="font-display-serif text-3xl sm:text-4xl text-[var(--color-text)] mt-1">17</dd>
-          </div>
-          <div>
-            <dt class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)]">Judges</dt>
-            <dd class="font-display-serif text-3xl sm:text-4xl text-[var(--color-text)] mt-1">14</dd>
-          </div>
-        </dl>
       </div>
     </div>
-    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-border-strong)] to-transparent"></div>
+    <div class="absolute bottom-0 left-0 right-0 hairline"></div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-16 space-y-20">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20 space-y-20 sm:space-y-24">
+    {/* Stats strip */}
+    <section class="grid grid-cols-3 gap-3 sm:gap-5 -mt-4">
+      <StatCard label="Episodes" value={episodes.length} sublabel="配信済み回数" />
+      <StatCard label="Cinderellas" value={cinderellas.length} sublabel="登場した志願者" />
+      <StatCard label="Judges" value={judges.length} sublabel="固定レジェンド" />
+    </section>
+
+    {/* Latest episode — editorial pick */}
     {latest && (
-      <section class="space-y-6">
-        <h2 class="section-eyebrow">Latest Episode</h2>
+      <section id="latest" class="space-y-6 scroll-mt-24">
+        <div class="flex items-end justify-between gap-3">
+          <h2 class="section-eyebrow">Latest Episode</h2>
+          <span class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] tabular-nums">
+            #{latest.data.id}
+          </span>
+        </div>
         <EpisodeCard episode={latest} variant="feature" />
       </section>
     )}
 
-    {rest.length > 0 && (
+    {/* Recent sub picks (2-up) + archive grid below */}
+    {sub.length > 0 && (
+      <section class="space-y-6">
+        <div class="flex items-end justify-between gap-3">
+          <h2 class="section-eyebrow">Recently aired</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+          {sub.map((ep) => (
+            <EpisodeCard episode={ep} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Overall verdict snapshot */}
+    {totalPass + totalFail > 0 && (
+      <section class="space-y-5">
+        <h2 class="section-eyebrow">Overall verdict</h2>
+        <div class="card p-6 sm:p-8 space-y-4">
+          <p class="text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed max-w-xl">
+            全 <span class="text-[var(--color-text)]">{episodes.length}</span> 回の <span class="text-[var(--color-text)]">最終ジャッジ</span> を集計。LAST CALL（合格判定）と NOTHING / NO CALL（不合格判定）の総票数バランスです。
+          </p>
+          <DivergingBar
+            pass={totalPass}
+            fail={totalFail}
+            label="Total final judgments"
+            size="lg"
+            spoilerLevel="result"
+          />
+        </div>
+      </section>
+    )}
+
+    {/* Archive grid */}
+    {archive.length > 0 && (
       <section id="episodes" class="space-y-6 scroll-mt-24">
-        <div class="flex items-end justify-between gap-4">
+        <div class="flex items-end justify-between gap-3">
           <h2 class="section-eyebrow">Archive</h2>
-          <span class="text-xs text-[var(--color-text-subtle)] tracking-wider">全 {episodes.length} 回</span>
+          <a
+            href={siteLink("/people/#matrix")}
+            class="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-gold-bright)] transition tracking-wider inline-flex items-center gap-1"
+          >
+            審査マトリックスで横断
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {rest.map((ep) => (
+          {archive.map((ep) => (
             <EpisodeCard episode={ep} />
           ))}
         </div>

@@ -5,106 +5,155 @@ import { siteLink, youtubeThumb } from "../lib/url";
 
 interface Props {
   episode: CollectionEntry<"episodes">;
-  variant?: "default" | "feature";
+  variant?: "default" | "feature" | "compact";
 }
 
 const { episode, variant = "default" } = Astro.props;
 const cinderella = await getEntry(episode.data.cinderella);
 
-const pass = episode.data.votes.filter((v) => v.vote === "LAST CALL").length;
-const fail = episode.data.votes.filter((v) => v.vote === "NOTHING").length;
+const finalVotes = episode.data.votes.filter((v) => v.round === "final");
+const pass = finalVotes.filter((v) => v.vote === "LAST CALL").length;
+const fail = finalVotes.filter((v) => v.vote === "NOTHING" || v.vote === "NO CALL").length;
 const total = pass + fail;
 const voteResult = total > 0 ? (pass >= Math.ceil(total / 2) ? "pass" : "fail") : null;
 const result = voteResult ?? cinderella?.data.result ?? null;
 
 const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
+const cleanTitle = episode.data.title.replace(/【LAST.*$/, "").replace(/\s*#\d+\s*$/, "").trim();
+
+// Unique transition name for cross-document view-transitions
+const transitionName = `ep-${episode.data.id}-thumb`;
 ---
 
 <a
   href={siteLink(`/episodes/${episode.data.id}/`)}
   class:list={[
     "group block relative overflow-hidden card",
-    variant === "feature" ? "md:grid md:grid-cols-[1.4fr_1fr] md:gap-0" : "",
+    variant === "feature" && "md:grid md:grid-cols-[1.5fr_1fr]",
+    variant === "compact" && "flex gap-4 p-3 sm:p-4 items-center",
   ]}
 >
-  {/* Image — wider for feature, square-ish for grid */}
+  {/* Thumbnail */}
   <div
     class:list={[
       "relative overflow-hidden bg-black",
-      variant === "feature" ? "aspect-video md:aspect-auto md:min-h-[340px]" : "aspect-video",
+      variant === "feature"
+        ? "aspect-video md:aspect-auto md:min-h-[360px]"
+        : variant === "compact"
+          ? "w-32 sm:w-44 aspect-video rounded-md shrink-0"
+          : "aspect-video",
     ]}
   >
     <img
       src={youtubeThumb(episode.data.youtubeId)}
       alt=""
-      loading="lazy"
+      loading={variant === "feature" ? "eager" : "lazy"}
+      fetchpriority={variant === "feature" ? "high" : undefined}
       decoding="async"
-      class="w-full h-full object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
+      class="w-full h-full object-cover transition duration-[600ms] ease-out group-hover:scale-[1.05]"
+      style={`view-transition-name: ${transitionName};`}
     />
-    {/* Bottom-up gradient for text legibility on thumbnails */}
-    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
-    {/* Episode badge — top left */}
-    <div class="absolute top-3 left-3 flex items-center gap-2">
-      <span class="font-display tracking-[0.24em] text-[10px] text-[var(--color-gold)] bg-black/60 backdrop-blur px-2.5 py-1 rounded-full border border-[var(--color-gold)]/30">
-        EP #{episode.data.id}
-      </span>
-    </div>
-    {/* Result badge — top right */}
-    {result && (
+    {/* Gradient overlay for legibility */}
+    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90"></div>
+    {variant !== "compact" && (
+      <div class="absolute top-3 left-3 flex items-center gap-2">
+        <span class="font-display tracking-[0.24em] text-[10px] text-[var(--color-gold)] bg-black/65 backdrop-blur px-2.5 py-1 rounded-full border border-[var(--color-gold)]/30">
+          EP #{episode.data.id}
+        </span>
+      </div>
+    )}
+    {variant !== "compact" && result && (
       <div class="absolute top-3 right-3">
         <span
           class:list={[
-            "spoiler font-display tracking-[0.18em] text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur",
+            "spoiler font-display tracking-[0.2em] text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur",
             result === "pass"
               ? "bg-[var(--color-gold)] text-black"
               : "bg-black/70 text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
           ]}
+          data-spoiler-level="result"
         >
           {result === "pass" ? "LAST CALL" : "NOTHING"}
         </span>
       </div>
     )}
-    {/* Title overlay — bottom */}
     {variant === "default" && (
       <div class="absolute bottom-0 left-0 right-0 p-4 space-y-1.5">
-        <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--color-text-subtle)]">
+        <div class="text-[10px] tracking-[0.2em] uppercase text-[var(--color-text-subtle)] tabular-nums">
           {dateLabel}
         </div>
-        <h3 class="text-[15px] font-semibold leading-snug text-[var(--color-text)] line-clamp-2 group-hover:text-[var(--color-gold-bright)] transition">
-          {episode.data.title}
+        <h3 class="font-display-serif text-[17px] sm:text-[19px] leading-snug text-[var(--color-text)] line-clamp-2 group-hover:text-[var(--color-gold-bright)] transition">
+          {cleanTitle}
         </h3>
       </div>
     )}
   </div>
 
-  {/* Side panel — feature only */}
+  {/* Compact metadata */}
+  {variant === "compact" && (
+    <div class="flex-1 min-w-0 space-y-1">
+      <div class="flex items-center gap-2 text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] tabular-nums">
+        <span class="text-[var(--color-gold)]">#{episode.data.id}</span>
+        <span>{dateLabel}</span>
+        {result && (
+          <span
+            class:list={[
+              "spoiler ml-auto px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wider",
+              result === "pass"
+                ? "bg-[var(--color-gold)] text-black"
+                : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
+            ]}
+            data-spoiler-level="result"
+          >
+            {result === "pass" ? "LC" : "NO"}
+          </span>
+        )}
+      </div>
+      <h3 class="font-display-serif text-sm sm:text-base text-[var(--color-text)] line-clamp-2 group-hover:text-[var(--color-gold-bright)] transition leading-snug">
+        {cleanTitle}
+      </h3>
+      {cinderella && (
+        <p class="text-[11px] text-[var(--color-text-muted)] truncate">
+          Cinderella · {cinderella.data.name}
+        </p>
+      )}
+    </div>
+  )}
+
+  {/* Feature side panel */}
   {variant === "feature" && (
-    <div class="p-6 sm:p-8 md:p-10 flex flex-col justify-between gap-6">
-      <div class="space-y-4">
-        <div class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)]">
-          {dateLabel}
+    <div class="p-6 sm:p-8 md:p-10 flex flex-col justify-between gap-6 bg-gradient-to-br from-[var(--color-card)] to-[color-mix(in_oklab,var(--color-card)_85%,var(--color-gold-deep)_15%)]">
+      <div class="space-y-5">
+        <div class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)] tabular-nums flex items-center gap-2 flex-wrap">
+          <span>{dateLabel}</span>
           {cinderella && (
             <>
-              <span class="mx-2 text-[var(--color-border-strong)]">/</span>
-              <span class="text-[var(--color-text-muted)]">Cinderella · {cinderella.data.name}</span>
+              <span class="text-[var(--color-border-strong)]">/</span>
+              <span class="text-[var(--color-text-muted)] normal-case tracking-[0.12em]">Cinderella · {cinderella.data.name}</span>
             </>
           )}
         </div>
-        <h3 class="font-display-serif text-2xl sm:text-3xl text-[var(--color-text)] leading-tight group-hover:text-[var(--color-gold-bright)] transition">
-          {episode.data.title.replace(/【LAST.*$/, "").trim()}
+        <h3 class="font-display-serif text-[26px] sm:text-[34px] text-[var(--color-text)] leading-[1.2] group-hover:text-[var(--color-gold-bright)] transition">
+          {cleanTitle}
         </h3>
       </div>
-      <div class="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
-        {total > 0 ? (
-          <div class="spoiler inline-block">
-            LAST CALL <span class="text-[var(--color-gold)] font-semibold">{pass}</span>
-            <span class="mx-1.5 text-[var(--color-border-strong)]">·</span>
-            NOTHING <span class="font-semibold">{fail}</span>
-          </div>
-        ) : <span></span>}
-        <span class="inline-flex items-center gap-1.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-gold-bright)] transition">
+      <div class="flex items-end justify-between gap-3">
+        <div class="flex flex-col gap-1 min-w-0">
+          {total > 0 ? (
+            <div class="spoiler inline-flex items-center gap-2 text-xs text-[var(--color-text-muted)] tabular-nums" data-spoiler-level="result">
+              <span>LAST CALL <span class="text-[var(--color-gold)] font-semibold">{pass}</span></span>
+              <span class="text-[var(--color-border-strong)]">/</span>
+              <span>NOTHING <span class="font-semibold">{fail}</span></span>
+            </div>
+          ) : (
+            <span class="text-[10px] tracking-wider text-[var(--color-text-subtle)] uppercase">
+              票データ収集中
+            </span>
+          )}
+        </div>
+        <span class="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] group-hover:text-[var(--color-gold-bright)] transition shrink-0">
           詳細
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="group-hover:translate-x-0.5 transition">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
         </span>

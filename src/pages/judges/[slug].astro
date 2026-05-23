@@ -3,6 +3,10 @@ import { getCollection, getEntry } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import Layout from "../../components/Layout.astro";
 import SnsLinks from "../../components/SnsLinks.astro";
+import StatCard from "../../components/StatCard.astro";
+import VoteSignature from "../../components/VoteSignature.astro";
+import VoteChip from "../../components/VoteChip.astro";
+import DivergingBar from "../../components/DivergingBar.astro";
 import { siteLink } from "../../lib/url";
 
 export async function getStaticPaths() {
@@ -18,11 +22,13 @@ const episodes = (await getCollection("episodes")).sort(
   (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
 );
 
+type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT";
+
 type HistoryRow = {
   episode: CollectionEntry<"episodes">;
   cinderellaName: string;
   round: "first" | "final";
-  vote: "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT";
+  vote: VoteValue;
   comment?: string;
 };
 
@@ -44,7 +50,6 @@ for (const ep of episodes) {
   }
 }
 
-// ラウンド別の集計
 const roundTally = (round: "first" | "final") => {
   const list = history.filter((h) => h.round === round);
   return {
@@ -58,15 +63,12 @@ const roundTally = (round: "first" | "final") => {
 const firstTally = roundTally("first");
 const finalTally = roundTally("final");
 
-// 合格率は最終ジャッジのみ
 const passCount = finalTally.lastCall;
 const failCount = finalTally.nothing + finalTally.noCall;
 const total = passCount + failCount;
 const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
 
-// ファースト→最終で判定を変えた回数
 const flipped = (() => {
-  // group history by episode id
   const byEp = new Map<string, { first?: HistoryRow; final?: HistoryRow }>();
   for (const h of history) {
     const slot = byEp.get(h.episode.data.id) ?? {};
@@ -86,151 +88,180 @@ const flipped = (() => {
 
 <Layout
   title={judge.data.name}
-  description={`LAST CALL 審査員「${judge.data.name}」のプロフィール、SNS、全回投票履歴。`}
+  description={`LAST CALL 審査員「${judge.data.name}」のプロフィール、合格率、全回投票履歴。`}
 >
-  <article class="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
-    <header class="space-y-3">
-      <p class="font-display tracking-[0.3em] text-xs text-[var(--color-gold)]">JUDGE</p>
-      <h1 class="text-2xl sm:text-3xl font-bold">
-        {judge.data.name}
-        {judge.data.nameKana && (
-          <span class="text-sm text-[var(--color-text-muted)] ml-2 font-normal">
-            {judge.data.nameKana}
-          </span>
-        )}
-      </h1>
-      <div class="text-sm text-[var(--color-text-muted)] space-x-2">
-        {judge.data.age && <span>{judge.data.age}歳</span>}
-        {judge.data.area && <span>· {judge.data.area}</span>}
-        {judge.data.store && <span>· {judge.data.store}</span>}
+  <article class="max-w-5xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12">
+    <header class="space-y-5">
+      <p class="eyebrow">Judge</p>
+      <div class="space-y-2">
+        <h1 class="font-display-serif text-[2.25rem] sm:text-[3.25rem] leading-[1.05] text-[var(--color-text)]">
+          {judge.data.name}
+          {judge.data.nameKana && judge.data.nameKana !== judge.data.name && (
+            <span class="text-base font-sans text-[var(--color-text-muted)] ml-3 align-middle">
+              {judge.data.nameKana}
+            </span>
+          )}
+        </h1>
+        <div class="text-sm text-[var(--color-text-muted)] tracking-wide flex flex-wrap gap-x-3 gap-y-1">
+          {judge.data.age && <span>{judge.data.age}歳</span>}
+          {judge.data.area && <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">{judge.data.area}</span>}
+          {judge.data.store && <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">{judge.data.store}</span>}
+        </div>
       </div>
     </header>
 
     {judge.data.bio && (
-      <section class="space-y-2">
-        <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-          Profile
-        </h2>
-        <p class="text-sm sm:text-base leading-relaxed">{judge.data.bio}</p>
+      <section class="space-y-3">
+        <h2 class="section-eyebrow">Profile</h2>
+        <p class="text-sm sm:text-base leading-[1.85] text-[var(--color-text-muted)]">{judge.data.bio}</p>
       </section>
     )}
 
-    <section class="space-y-2">
-      <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-        SNS
-      </h2>
+    {/* Season Averages — stat cards + diverging bar */}
+    {total > 0 && (
+      <section class="space-y-5">
+        <h2 class="section-eyebrow">Season Averages</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <StatCard
+            label="合格判定率"
+            value={passRate !== null ? `${passRate}%` : "—"}
+            sublabel={`${passCount} / ${total}`}
+            accent="gold"
+            spoiler
+            spoilerLevel="vote"
+          />
+          <StatCard
+            label="LAST CALL"
+            value={finalTally.lastCall}
+            sublabel="最終ジャッジ"
+            accent="gold"
+            spoiler
+            spoilerLevel="vote"
+          />
+          <StatCard
+            label="NOTHING / NC"
+            value={finalTally.nothing + finalTally.noCall}
+            sublabel={finalTally.noCall > 0 ? `NO CALL ${finalTally.noCall} を含む` : "最終ジャッジ"}
+            spoiler
+            spoilerLevel="vote"
+          />
+          <StatCard
+            label="判定変更"
+            value={flipped}
+            sublabel="ファースト → 最終"
+            spoiler
+            spoilerLevel="vote"
+          />
+        </div>
+        <div class="card p-5 sm:p-6 space-y-4">
+          <DivergingBar
+            pass={finalTally.lastCall}
+            fail={finalTally.nothing + finalTally.noCall}
+            absent={finalTally.absent}
+            label="最終ジャッジの傾向"
+            size="lg"
+            spoilerLevel="vote"
+          />
+          <DivergingBar
+            pass={firstTally.lastCall}
+            fail={firstTally.nothing + firstTally.noCall}
+            absent={firstTally.absent}
+            label="ファーストコールの傾向"
+            size="sm"
+            spoilerLevel="vote"
+          />
+        </div>
+      </section>
+    )}
+
+    {/* Vote Signature — across all episodes */}
+    {total > 0 && (
+      <section class="space-y-3">
+        <h2 class="section-eyebrow">Vote Signature <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">時系列 · 全 {episodes.length} 回</span></h2>
+        <div class="card p-4 sm:p-5">
+          <VoteSignature forJudge={judge} round="both" size="sm" linkTo="episode" />
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="LAST CALL" size="xs" spoiler={false} /> LC
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="NOTHING" size="xs" spoiler={false} /> NOTHING
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="NO CALL" size="xs" spoiler={false} /> NO CALL
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="UNKNOWN" size="xs" spoiler={false} /> 未確認
+          </span>
+          <span>上=First · 下=Final</span>
+        </div>
+      </section>
+    )}
+
+    <section class="space-y-3">
+      <h2 class="section-eyebrow">SNS</h2>
       <SnsLinks sns={judge.data.sns} />
     </section>
 
-    <section class="space-y-3">
-      <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-        Voting History
-      </h2>
+    {/* Comments / detail table */}
+    {history.length > 0 && (
+      <section class="space-y-3">
+        <h2 class="section-eyebrow">Voting History</h2>
+        <details class="card group">
+          <summary class="px-5 sm:px-6 py-3 cursor-pointer list-none flex items-center justify-between gap-3 text-sm select-none">
+            <span class="inline-flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition group-open:rotate-90" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+              票の詳細 & コメント
+            </span>
+            <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider uppercase">
+              {history.length} 票
+            </span>
+          </summary>
+          <div class="border-t border-[var(--color-border)] overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
+                <tr>
+                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">回</th>
+                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">シンデレラ</th>
+                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">ラウンド</th>
+                  <th class="text-center font-medium px-3 py-2 whitespace-nowrap">投票</th>
+                  <th class="text-left font-medium px-3 py-2">コメント</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((h) => (
+                  <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <a href={siteLink(`/episodes/${h.episode.data.id}/`)} class="hover:text-[var(--color-gold-bright)] transition tabular-nums">
+                        #{h.episode.data.id}
+                      </a>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-[var(--color-text-muted)]">{h.cinderellaName}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-xs text-[var(--color-text-muted)]">
+                      {h.round === "first" ? "ファースト" : "最終"}
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                      <VoteChip vote={h.vote} size="sm" round={h.round} judgeName={judge.data.name} />
+                    </td>
+                    <td class="px-3 py-2 text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed">
+                      {h.comment ? <span class="spoiler-block inline-block" data-spoiler-level="comment">{h.comment}</span> : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+    )}
 
-      {(firstTally.total > 0 || finalTally.total > 0) && (
-        <div class="grid sm:grid-cols-2 gap-2 text-xs">
-          {([
-            { label: "ファーストコール", sub: "First Call", t: firstTally },
-            { label: "最終ジャッジ", sub: "Final Judgment", t: finalTally },
-          ]).map(({ label, sub, t }) => (
-            <div class="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2">
-              <div class="flex items-center justify-between mb-1">
-                <span class="font-semibold text-[var(--color-text)]">{label}</span>
-                <span class="text-[10px] text-[var(--color-text-subtle)] uppercase tracking-wider">{sub} · {t.total} 票</span>
-              </div>
-              <div class="spoiler flex flex-wrap items-center gap-x-3 gap-y-1 text-[var(--color-text-muted)]">
-                <span class="inline-flex items-center gap-1">
-                  <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-gold)]"></span>
-                  LC <span class="font-semibold text-[var(--color-gold)]">{t.lastCall}</span>
-                </span>
-                <span class="inline-flex items-center gap-1">
-                  <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-fail)]"></span>
-                  NOTHING <span class="font-semibold text-[var(--color-text)]">{t.nothing}</span>
-                </span>
-                <span class="inline-flex items-center gap-1">
-                  <span class="inline-block w-2 h-2 rounded-full border border-[var(--color-fail)]"></span>
-                  NO CALL <span class="font-semibold text-[var(--color-text)]">{t.noCall}</span>
-                </span>
-                {t.absent > 0 && <span>欠席 {t.absent}</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {total > 0 && passRate !== null && (
-        <p class="spoiler text-xs text-[var(--color-text-muted)]">
-          合格率（最終ジャッジ） <span class="text-[var(--color-text)] font-semibold">{passRate}%</span>
-          （{passCount} / {total}）
-          {flipped > 0 && <span class="ml-2">· ファースト→最終で判定変更 <span class="text-[var(--color-text)] font-semibold">{flipped}</span> 回</span>}
-        </p>
-      )}
-
-      <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-        <table class="min-w-full text-sm">
-          <thead class="bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
-            <tr>
-              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">回</th>
-              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">シンデレラ</th>
-              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">ラウンド</th>
-              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">投票</th>
-              <th class="text-left font-medium px-3 py-2">コメント</th>
-            </tr>
-          </thead>
-          <tbody>
-            {history.map((h) => (
-              <tr class="border-t border-[var(--color-border)]">
-                <td class="px-3 py-2 whitespace-nowrap">
-                  <a
-                    href={siteLink(`/episodes/${h.episode.data.id}/`)}
-                    class="hover:text-[var(--color-gold-bright)] transition"
-                  >
-                    #{h.episode.data.id}
-                  </a>
-                </td>
-                <td class="px-3 py-2 whitespace-nowrap text-[var(--color-text-muted)]">
-                  {h.cinderellaName}
-                </td>
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-[var(--color-text-muted)]">
-                  {h.round === "first" ? "ファーストコール" : "最終ジャッジ"}
-                </td>
-                <td class="px-3 py-2 whitespace-nowrap">
-                  {h.vote === "LAST CALL" && (
-                    <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-gold)] text-black text-xs font-semibold tracking-wider">
-                      LAST CALL
-                    </span>
-                  )}
-                  {h.vote === "NOTHING" && (
-                    <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-fail)] text-white text-xs font-semibold tracking-wider">
-                      NOTHING
-                    </span>
-                  )}
-                  {h.vote === "NO CALL" && (
-                    <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-fail)] text-[var(--color-fail)] text-xs font-semibold tracking-wider">
-                      NO CALL
-                    </span>
-                  )}
-                  {h.vote === "ABSENT" && (
-                    <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
-                      欠席
-                    </span>
-                  )}
-                </td>
-                <td class="px-3 py-2 text-[var(--color-text-muted)]">
-                  {h.comment ? <span class="spoiler-block inline-block">{h.comment}</span> : "—"}
-                </td>
-              </tr>
-            ))}
-            {history.length === 0 && (
-              <tr>
-                <td colspan="5" class="px-3 py-6 text-center text-[var(--color-text-muted)]">
-                  投票履歴データを準備中です。
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    {history.length === 0 && (
+      <section class="card p-6 text-center text-sm text-[var(--color-text-muted)]">
+        この審査員の投票履歴データを準備中です。
+      </section>
+    )}
   </article>
 </Layout>

@@ -89,7 +89,36 @@ When adding any new result badge, vote count, pass/fail tally, or text that incl
 
 `src/components/EpisodeCard.astro` and `src/components/PersonCard.astro` are the reusable card shells used on home, `/people/`, prev/next nav. They both rely on the `.card` utility in `globals.css` for the hover ring and consistent surface elevation. Don't ship one-off card markup — extend these.
 
-The matrix in `src/pages/people.astro` is a hand-rolled `<table>` with `position: sticky` on the left two columns. When changing the schema, the matrix is the most touchy place because it iterates `episodes × judges` and renders **two stacked vote-token badges** per cell (上=ファーストコール / 下=最終ジャッジ).
+`EpisodeCard` supports three `variant`s: `"default"` (image-led grid card), `"feature"` (large image + side panel, used for the latest episode hero), and `"compact"` (small thumb + text, used for prev/next nav). `PersonCard` exposes a named `signature` slot for embedding a `<DivergingBar>` or `<VoteSignature>` strip (e.g., on the judges list).
+
+The matrix in `src/pages/people.astro` is a hand-rolled `<table>` with `position: sticky` on the left two columns. When changing the schema, the matrix is the most touchy place because it iterates `episodes × judges` and renders **two stacked `<VoteChip>` per cell** (上=ファーストコール / 下=最終ジャッジ).
+
+### Vote visualization primitives — always reuse these
+
+When showing vote data anywhere, use the four shared primitives in `src/components/`:
+
+- **`VoteChip.astro`** — single round chip for one judge × one round. Renders as a colored circle (gold = LC, dark gray = NOTHING, hollow = NO CALL, dashed = UNKNOWN, slashed = ABSENT). Use `size: "xs" | "sm" | "md" | "lg"`. Has built-in spoiler protection (toggleable via `spoiler={false}` for legends).
+- **`VoteSignature.astro`** — horizontal strip of chips for one axis. Use `forJudge` to show that judge's votes across all episodes (the "personality fingerprint" view used on judge profile pages) or `forEpisode` to show all 14 judges' votes for one episode. Set `round: "first" | "final" | "both"`.
+- **`DivergingBar.astro`** — pass/fail tally as a center-axis horizontal bar (gold right, dark gray left). Use anywhere a "X 票 vs Y 票" count appears. Auto-handles the `合格率 %` label.
+- **`StatCard.astro`** — large numeric stat with eyebrow + sublabel (used in season-averages dashboards on judge profiles and the matrix banner).
+
+Whenever you'd otherwise hand-roll a "pass count / fail count" inline span or a tally table, reach for `DivergingBar` + `StatCard` instead. Hand-rolled inline tallies have been deleted — re-introducing them creates visual drift.
+
+### 3-tier spoiler granularity
+
+The spoiler system has three states (was 2 prior to the 2026 redesign):
+
+1. `spoilers-hidden` (default) — every `.spoiler` / `.spoiler-block` is blurred.
+2. `spoilers-results-only` — only elements with `data-spoiler-level="result"` are blurred (合否 / pass-fail verdicts). Individual votes (`data-spoiler-level="vote"`) and judge comments (`data-spoiler-level="comment"`) are revealed. This is for the "I want to see who appeared and how each judge voted but not the final verdict" persona.
+3. `spoilers-shown` — everything visible.
+
+Annotation conventions on the element:
+- `data-spoiler-level="result"` — pass/fail badges, "合格率 X%", overall verdict bars, cinderella `result` badges.
+- `data-spoiler-level="vote"` — individual `<VoteChip>` and per-round tallies.
+- `data-spoiler-level="comment"` — judge comments and `background` text.
+- No `data-spoiler-level` on `.spoiler` = treated as `"vote"` (legacy default).
+
+The state class lives on `<html>` (`spoilers-hidden` / `spoilers-results-only` / `spoilers-shown`). Storage key is `lc-spoilers` with value `"hidden" | "results-only" | "shown"`. Toggle UI is a 3-button segmented control in `Layout.astro` header. `.show-spoilers` is kept as a legacy alias of `spoilers-shown`.
 
 ### Design system in globals.css
 
@@ -102,6 +131,23 @@ Token-driven dark theme using Material/HIG-aligned elevation (`--color-bg` < `--
 Stick to these for any new headings instead of inventing new heading styles. Backwards-compat aliases `--color-bg-elevated` / `--color-bg-card` exist for older markup but new code should use the canonical names.
 
 Note: `--color-fail` は意図的にグレー（`#4a4a52`）であり赤ではない。NOTHING / NO CALL バッジが赤系に見えないのは仕様で、鮮やかな赤を避けることでゴールドの合格表現とのコントラストを保っている。「失敗 = 赤」の直感で塗り替えないこと。
+
+### Japanese typography baseline
+
+`globals.css` sets JP-optimized defaults that should be respected everywhere:
+
+- `line-height: var(--leading-jp-body)` = **1.85** for body. Don't tighten back to ~1.5 — kanji density needs more breathing room on screen.
+- `font-feature-settings: "palt" 1` on `<html>` and `.font-display-serif` — proportional kana metrics. Don't disable.
+- Body `letter-spacing: 0.02em`; display serif `letter-spacing: -0.01em`. The Mincho display face wants tighter tracking by design.
+- Use `.font-display-serif` (Noto Serif JP) **only for display headings and key proper nouns**. Long body in Mincho on screen is hard to read — keep body in `--font-sans` (Noto Sans JP).
+- For tabular numbers (dates, vote counts, percentages), add `tabular-nums` class so columns align.
+
+### Motion & accessibility
+
+- All animations must use only `transform` and `opacity` (never `width` / `height`) to keep INP healthy.
+- `@media (prefers-reduced-motion: reduce)` in `globals.css` neutralizes all transitions globally — don't add `transition` overrides that bypass this.
+- Cross-document View Transitions are enabled site-wide via `@view-transition { navigation: auto; }`. Add `view-transition-name: ep-{id}-thumb` (already wired in `EpisodeCard` and on the YouTube embed wrapper in episode detail) to thread thumbnails between pages. New transitioned elements need a unique name per page.
+- Use `.reveal-on-scroll` class for opt-in scroll-driven fade-in (`animation-timeline: view()`, no JS). Only applies in browsers that support it; gracefully no-op otherwise.
 
 ### URL helper handles the GitHub Pages base path
 

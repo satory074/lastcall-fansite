@@ -4,6 +4,7 @@ import Layout from "../../components/Layout.astro";
 import YouTubeEmbed from "../../components/YouTubeEmbed.astro";
 import VoteTable from "../../components/VoteTable.astro";
 import SnsLinks from "../../components/SnsLinks.astro";
+import EpisodeCard from "../../components/EpisodeCard.astro";
 import { siteLink, youtubeUrl } from "../../lib/url";
 
 export async function getStaticPaths() {
@@ -18,70 +19,79 @@ const { episode } = Astro.props;
 const cinderella = await getEntry(episode.data.cinderella);
 const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
 
-// 前後回のナビゲーション
 const allEpisodes = (await getCollection("episodes")).sort(
   (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
 );
 const idx = allEpisodes.findIndex((e) => e.data.id === episode.data.id);
 const prev = idx > 0 ? allEpisodes[idx - 1] : null;
 const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : null;
+
+const cleanTitle = episode.data.title.replace(/【LAST.*$/, "").trim();
+const transitionName = `ep-${episode.data.id}-thumb`;
 ---
 
 <Layout
-  title={`#${episode.data.id} ${episode.data.title}`}
+  title={`#${episode.data.id} ${cleanTitle}`}
   description={episode.data.summary ?? episode.data.title}
 >
-  <article class="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12">
-    <header class="space-y-4">
-      <div class="flex flex-wrap items-center gap-3">
+  <article class="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-14">
+    <header class="space-y-5">
+      <div class="flex flex-wrap items-center gap-2.5">
         <p class="eyebrow">Episode #{episode.data.id}</p>
+        <span class="text-[10px] tracking-[0.2em] uppercase text-[var(--color-text-subtle)] tabular-nums">
+          {dateLabel}
+        </span>
         {cinderella && (
           <span
             class:list={[
-              "spoiler font-display tracking-[0.18em] text-[10px] font-semibold px-2.5 py-1 rounded-full",
+              "spoiler font-display tracking-[0.2em] text-[10px] font-semibold px-2.5 py-1 rounded-full",
               cinderella.data.result === "pass"
                 ? "bg-[var(--color-gold)] text-black"
                 : "bg-transparent text-[var(--color-text-subtle)] border border-[var(--color-border-strong)]",
             ]}
+            data-spoiler-level="result"
           >
             {cinderella.data.result === "pass" ? "LAST CALL · 合格" : "NOTHING · 不合格"}
           </span>
         )}
       </div>
-      <h1 class="font-display-serif text-2xl sm:text-4xl leading-tight text-[var(--color-text)]">
-        {episode.data.title}
+      <h1 class="font-display-serif text-2xl sm:text-[2.5rem] leading-[1.2] text-[var(--color-text)]">
+        {cleanTitle}
       </h1>
       <div class="text-xs text-[var(--color-text-subtle)] tracking-wider">
-        {dateLabel}
-        <span class="mx-2 text-[var(--color-border-strong)]">/</span>
         <a
           href={youtubeUrl(episode.data.youtubeId)}
           target="_blank"
           rel="noopener"
-          class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]"
+          class="inline-flex items-center gap-1.5 underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]"
         >
-          YouTubeで見る
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.546 15.568V8.432L15.818 12z"/>
+          </svg>
+          YouTube で視聴
         </a>
       </div>
     </header>
 
     {episode.data.summary && (
-      <p class="spoiler-block text-sm sm:text-base leading-relaxed text-[var(--color-text)]">
+      <p class="spoiler-block text-sm sm:text-base leading-[1.85] text-[var(--color-text)]" data-spoiler-level="comment">
         {episode.data.summary}
       </p>
     )}
 
     <section class="space-y-4">
       <h2 class="section-eyebrow">Video</h2>
-      <YouTubeEmbed videoId={episode.data.youtubeId} title={episode.data.title} />
+      <div style={`view-transition-name: ${transitionName};`}>
+        <YouTubeEmbed videoId={episode.data.youtubeId} title={episode.data.title} />
+      </div>
     </section>
 
     {cinderella && (
       <section class="space-y-4">
         <h2 class="section-eyebrow">Cinderella</h2>
-        <div class="card p-6 space-y-4">
+        <div class="card p-6 sm:p-8 space-y-5">
           <div class="flex flex-wrap items-baseline justify-between gap-3">
-            <h3 class="text-xl font-semibold">
+            <h3 class="font-display-serif text-2xl sm:text-3xl">
               <a
                 href={siteLink(`/cinderellas/${cinderella.id}/`)}
                 class="hover:text-[var(--color-gold-bright)] transition"
@@ -89,22 +99,23 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
                 {cinderella.data.name}
               </a>
               {cinderella.data.age && (
-                <span class="text-sm text-[var(--color-text-muted)] ml-2">{cinderella.data.age}歳</span>
+                <span class="text-sm font-sans text-[var(--color-text-muted)] ml-3 tabular-nums">{cinderella.data.age}歳</span>
               )}
             </h3>
             <span
               class:list={[
-                "spoiler px-2 py-0.5 rounded text-xs font-semibold tracking-wider",
+                "spoiler px-3 py-1 rounded-full text-[11px] font-semibold tracking-widest",
                 cinderella.data.result === "pass"
                   ? "bg-[var(--color-gold)] text-black"
-                  : "bg-[var(--color-fail)] text-white",
+                  : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
               ]}
+              data-spoiler-level="result"
             >
               {cinderella.data.result === "pass" ? "合格" : "不合格"}
             </span>
           </div>
           {cinderella.data.background && (
-            <p class="spoiler-block text-sm text-[var(--color-text-muted)] leading-relaxed">
+            <p class="spoiler-block text-sm leading-[1.85] text-[var(--color-text-muted)]" data-spoiler-level="comment">
               {cinderella.data.background}
             </p>
           )}
@@ -116,16 +127,16 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
     <VoteTable votes={episode.data.votes} cinderellaResult={cinderella?.data.result} />
 
     {episode.data.sources.length > 0 && (
-      <section class="space-y-3 pt-6 border-t border-[var(--color-border)]">
+      <section class="space-y-3">
         <h2 class="section-eyebrow">Sources</h2>
-        <ul class="text-sm space-y-1">
+        <ul class="text-xs sm:text-sm space-y-1.5">
           {episode.data.sources.map((url) => (
             <li>
               <a
                 href={url}
                 target="_blank"
                 rel="noopener nofollow"
-                class="text-[var(--color-text-muted)] underline hover:text-[var(--color-gold-bright)] break-all"
+                class="text-[var(--color-text-muted)] underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)] break-all"
               >
                 {url}
               </a>
@@ -135,24 +146,22 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
       </section>
     )}
 
-    <nav class="pt-6 border-t border-[var(--color-border)] grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+    <nav class="pt-6 border-t border-[var(--color-border)] grid grid-cols-1 sm:grid-cols-2 gap-4">
       {prev ? (
-        <a
-          href={siteLink(`/episodes/${prev.data.id}/`)}
-          class="group card p-4 sm:p-5 min-w-0"
-        >
-          <div class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] mb-1">← Prev · #{prev.data.id}</div>
-          <div class="truncate group-hover:text-[var(--color-gold-bright)] transition">{prev.data.title}</div>
-        </a>
+        <div class="space-y-2">
+          <div class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)]">
+            ← Prev · #{prev.data.id}
+          </div>
+          <EpisodeCard episode={prev} variant="compact" />
+        </div>
       ) : <span class="hidden sm:block" />}
       {next ? (
-        <a
-          href={siteLink(`/episodes/${next.data.id}/`)}
-          class="group card p-4 sm:p-5 min-w-0 sm:text-right"
-        >
-          <div class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] mb-1">Next · #{next.data.id} →</div>
-          <div class="truncate group-hover:text-[var(--color-gold-bright)] transition">{next.data.title}</div>
-        </a>
+        <div class="space-y-2 sm:text-right">
+          <div class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)]">
+            Next · #{next.data.id} →
+          </div>
+          <EpisodeCard episode={next} variant="compact" />
+        </div>
       ) : <span class="hidden sm:block" />}
     </nav>
   </article>

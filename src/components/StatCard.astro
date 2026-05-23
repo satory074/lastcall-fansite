@@ -1,0 +1,46 @@
+---
+interface Props {
+  label: string;
+  value: string | number;
+  sublabel?: string;
+  accent?: "gold" | "neutral" | "fail";
+  spoiler?: boolean;
+  spoilerLevel?: "result" | "vote" | "comment";
+}
+
+const {
+  label,
+  value,
+  sublabel,
+  accent = "neutral",
+  spoiler = false,
+  spoilerLevel,
+} = Astro.props;
+
+const accentColor: Record<NonNullable<Props["accent"]>, string> = {
+  gold: "text-[var(--color-gold)]",
+  neutral: "text-[var(--color-text)]",
+  fail: "text-[var(--color-text-muted)]",
+};
+---
+
+<div class="card px-4 py-4 sm:px-5 sm:py-5 flex flex-col gap-1.5 min-w-0">
+  <div class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)] font-medium">
+    {label}
+  </div>
+  <div
+    class:list={[
+      "font-display-serif text-3xl sm:text-4xl tabular-nums leading-none",
+      accentColor[accent],
+      spoiler && "spoiler",
+    ]}
+    data-spoiler-level={spoiler ? spoilerLevel : undefined}
+  >
+    {value}
+  </div>
+  {sublabel && (
+    <div class="text-[11px] text-[var(--color-text-muted)] tracking-wide truncate">
+      {sublabel}
+    </div>
+  )}
+</div>

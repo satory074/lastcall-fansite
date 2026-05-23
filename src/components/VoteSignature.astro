@@ -1,0 +1,131 @@
+---
+import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import { siteLink } from "../lib/url";
+import VoteChip from "./VoteChip.astro";
+
+type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
+
+interface BaseProps {
+  /** Round to display. "both" stacks first above final */
+  round?: "first" | "final" | "both";
+  size?: "xs" | "sm" | "md" | "lg";
+  /** Optional override of which episodes/judges to show */
+  episodeIds?: string[];
+  judgeIds?: string[];
+  /** Wrap or scroll horizontally */
+  wrap?: boolean;
+  /** Link each chip to the episode or judge page */
+  linkTo?: "episode" | "judge" | "none";
+}
+
+interface ForJudgeProps extends BaseProps {
+  /** Show this judge's votes across all episodes */
+  forJudge: CollectionEntry<"judges">;
+  forEpisode?: never;
+}
+
+interface ForEpisodeProps extends BaseProps {
+  /** Show all judges' votes for this episode */
+  forEpisode: CollectionEntry<"episodes">;
+  forJudge?: never;
+}
+
+type Props = ForJudgeProps | ForEpisodeProps;
+
+const {
+  forJudge,
+  forEpisode,
+  round = "final",
+  size = "sm",
+  episodeIds,
+  judgeIds,
+  wrap = true,
+  linkTo,
+} = Astro.props as Props;
+
+// Build cell list
+type Cell = {
+  key: string;
+  href: string | null;
+  label: string;
+  sublabel?: string;
+  votes: { round: "first" | "final"; vote: VoteValue }[];
+};
+
+const cells: Cell[] = [];
+
+if (forJudge) {
+  const eps = (await getCollection("episodes")).sort(
+    (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
+  );
+  const filtered = episodeIds ? eps.filter((e) => episodeIds.includes(e.data.id)) : eps;
+  for (const ep of filtered) {
+    const f = ep.data.votes.find((v) => v.judge.id === forJudge.id && v.round === "first");
+    const l = ep.data.votes.find((v) => v.judge.id === forJudge.id && v.round === "final");
+    cells.push({
+      key: ep.data.id,
+      href: linkTo === "episode" || linkTo === undefined ? siteLink(`/episodes/${ep.data.id}/`) : null,
+      label: `#${ep.data.id}`,
+      sublabel: ep.data.airedAt.toISOString().slice(5, 10),
+      votes: [
+        { round: "first", vote: (f?.vote as VoteValue | undefined) ?? "UNKNOWN" },
+        { round: "final", vote: (l?.vote as VoteValue | undefined) ?? "UNKNOWN" },
+      ],
+    });
+  }
+} else if (forEpisode) {
+  const allJudges = (await getCollection("judges")).sort((a, b) =>
+    a.data.name.localeCompare(b.data.name, "ja")
+  );
+  const filtered = judgeIds ? allJudges.filter((j) => judgeIds.includes(j.id)) : allJudges;
+  for (const j of filtered) {
+    const f = forEpisode.data.votes.find((v) => v.judge.id === j.id && v.round === "first");
+    const l = forEpisode.data.votes.find((v) => v.judge.id === j.id && v.round === "final");
+    cells.push({
+      key: j.id,
+      href: linkTo === "judge" || linkTo === undefined ? siteLink(`/judges/${j.id}/`) : null,
+      label: j.data.name,
+      votes: [
+        { round: "first", vote: (f?.vote as VoteValue | undefined) ?? "UNKNOWN" },
+        { round: "final", vote: (l?.vote as VoteValue | undefined) ?? "UNKNOWN" },
+      ],
+    });
+  }
+}
+
+const wrapClass = wrap ? "flex-wrap" : "overflow-x-auto";
+const roundsToShow: ("first" | "final")[] =
+  round === "both" ? ["first", "final"] : [round];
+---
+
+<div class={`flex ${wrapClass} gap-1.5 sm:gap-2 items-start`}>
+  {cells.map((cell) => {
+    const inner = (
+      <span class="flex flex-col items-center gap-0.5 group">
+        <span class="flex flex-col items-center gap-0.5">
+          {roundsToShow.map((r) => {
+            const v = cell.votes.find((vv) => vv.round === r)!.vote;
+            return (
+              <VoteChip
+                vote={v}
+                size={size}
+                round={r}
+                judgeName={forEpisode ? cell.label : undefined}
+              />
+            );
+          })}
+        </span>
+        <span class="text-[9px] tracking-wider text-[var(--color-text-subtle)] group-hover:text-[var(--color-gold-bright)] transition leading-none whitespace-nowrap">
+          {cell.label}
+        </span>
+        {cell.sublabel && (
+          <span class="text-[8px] text-[var(--color-text-subtle)] leading-none opacity-70 tabular-nums">
+            {cell.sublabel}
+          </span>
+        )}
+      </span>
+    );
+    return cell.href ? <a href={cell.href} class="block">{inner}</a> : inner;
+  })}
+</div>

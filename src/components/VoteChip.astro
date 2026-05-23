@@ -1,0 +1,68 @@
+---
+type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
+
+interface Props {
+  vote: VoteValue;
+  size?: "xs" | "sm" | "md" | "lg";
+  round?: "first" | "final";
+  judgeName?: string;
+  spoiler?: boolean;
+}
+
+const { vote, size = "sm", round, judgeName, spoiler = true } = Astro.props;
+
+const sizePx: Record<NonNullable<Props["size"]>, { box: string; text: string }> = {
+  xs: { box: "w-4 h-4", text: "text-[8px]" },
+  sm: { box: "w-6 h-6", text: "text-[10px]" },
+  md: { box: "w-8 h-8", text: "text-[11px]" },
+  lg: { box: "w-10 h-10", text: "text-xs" },
+};
+
+const variants: Record<VoteValue, string> = {
+  "LAST CALL":
+    "bg-[var(--color-gold)] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]",
+  NOTHING: "bg-[var(--color-fail)] text-white",
+  "NO CALL":
+    "bg-transparent text-[var(--color-text-muted)] border border-[var(--color-fail)]",
+  ABSENT:
+    "bg-[var(--color-surface)] text-[var(--color-text-subtle)] border border-[var(--color-border)]",
+  UNKNOWN:
+    "bg-transparent text-[var(--color-text-subtle)] border border-dashed border-[var(--color-border)]",
+};
+
+const labels: Record<VoteValue, string> = {
+  "LAST CALL": "LC",
+  NOTHING: "NO",
+  "NO CALL": "NC",
+  ABSENT: "—",
+  UNKNOWN: "?",
+};
+
+const ariaLabel = (() => {
+  const parts: string[] = [];
+  if (judgeName) parts.push(judgeName);
+  if (round) parts.push(round === "first" ? "ファースト" : "最終");
+  parts.push(vote === "UNKNOWN" ? "未確認" : vote === "ABSENT" ? "欠席" : vote);
+  return parts.join(" / ");
+})();
+
+// vote / 未確認 / 欠席 はネタバレ保護対象（ABSENT/UNKNOWN は仕様上隠す必要は薄いが、列の判別を防ぐため統一）
+const spoilerClass = spoiler && vote !== "UNKNOWN" ? "spoiler" : "";
+const dataLevel = vote === "LAST CALL" || vote === "NOTHING" ? "vote" : undefined;
+---
+
+<span
+  class:list={[
+    "inline-flex items-center justify-center rounded-full font-bold leading-none tracking-tight transition-transform",
+    sizePx[size].box,
+    sizePx[size].text,
+    variants[vote],
+    spoilerClass,
+  ]}
+  data-spoiler-level={dataLevel}
+  data-vote={vote}
+  aria-label={ariaLabel}
+  title={ariaLabel}
+>
+  {labels[vote]}
+</span>

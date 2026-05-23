@@ -2,6 +2,9 @@
 import { getCollection, getEntry } from "astro:content";
 import Layout from "../components/Layout.astro";
 import PersonCard from "../components/PersonCard.astro";
+import VoteChip from "../components/VoteChip.astro";
+import DivergingBar from "../components/DivergingBar.astro";
+import StatCard from "../components/StatCard.astro";
 import { siteLink } from "../lib/url";
 
 // 14名固定の審査員（マトリックス列順）
@@ -36,54 +39,52 @@ const matrix = await Promise.all(
         final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
       };
     });
-    // 合否タリーは最終ジャッジのみ
     const passCount = cells.filter((c) => c.final.vote === "LAST CALL").length;
     const failCount = cells.filter(
       (c) => c.final.vote === "NOTHING" || c.final.vote === "NO CALL"
     ).length;
-    return {
-      episode: ep,
-      cinderella,
-      cells,
-      passCount,
-      failCount,
-    };
+    return { episode: ep, cinderella, cells, passCount, failCount };
   })
 );
 
-// 審査員ごとの累計（最終ジャッジ）と合格率
-type JudgeTotals = { lastCall: number; nothing: number; noCall: number; recorded: number };
-const judgeTotals: JudgeTotals[] = judges.map((_, idx) => {
+// 審査員ごとの累計
+const judgeStats = judges.map((_, idx) => {
   const lastCall = matrix.filter((m) => m.cells[idx].final.vote === "LAST CALL").length;
   const nothing = matrix.filter((m) => m.cells[idx].final.vote === "NOTHING").length;
   const noCall = matrix.filter((m) => m.cells[idx].final.vote === "NO CALL").length;
-  return { lastCall, nothing, noCall, recorded: lastCall + nothing + noCall };
+  const recorded = lastCall + nothing + noCall;
+  const passRate = recorded > 0 ? Math.round((lastCall / recorded) * 100) : null;
+  return { lastCall, nothing, noCall, recorded, passRate };
 });
 
-// 全体集計（最終ジャッジ）
+// 全体集計
 const overallEpisodes = matrix.length;
 const overallPass = matrix.reduce((acc, m) => acc + m.passCount, 0);
 const overallFail = matrix.reduce((acc, m) => acc + m.failCount, 0);
 const overallRecorded = overallPass + overallFail;
 const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallRecorded) * 100) : null;
+
+// 番組としての"合否"回数 (1 episode = 1 verdict)
+const passEpisodes = cinderellas.filter((c) => c.data.result === "pass").length;
+const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
 ---
 
 <Layout
   title="出演者・審査一覧"
   description="LAST CALL の全シンデレラ・14名審査員・各回の審査結果マトリックスを一覧。"
 >
-  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-16">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-16">
     <header class="space-y-5">
       <p class="eyebrow">People &amp; Votes</p>
-      <h1 class="font-display-serif text-3xl sm:text-5xl text-[var(--color-text)]">出演者・審査一覧</h1>
-      <p class="text-sm text-[var(--color-text-muted)]">
-        シンデレラ <span class="text-[var(--color-text)]">{cinderellas.length}</span> 名
-        <span class="text-[var(--color-border-strong)] mx-2">/</span>
-        審査員 <span class="text-[var(--color-text)]">{judges.length}</span> 名
-        <span class="text-[var(--color-border-strong)] mx-2">/</span>
-        配信回 <span class="text-[var(--color-text)]">{episodes.length}</span> 回
+      <h1 class="font-display-serif text-[2.25rem] sm:text-[3.5rem] leading-[1.05] text-[var(--color-text)]">出演者・審査一覧</h1>
+      <p class="text-sm text-[var(--color-text-muted)] leading-relaxed max-w-2xl">
+        全 <span class="text-[var(--color-text)] tabular-nums">{episodes.length}</span> 回のシンデレラ
+        <span class="mx-1.5 text-[var(--color-border-strong)]">·</span>
+        14 名固定審査員
+        <span class="mx-1.5 text-[var(--color-border-strong)]">·</span>
+        2 ラウンド審査の投票マトリックス。
       </p>
-      <nav class="flex flex-wrap gap-2 text-xs pt-2">
+      <nav class="flex flex-wrap gap-2 text-xs pt-1">
         <a href="#cinderellas" class="px-3 py-1.5 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">
           シンデレラ
         </a>
@@ -96,8 +97,16 @@ const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallR
       </nav>
     </header>
 
+    {/* Cinderellas */}
     <section id="cinderellas" class="space-y-6 scroll-mt-24">
-      <h2 class="section-eyebrow">Cinderellas <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">出演回順</span></h2>
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <h2 class="section-eyebrow">Cinderellas <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">出演回順 · {cinderellas.length} 名</span></h2>
+        <span class="spoiler text-[11px] text-[var(--color-text-muted)] tracking-wide" data-spoiler-level="result">
+          合格 <span class="text-[var(--color-gold)] font-semibold">{passEpisodes}</span>
+          <span class="mx-1 text-[var(--color-border-strong)]">/</span>
+          不合格 <span class="font-semibold">{failEpisodes}</span>
+        </span>
+      </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cinderellas.map((c) => (
           <PersonCard
@@ -115,47 +124,94 @@ const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallR
       </div>
     </section>
 
+    {/* Judges */}
     <section id="judges" class="space-y-6 scroll-mt-24">
-      <h2 class="section-eyebrow">Judges <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">固定 14 名</span></h2>
+      <h2 class="section-eyebrow">Judges <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">固定 {judges.length} 名</span></h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {judges.map((j) => (
-          <PersonCard
-            name={j.data.name}
-            href={siteLink(`/judges/${j.id}/`)}
-            subtitle={j.data.area ?? j.data.store}
-            meta={j.data.age ? `${j.data.age}歳` : undefined}
-            sns={j.data.sns}
-          />
-        ))}
+        {judges.map((j, i) => {
+          const s = judgeStats[i];
+          return (
+            <PersonCard
+              name={j.data.name}
+              href={siteLink(`/judges/${j.id}/`)}
+              subtitle={j.data.area ?? j.data.store}
+              meta={j.data.age ? `${j.data.age}歳` : undefined}
+              sns={j.data.sns}
+            >
+              {s.recorded > 0 && (
+                <Fragment slot="signature">
+                  <DivergingBar
+                    pass={s.lastCall}
+                    fail={s.nothing + s.noCall}
+                    label="最終ジャッジ傾向"
+                    size="sm"
+                    spoilerLevel="vote"
+                    showLabels={true}
+                  />
+                </Fragment>
+              )}
+            </PersonCard>
+          );
+        })}
       </div>
     </section>
 
+    {/* Voting Matrix — heatmap */}
     <section id="matrix" class="space-y-6 scroll-mt-24">
-      <div class="flex flex-wrap items-end justify-between gap-3">
-        <h2 class="section-eyebrow">Voting Matrix <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{episodes.length} × {judges.length}</span></h2>
+      <div class="space-y-3">
+        <h2 class="section-eyebrow">Voting Matrix <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{episodes.length} 回 × {judges.length} 名審査員</span></h2>
+        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed max-w-2xl">
+          縦=各回（新しい順）・横=審査員。各セルは上段=<span class="text-[var(--color-text)]">ファーストコール</span> / 下段=<span class="text-[var(--color-text)]">最終ジャッジ</span>。点線輪郭は本編未視聴で未記録のセル。
+        </p>
       </div>
-      <p class="text-xs text-[var(--color-text-muted)]">
-        縦軸=各回（新しい順）、横軸=審査員。各セルは上=<span class="text-[var(--color-text)]">ファーストコール</span> / 下=<span class="text-[var(--color-text)]">最終ジャッジ</span>。空セルは本編未視聴で投票が記録されていない箇所。
-      </p>
+
+      {/* Overall stats banner */}
       {overallRecorded > 0 && (
-        <div class="spoiler flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--color-text-muted)] rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2">
-          <span class="font-semibold text-[var(--color-text)]">全体集計（最終ジャッジ）:</span>
-          <span>全 {overallEpisodes} 回</span>
-          <span>LAST CALL <span class="font-semibold text-[var(--color-gold)]">{overallPass}</span></span>
-          <span>NOTHING/NO CALL <span class="font-semibold text-[var(--color-text)]">{overallFail}</span></span>
-          {overallPassRate !== null && <span>合格率 <span class="font-semibold text-[var(--color-text)]">{overallPassRate}%</span></span>}
+        <div class="card p-5 sm:p-6 space-y-5">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <StatCard label="Episodes" value={overallEpisodes} sublabel="配信済み" />
+            <StatCard
+              label="合格率"
+              value={overallPassRate !== null ? `${overallPassRate}%` : "—"}
+              sublabel={`${overallPass} / ${overallRecorded} 票`}
+              accent="gold"
+              spoiler
+              spoilerLevel="result"
+            />
+            <StatCard label="LAST CALL" value={overallPass} sublabel="最終 合格判定票" accent="gold" spoiler spoilerLevel="result" />
+            <StatCard label="NOTHING / NC" value={overallFail} sublabel="最終 不合格判定票" spoiler spoilerLevel="result" />
+          </div>
+          <DivergingBar
+            pass={overallPass}
+            fail={overallFail}
+            label="全エピソードの最終ジャッジ合計"
+            size="lg"
+            spoilerLevel="result"
+          />
         </div>
       )}
-      <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-        <table class="text-xs sm:text-sm">
-          <thead class="bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
+
+      {/* Legend */}
+      <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="LAST CALL" size="xs" spoiler={false} /> LC</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="NOTHING" size="xs" spoiler={false} /> NOTHING</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="NO CALL" size="xs" spoiler={false} /> NO CALL</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="ABSENT" size="xs" spoiler={false} /> 欠席</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="UNKNOWN" size="xs" spoiler={false} /> 未確認</span>
+        <span>上=ファースト / 下=最終</span>
+      </div>
+
+      {/* Heatmap matrix */}
+      <div class="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+        <table class="text-xs lc-matrix">
+          <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
             <tr>
-              <th scope="col" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 bg-[var(--color-bg-elevated)] z-10">回</th>
-              <th scope="col" class="text-left font-medium px-3 py-2 whitespace-nowrap">シンデレラ</th>
-              <th scope="col" class="text-center font-medium px-2 py-2 whitespace-nowrap">結果</th>
+              <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-0 z-20 bg-[var(--color-surface)]">回</th>
+              <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-[60px] z-20 bg-[var(--color-surface)]">シンデレラ</th>
+              <th scope="col" class="text-center font-medium px-3 py-3 whitespace-nowrap">結果</th>
               {judges.map((j) => (
-                <th scope="col" class="text-center font-medium px-2 py-2 whitespace-nowrap">
-                  <a href={siteLink(`/judges/${j.id}/`)} class="hover:text-[var(--color-gold-bright)] transition">
+                <th scope="col" class="text-center font-medium px-2 py-3 whitespace-nowrap">
+                  <a href={siteLink(`/judges/${j.id}/`)} class="hover:text-[var(--color-gold-bright)] transition inline-block max-w-[64px] truncate text-[11px]">
                     {j.data.name}
                   </a>
                 </th>
@@ -170,71 +226,50 @@ const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallR
                 recorded > 0 ? (passCount >= Math.ceil(recorded / 2) ? "pass" : "fail") : null;
               const result = calcResult ?? cinderella?.data.result ?? null;
               return (
-                <tr class="border-t border-[var(--color-border)]">
-                  <td class="px-3 py-2 whitespace-nowrap sticky left-0 bg-[var(--color-bg-card)] z-10">
+                <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
+                  <td class="px-3 py-2.5 whitespace-nowrap sticky left-0 z-10 bg-[var(--color-card)]">
                     <a
                       href={siteLink(`/episodes/${episode.data.id}/`)}
-                      class="text-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition"
+                      class="text-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition font-semibold tabular-nums"
                     >
                       #{episode.data.id}
                     </a>
-                    <div class="text-[10px] text-[var(--color-text-muted)]">{dateLabel}</div>
+                    <div class="text-[9px] text-[var(--color-text-subtle)] tabular-nums">{dateLabel.slice(5)}</div>
                   </td>
-                  <td class="px-3 py-2 whitespace-nowrap">
+                  <td class="px-3 py-2.5 whitespace-nowrap sticky left-[60px] z-10 bg-[var(--color-card)]">
                     {cinderella ? (
                       <a
                         href={siteLink(`/cinderellas/${cinderella.id}/`)}
-                        class="hover:text-[var(--color-gold-bright)] transition"
+                        class="text-[var(--color-text)] hover:text-[var(--color-gold-bright)] transition text-[12px]"
                       >
                         {cinderella.data.name}
                       </a>
-                    ) : "—"}
+                    ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                   </td>
-                  <td class="px-2 py-2 text-center whitespace-nowrap">
+                  <td class="px-3 py-2.5 text-center whitespace-nowrap">
                     {result ? (
                       <span
                         class:list={[
-                          "spoiler inline-flex items-center justify-center w-12 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider",
+                          "spoiler inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider",
                           result === "pass"
                             ? "bg-[var(--color-gold)] text-black"
-                            : "bg-[var(--color-fail)] text-white",
+                            : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
                         ]}
+                        data-spoiler-level="result"
                       >
-                        {result === "pass" ? "PASS" : "NO"}
+                        {result === "pass" ? "LC" : "NO"}
                       </span>
-                    ) : (
-                      <span class="text-[var(--color-text-muted)]">—</span>
-                    )}
+                    ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                   </td>
-                  {cells.map((cell) => {
-                    const titleParts: string[] = [];
+                  {cells.map((cell, ji) => {
+                    const titleParts: string[] = [judges[ji].data.name];
                     if (cell.first.comment) titleParts.push(`ファースト: ${cell.first.comment}`);
                     if (cell.final.comment) titleParts.push(`最終: ${cell.final.comment}`);
                     return (
-                      <td class="px-2 py-2 text-center whitespace-nowrap align-middle" title={titleParts.join(" / ") || undefined}>
+                      <td class="px-1.5 py-2 text-center align-middle" title={titleParts.join(" · ")}>
                         <div class="inline-flex flex-col items-center gap-0.5">
-                          {(["first", "final"] as const).map((round) => {
-                            const v = cell[round].vote;
-                            return (
-                              <>
-                                {v === "LAST CALL" && (
-                                  <span class="spoiler inline-flex items-center justify-center w-8 h-4 rounded bg-[var(--color-gold)] text-black text-[10px] font-bold leading-none">LC</span>
-                                )}
-                                {v === "NOTHING" && (
-                                  <span class="spoiler inline-flex items-center justify-center w-8 h-4 rounded bg-[var(--color-fail)] text-white text-[10px] font-bold leading-none">NO</span>
-                                )}
-                                {v === "NO CALL" && (
-                                  <span class="spoiler inline-flex items-center justify-center w-8 h-4 rounded border border-[var(--color-fail)] text-[var(--color-fail)] text-[10px] font-bold leading-none">NC</span>
-                                )}
-                                {v === "ABSENT" && (
-                                  <span class="spoiler inline-flex items-center justify-center w-8 h-4 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px] leading-none">—</span>
-                                )}
-                                {v === "UNKNOWN" && (
-                                  <span class="inline-flex items-center justify-center w-8 h-4 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px] leading-none">?</span>
-                                )}
-                              </>
-                            );
-                          })}
+                          <VoteChip vote={cell.first.vote} size="sm" round="first" judgeName={judges[ji].data.name} />
+                          <VoteChip vote={cell.final.vote} size="sm" round="final" judgeName={judges[ji].data.name} />
                         </div>
                       </td>
                     );
@@ -243,30 +278,32 @@ const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallR
               );
             })}
           </tbody>
-          {judgeTotals.some((t) => t.recorded > 0) && (
-            <tfoot class="border-t-2 border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
+          {judgeStats.some((t) => t.recorded > 0) && (
+            <tfoot class="border-t-2 border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text-muted)]">
               <tr>
-                <th scope="row" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 bg-[var(--color-bg-elevated)] z-10">
+                <th scope="row" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 z-10 bg-[var(--color-surface)]">
                   累計
-                  <div class="text-[10px] text-[var(--color-text-subtle)] font-normal">最終ジャッジ</div>
+                  <div class="text-[9px] text-[var(--color-text-subtle)] font-normal">最終</div>
                 </th>
-                <td class="px-3 py-2 text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap">審査員別 LC / NO / NC</td>
-                <td class="px-2 py-2 text-center text-[10px]">
-                  <span class="spoiler">
-                    <span class="text-[var(--color-gold)] font-semibold">{overallPass}</span>
-                    /
-                    <span class="font-semibold">{overallFail}</span>
+                <td class="px-3 py-2 text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap sticky left-[60px] z-10 bg-[var(--color-surface)]">合格率（最終）</td>
+                <td class="px-3 py-2 text-center text-[10px] whitespace-nowrap">
+                  <span class="spoiler" data-spoiler-level="result">
+                    <span class="text-[var(--color-gold)] font-bold tabular-nums">{overallPassRate ?? "—"}</span>
+                    {overallPassRate !== null && <span class="text-[var(--color-text-subtle)]">%</span>}
                   </span>
                 </td>
-                {judgeTotals.map((t) => (
-                  <td class="px-2 py-2 text-center align-middle">
+                {judgeStats.map((t) => (
+                  <td class="px-1.5 py-2 text-center align-middle">
                     {t.recorded === 0 ? (
                       <span class="text-[10px] text-[var(--color-text-subtle)]">—</span>
                     ) : (
-                      <div class="spoiler inline-flex flex-col items-center gap-0 text-[10px] leading-tight">
-                        <span class="text-[var(--color-gold)] font-bold">{t.lastCall}</span>
-                        <span class="text-[var(--color-text-subtle)]">/</span>
-                        <span>{t.nothing}{t.noCall > 0 && <span class="text-[var(--color-fail)]">+{t.noCall}</span>}</span>
+                      <div class="spoiler inline-flex flex-col items-center text-[10px] leading-tight" data-spoiler-level="vote">
+                        <span class="text-[var(--color-gold)] font-bold tabular-nums">
+                          {t.passRate ?? 0}%
+                        </span>
+                        <span class="text-[var(--color-text-subtle)] tabular-nums text-[9px]">
+                          {t.lastCall}/{t.recorded}
+                        </span>
                       </div>
                     )}
                   </td>
@@ -276,29 +313,14 @@ const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallR
           )}
         </table>
       </div>
-      <div class="flex flex-wrap items-center gap-4 text-xs text-[var(--color-text-muted)]">
-        <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-4 rounded bg-[var(--color-gold)] text-black text-[10px] font-bold leading-none">LC</span>
-          = LAST CALL
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-4 rounded bg-[var(--color-fail)] text-white text-[10px] font-bold leading-none">NO</span>
-          = NOTHING
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-4 rounded border border-[var(--color-fail)] text-[var(--color-fail)] text-[10px] font-bold leading-none">NC</span>
-          = NO CALL
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-4 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px] leading-none">?</span>
-          = 未確認
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-8 h-4 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-[10px] leading-none">—</span>
-          = 欠席
-        </span>
-        <span class="text-[var(--color-text-muted)]">セル上=ファーストコール / 下=最終ジャッジ</span>
-      </div>
     </section>
   </div>
 </Layout>
+
+<style>
+  /* Sticky shadow on left columns for visual separation when scrolling */
+  .lc-matrix th[scope="col"]:nth-child(2),
+  .lc-matrix td:nth-child(2) {
+    box-shadow: 1px 0 0 var(--color-border);
+  }
+</style>

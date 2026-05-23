@@ -19,13 +19,14 @@ interface Props {
 }
 
 const { name, href, subtitle, meta, badge, sns } = Astro.props;
+const hasSignatureSlot = Astro.slots.has("signature");
 ---
 
-<article class="group relative card p-5 sm:p-6">
+<article class="group relative card p-5 sm:p-6 flex flex-col gap-4">
   <div class="flex items-start justify-between gap-3">
     <div class="min-w-0 space-y-1">
-      <h3 class="font-display-serif text-lg sm:text-xl text-[var(--color-text)]">
-        <a href={href} class="group-hover:text-[var(--color-gold-bright)] transition before:absolute before:inset-0">
+      <h3 class="font-display-serif text-lg sm:text-xl text-[var(--color-text)] leading-tight">
+        <a href={href} class="group-hover:text-[var(--color-gold-bright)] transition before:absolute before:inset-0 before:rounded-[inherit]">
           {name}
         </a>
       </h3>
@@ -46,13 +47,19 @@ const { name, href, subtitle, meta, badge, sns } = Astro.props;
               ? "bg-transparent text-[var(--color-text-subtle)] border border-[var(--color-border-strong)]"
               : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border)]",
         ]}
+        data-spoiler-level={badge.tone !== "neutral" ? "result" : undefined}
       >
         {badge.label}
       </span>
     )}
   </div>
+  {hasSignatureSlot && (
+    <div class="relative z-10 pt-1 border-t border-dashed border-[var(--color-border)]">
+      <slot name="signature" />
+    </div>
+  )}
   {sns && (
-    <div class="mt-4 relative z-10">
+    <div class="relative z-10 mt-auto">
       <SnsLinks sns={sns} size="sm" />
     </div>
   )}

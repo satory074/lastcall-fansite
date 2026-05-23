@@ -3,59 +3,74 @@ import Layout from "../components/Layout.astro";
 ---
 
 <Layout title="このサイトについて" description="LAST CALL 非公式ファンサイトの運営方針と削除依頼について。">
-  <article class="max-w-3xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12 text-sm sm:text-base leading-relaxed">
+  <article class="max-w-3xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12 text-sm sm:text-base leading-[1.85]">
     <header class="space-y-4">
       <p class="eyebrow">About</p>
-      <h1 class="font-display-serif text-3xl sm:text-5xl text-[var(--color-text)]">このサイトについて</h1>
+      <h1 class="font-display-serif text-[2.25rem] sm:text-[3rem] leading-[1.1] text-[var(--color-text)]">このサイトについて</h1>
     </header>
 
     <section class="space-y-3">
-      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">非公式であることの明示</h2>
+      <h2 class="section-eyebrow">非公式であることの明示</h2>
       <p>
-        本サイト「LAST CALL 非公式ファンサイト」は、YouTube配信中のオーディション番組
-        <a href="https://lastcall.jp/" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">LAST CALL（ラストコール）</a>
+        本サイト「LAST CALL 非公式ファンサイト」は、YouTube 配信中のオーディション番組
+        <a href="https://lastcall.jp/" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">LAST CALL（ラストコール）</a>
         に関する情報を、ファンが個人的にまとめた非公式の索引サイトです。
         番組制作・出演者・所属事務所・スポンサー各社とは一切関係ありません。
       </p>
     </section>
 
     <section class="space-y-3">
-      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">ネタバレ配慮</h2>
+      <h2 class="section-eyebrow">ネタバレ表示モード（3 段階）</h2>
       <p>
-        合否・投票結果・あらすじなど本編未視聴の方にネタバレとなる情報は、既定では<strong>ぼかし表示</strong>になっています。
-        ヘッダ右上の「ネタバレ非表示」ボタンを押すと表示モードが切り替わり、選択はブラウザに保存されます。
-        個別のぼかしをタップ／クリックすると、その箇所だけ一時的に表示することもできます。
+        合否・投票結果・コメントなど本編未視聴の方にネタバレとなる情報は、既定で<strong>ぼかし表示</strong>になっています。ヘッダ右上のセグメントトグルで以下の 3 段階を切り替えられます（選択はブラウザに保存）。
+      </p>
+      <ul class="space-y-2 text-[var(--color-text-muted)] pt-1">
+        <li class="flex gap-3">
+          <span class="font-display tracking-[0.18em] text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] shrink-0">全隠</span>
+          <span>合否・票内訳・コメントを全てぼかす。初見の視聴者向け（既定）。</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="font-display tracking-[0.18em] text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] shrink-0">結果伏</span>
+          <span>「誰が合格・不合格になったか」だけ伏せ、出演者一覧や個別の投票・コメントは表示。<strong>結末は知らずにキャストや審査傾向を眺めたい</strong>視聴者向け。</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="font-display tracking-[0.18em] text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-gold)] text-black shrink-0">全表示</span>
+          <span>全てのデータを表示。視聴済みの方向け。</span>
+        </li>
+      </ul>
+      <p class="text-[var(--color-text-muted)]">
+        個別のぼかし要素をタップ／クリックすると、その箇所だけ一時的に表示することもできます。
       </p>
     </section>
 
     <section class="space-y-3">
-      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">掲載情報の方針</h2>
+      <h2 class="section-eyebrow">掲載情報の方針</h2>
       <ul class="list-disc list-outside pl-5 space-y-2 text-[var(--color-text-muted)]">
-        <li>動画・画像は公式YouTubeの埋め込みおよびリンクのみを使用し、ホスティングは行いません。</li>
+        <li>動画・画像は公式 YouTube の埋め込みおよびリンクのみを使用し、ホスティングは行いません。</li>
         <li>各回の投票結果・コメントは公開放送回からの引用範囲で記載し、出典を併記します。</li>
-        <li>SNSリンクは本人が公開しているアカウントのみを掲載対象とします。</li>
+        <li>SNS リンクは本人が公開しているアカウントのみを掲載対象とします。</li>
         <li>掲載内容の正確性に努めますが、公式発表と齟齬がある場合は公式情報を優先してください。</li>
       </ul>
     </section>
 
     <section class="space-y-3">
-      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">修正・削除依頼</h2>
+      <h2 class="section-eyebrow">修正・削除依頼</h2>
       <p>
-        記載内容の誤り、SNSリンクの追加・削除、ご本人による掲載拒否のご要望は、
-        GitHubリポジトリの Issue にてご連絡ください。本人確認可能な方法でご連絡いただいた場合、原則として速やかに対応します。
+        記載内容の誤り、SNS リンクの追加・削除、ご本人による掲載拒否のご要望は、
+        GitHub リポジトリの Issue にてご連絡ください。本人確認可能な方法でご連絡いただいた場合、原則として速やかに対応します。
       </p>
       <p class="text-[var(--color-text-muted)]">
-        ※ Issue のURLはリポジトリ公開後に追記します。
+        ※ Issue の URL はリポジトリ公開後に追記します。
       </p>
     </section>
 
     <section class="space-y-3">
-      <h2 class="text-lg font-semibold border-l-2 border-[var(--color-gold)] pl-3">主なデータソース</h2>
+      <h2 class="section-eyebrow">主なデータソース</h2>
       <ul class="list-disc list-outside pl-5 space-y-1 text-[var(--color-text-muted)]">
-        <li><a href="https://lastcall.jp/" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">公式サイト lastcall.jp</a></li>
-        <li><a href="https://www.youtube.com/@LASTCALL_OFFICIAL" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">公式YouTube @LASTCALL_OFFICIAL</a></li>
-        <li><a href="https://x.com/LASTCALL_ofcl" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">公式X @LASTCALL_ofcl</a></li>
-        <li><a href="https://www.instagram.com/lastcall_ofcl/" class="underline hover:text-[var(--color-gold-bright)]" target="_blank" rel="noopener">公式Instagram @lastcall_ofcl</a></li>
+        <li><a href="https://lastcall.jp/" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">公式サイト lastcall.jp</a></li>
+        <li><a href="https://www.youtube.com/@LASTCALL_OFFICIAL" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">公式 YouTube @LASTCALL_OFFICIAL</a></li>
+        <li><a href="https://x.com/LASTCALL_ofcl" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">公式 X @LASTCALL_ofcl</a></li>
+        <li><a href="https://www.instagram.com/lastcall_ofcl/" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">公式 Instagram @lastcall_ofcl</a></li>
       </ul>
     </section>
   </article>

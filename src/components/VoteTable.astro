@@ -2,6 +2,8 @@
 import { getCollection, getEntries } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import { siteLink } from "../lib/url";
+import VoteChip from "./VoteChip.astro";
+import DivergingBar from "./DivergingBar.astro";
 
 interface Props {
   votes: CollectionEntry<"episodes">["data"]["votes"];
@@ -59,29 +61,26 @@ const extraRows: Row[] = extraJudgeIds.map((id) => {
 
 const rows = [...baseRows, ...extraRows];
 
-// 各ラウンドごとに集計
 const tally = (round: "first" | "final") => {
-  const list = votes.filter((v) => v.round === round);
+  const list = rows.map((r) => r[round].vote);
   return {
-    lastCall: list.filter((v) => v.vote === "LAST CALL").length,
-    nothing: list.filter((v) => v.vote === "NOTHING").length,
-    noCall: list.filter((v) => v.vote === "NO CALL").length,
-    absent: list.filter((v) => v.vote === "ABSENT").length,
-    unknown: rows.filter((r) => r[round].vote === "UNKNOWN").length,
+    lastCall: list.filter((v) => v === "LAST CALL").length,
+    nothing: list.filter((v) => v === "NOTHING").length,
+    noCall: list.filter((v) => v === "NO CALL").length,
+    absent: list.filter((v) => v === "ABSENT").length,
+    unknown: list.filter((v) => v === "UNKNOWN").length,
   };
 };
 const firstTally = tally("first");
 const finalTally = tally("final");
 
-// 合否判定は最終ジャッジのみで集計
-const pass = finalTally.lastCall;
-const fail = finalTally.nothing + finalTally.noCall;
-const totalRecorded = pass + fail;
+const finalPass = finalTally.lastCall;
+const finalFail = finalTally.nothing + finalTally.noCall;
+const totalRecorded = finalPass + finalFail;
 const calcResult: "pass" | "fail" | null =
-  totalRecorded > 0 ? (pass >= Math.ceil(totalRecorded / 2) ? "pass" : "fail") : null;
+  totalRecorded > 0 ? (finalPass >= Math.ceil(totalRecorded / 2) ? "pass" : "fail") : null;
 const displayResult = cinderellaResult ?? calcResult;
 
-// ファースト → 最終で判定が変わった審査員数（両ラウンドとも記録があるもののみ）
 const flipped = rows.filter((r) => {
   if (r.first.vote === "UNKNOWN" || r.final.vote === "UNKNOWN") return false;
   const firstPass = r.first.vote === "LAST CALL";
@@ -89,156 +88,148 @@ const flipped = rows.filter((r) => {
   return firstPass !== finalPass;
 }).length;
 
-const renderBadge = (vote: VoteValue) => vote;
+const hasAnyVote = votes.length > 0;
 ---
 
-<section class="space-y-4">
-  <div class="flex flex-wrap items-end justify-between gap-3">
-    <h2 class="font-display tracking-widest text-sm text-[var(--color-text-muted)] uppercase">
-      Judges &amp; Vote
-    </h2>
+<section class="space-y-6">
+  <header class="flex flex-wrap items-end justify-between gap-3">
+    <div class="space-y-1">
+      <h2 class="section-eyebrow">Judges &amp; Votes</h2>
+      <p class="text-xs text-[var(--color-text-muted)] tracking-wide">
+        固定 14 名審査員 × 2 ラウンド（ファーストコール / 最終ジャッジ）
+      </p>
+    </div>
     {displayResult && (
       <span
         class:list={[
-          "spoiler px-3 py-1 rounded text-sm font-semibold tracking-wider",
+          "spoiler font-display tracking-[0.22em] text-[11px] font-semibold px-3 py-1.5 rounded-full",
           displayResult === "pass"
             ? "bg-[var(--color-gold)] text-black"
-            : "bg-[var(--color-fail)] text-white",
+            : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
         ]}
+        data-spoiler-level="result"
       >
-        {displayResult === "pass" ? "合格" : "不合格"}
+        {displayResult === "pass" ? "LAST CALL · 合格" : "NOTHING · 不合格"}
       </span>
+    )}
+  </header>
+
+  {/* Diverging bar — Final */}
+  <div class="card p-5 sm:p-6 space-y-5">
+    <DivergingBar
+      pass={finalTally.lastCall}
+      fail={finalTally.nothing + finalTally.noCall}
+      absent={finalTally.absent}
+      unknown={finalTally.unknown}
+      label="最終ジャッジ (Final)"
+      size="lg"
+      spoilerLevel="result"
+    />
+    <DivergingBar
+      pass={firstTally.lastCall}
+      fail={firstTally.nothing + firstTally.noCall}
+      absent={firstTally.absent}
+      unknown={firstTally.unknown}
+      label="ファーストコール (First)"
+      size="sm"
+      spoilerLevel="vote"
+    />
+    {flipped > 0 && (
+      <p class="spoiler text-[11px] text-[var(--color-text-muted)] tracking-wide" data-spoiler-level="vote">
+        ファースト → 最終で判定変更:
+        <span class="font-semibold text-[var(--color-text)] tabular-nums">{flipped}</span> 名
+      </p>
     )}
   </div>
 
-  <div class="grid sm:grid-cols-2 gap-2 text-xs">
-    {([
-      { key: "first" as const, label: "ファーストコール", t: firstTally },
-      { key: "final" as const, label: "最終ジャッジ", t: finalTally },
-    ]).map(({ key, label, t }) => (
-      <div class="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-2">
-        <div class="flex items-center justify-between mb-1">
-          <span class="font-semibold text-[var(--color-text)]">{label}</span>
-          <span class="text-[10px] text-[var(--color-text-subtle)] uppercase tracking-wider">
-            {key === "first" ? "First Call" : "Final Judgment"}
+  {/* Judge signature row — 14 chips */}
+  <div class="card p-4 sm:p-5 space-y-3">
+    <div class="flex items-baseline justify-between gap-3">
+      <h3 class="text-[11px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] font-medium">
+        Vote Signature
+      </h3>
+      <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider">
+        上=First / 下=Final
+      </span>
+    </div>
+    <div class="flex flex-wrap gap-1.5 sm:gap-2">
+      {rows.map((r) => (
+        <a href={r.judgeHref ?? "#"} class="group flex flex-col items-center gap-0.5">
+          <span class="flex flex-col items-center gap-0.5">
+            <VoteChip vote={r.first.vote} size="sm" round="first" judgeName={r.judgeName} />
+            <VoteChip vote={r.final.vote} size="sm" round="final" judgeName={r.judgeName} />
           </span>
-        </div>
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[var(--color-text-muted)]">
-          <span class="spoiler inline-flex items-center gap-1">
-            <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-gold)]"></span>
-            LC <span class="font-semibold text-[var(--color-gold)]">{t.lastCall}</span>
+          <span class="text-[9px] leading-none text-[var(--color-text-subtle)] tracking-tight group-hover:text-[var(--color-gold-bright)] transition max-w-[60px] truncate text-center">
+            {r.judgeName}
           </span>
-          <span class="spoiler inline-flex items-center gap-1">
-            <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-fail)]"></span>
-            NOTHING <span class="font-semibold text-[var(--color-text)]">{t.nothing}</span>
-          </span>
-          <span class="spoiler inline-flex items-center gap-1">
-            <span class="inline-block w-2 h-2 rounded-full border border-[var(--color-fail)]"></span>
-            NO CALL <span class="font-semibold text-[var(--color-text)]">{t.noCall}</span>
-          </span>
-          {t.absent > 0 && (
-            <span class="spoiler inline-flex items-center gap-1">欠席 {t.absent}</span>
-          )}
-          {t.unknown > 0 && (
-            <span class="inline-flex items-center gap-1">未確認 {t.unknown}</span>
-          )}
-        </div>
-      </div>
-    ))}
+        </a>
+      ))}
+    </div>
   </div>
 
-  {flipped > 0 && (
-    <p class="spoiler text-xs text-[var(--color-text-muted)]">
-      ファースト→最終で判定を変えた審査員：
-      <span class="font-semibold text-[var(--color-text)]">{flipped}</span> 名
-    </p>
-  )}
-
-  <div class="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-    <table class="min-w-full text-sm">
-      <thead class="bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
-        <tr>
-          <th class="text-left font-medium px-3 py-2 whitespace-nowrap">審査員</th>
-          <th class="text-left font-medium px-3 py-2 whitespace-nowrap">
-            ファーストコール
-            <span class="block text-[10px] font-normal text-[var(--color-text-subtle)] normal-case">First Call</span>
-          </th>
-          <th class="text-left font-medium px-3 py-2 whitespace-nowrap">
-            最終ジャッジ
-            <span class="block text-[10px] font-normal text-[var(--color-text-subtle)] normal-case">Final Judgment</span>
-          </th>
-          <th class="text-left font-medium px-3 py-2">コメント</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => {
-          const comments: string[] = [];
-          if (row.first.comment) comments.push(`（ファースト）${row.first.comment}`);
-          if (row.final.comment) comments.push(`（最終）${row.final.comment}`);
-          return (
-            <tr class="border-t border-[var(--color-border)]">
-              <td class="px-3 py-2 whitespace-nowrap">
-                {row.judgeHref ? (
-                  <a
-                    href={row.judgeHref}
-                    class="hover:text-[var(--color-gold-bright)] transition"
-                  >
-                    {row.judgeName}
-                  </a>
-                ) : (
-                  <span>{row.judgeName}</span>
-                )}
-              </td>
-              {(["first", "final"] as const).map((round) => {
-                const cell = row[round];
-                return (
+  {/* Detail table — collapsed by default */}
+  {hasAnyVote && (
+    <details class="card group">
+      <summary class="px-5 sm:px-6 py-3 cursor-pointer list-none flex items-center justify-between gap-3 text-sm tracking-wide select-none">
+        <span class="flex items-center gap-2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition group-open:rotate-90" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          票の詳細 & コメント
+        </span>
+        <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider uppercase">
+          {votes.length} 票記録
+        </span>
+      </summary>
+      <div class="border-t border-[var(--color-border)] overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
+            <tr>
+              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">審査員</th>
+              <th class="text-center font-medium px-3 py-2 whitespace-nowrap">First</th>
+              <th class="text-center font-medium px-3 py-2 whitespace-nowrap">Final</th>
+              <th class="text-left font-medium px-3 py-2">コメント</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const comments: string[] = [];
+              if (row.first.comment) comments.push(`（ファースト）${row.first.comment}`);
+              if (row.final.comment) comments.push(`（最終）${row.final.comment}`);
+              return (
+                <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
                   <td class="px-3 py-2 whitespace-nowrap">
-                    {cell.vote === "LAST CALL" && (
-                      <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-gold)] text-black text-xs font-semibold tracking-wider">
-                        {renderBadge(cell.vote)}
-                      </span>
-                    )}
-                    {cell.vote === "NOTHING" && (
-                      <span class="spoiler inline-flex items-center px-2 py-0.5 rounded bg-[var(--color-fail)] text-white text-xs font-semibold tracking-wider">
-                        {renderBadge(cell.vote)}
-                      </span>
-                    )}
-                    {cell.vote === "NO CALL" && (
-                      <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-fail)] text-[var(--color-fail)] text-xs font-semibold tracking-wider">
-                        {renderBadge(cell.vote)}
-                      </span>
-                    )}
-                    {cell.vote === "ABSENT" && (
-                      <span class="spoiler inline-flex items-center px-2 py-0.5 rounded border border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
-                        欠席
-                      </span>
-                    )}
-                    {cell.vote === "UNKNOWN" && (
-                      <span class="inline-flex items-center px-2 py-0.5 rounded border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] text-xs">
-                        未確認
-                      </span>
+                    {row.judgeHref ? (
+                      <a href={row.judgeHref} class="hover:text-[var(--color-gold-bright)] transition">
+                        {row.judgeName}
+                      </a>
+                    ) : (
+                      <span>{row.judgeName}</span>
                     )}
                   </td>
-                );
-              })}
-              <td class="px-3 py-2 text-[var(--color-text-muted)]">
-                {comments.length > 0
-                  ? <span class="spoiler-block inline-block">{comments.join(" / ")}</span>
-                  : "—"}
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
+                  <td class="px-3 py-2 text-center">
+                    <VoteChip vote={row.first.vote} size="sm" round="first" judgeName={row.judgeName} />
+                  </td>
+                  <td class="px-3 py-2 text-center">
+                    <VoteChip vote={row.final.vote} size="sm" round="final" judgeName={row.judgeName} />
+                  </td>
+                  <td class="px-3 py-2 text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed">
+                    {comments.length > 0
+                      ? <span class="spoiler-block inline-block" data-spoiler-level="comment">{comments.join(" / ")}</span>
+                      : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  )}
+
   {finalTally.unknown > 0 && (
-    <p class="text-xs text-[var(--color-text-muted)]">
-      「未確認」は本編未視聴により個別投票が記録されていない審査員です。視聴後に
-      <code class="text-[var(--color-text)]">src/content/episodes/{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1]}.json</code>
-      の <code class="text-[var(--color-text)]">votes</code> 配列に
-      <code class="text-[var(--color-text)]">round: "first"</code> / <code class="text-[var(--color-text)]">round: "final"</code>
-      を指定して埋めると反映されます。
+    <p class="text-[11px] text-[var(--color-text-subtle)] tracking-wide">
+      「未確認」は本編未視聴のため個別投票が未記録の審査員です。<code class="text-[var(--color-text-muted)]">src/content/episodes/{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1] ?? "<ID>"}.json</code> の <code class="text-[var(--color-text-muted)]">votes</code> に <code class="text-[var(--color-text-muted)]">round: "first" | "final"</code> 指定で追加してください。
     </p>
   )}
 </section>

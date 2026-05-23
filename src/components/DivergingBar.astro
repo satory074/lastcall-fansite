@@ -1,0 +1,99 @@
+---
+interface Props {
+  pass: number;
+  fail: number;
+  absent?: number;
+  unknown?: number;
+  label?: string;
+  size?: "sm" | "md" | "lg";
+  spoiler?: boolean;
+  spoilerLevel?: "result" | "vote" | "comment";
+  showLabels?: boolean;
+}
+
+const {
+  pass,
+  fail,
+  absent = 0,
+  unknown = 0,
+  label,
+  size = "md",
+  spoiler = true,
+  spoilerLevel = "result",
+  showLabels = true,
+} = Astro.props;
+
+const recorded = pass + fail;
+const total = pass + fail + absent;
+const passRate = recorded > 0 ? Math.round((pass / recorded) * 100) : null;
+
+const heights: Record<NonNullable<Props["size"]>, string> = {
+  sm: "h-1.5",
+  md: "h-2.5",
+  lg: "h-3.5",
+};
+
+// 中心 0 基準で、票割合を %幅に。記録 0 件の場合は中央線のみ
+const passPct = recorded > 0 ? (pass / recorded) * 50 : 0; // 右側 0..50%
+const failPct = recorded > 0 ? (fail / recorded) * 50 : 0; // 左側 0..50%
+---
+
+<div class="space-y-2">
+  {(label || showLabels) && (
+    <div class="flex flex-wrap items-baseline justify-between gap-2 text-[11px] text-[var(--color-text-muted)]">
+      {label && (
+        <span class="font-medium tracking-wider uppercase text-[10px] text-[var(--color-text-subtle)]">
+          {label}
+        </span>
+      )}
+      {showLabels && recorded > 0 && (
+        <span class:list={["tabular-nums", spoiler && "spoiler"]} data-spoiler-level={spoiler ? spoilerLevel : undefined}>
+          <span class="text-[var(--color-fail)] font-semibold">{fail}</span>
+          <span class="mx-1 text-[var(--color-border-strong)]">·</span>
+          <span class="text-[var(--color-gold)] font-semibold">{pass}</span>
+          {passRate !== null && (
+            <span class="ml-2 text-[var(--color-text-subtle)]">合格率 {passRate}%</span>
+          )}
+        </span>
+      )}
+    </div>
+  )}
+  <div
+    class:list={[
+      "relative rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden",
+      heights[size],
+      spoiler && "spoiler-block",
+    ]}
+    data-spoiler-level={spoiler ? spoilerLevel : undefined}
+    aria-label={
+      recorded > 0
+        ? `LAST CALL ${pass} / NOTHING+NO CALL ${fail}${passRate !== null ? ` (合格率 ${passRate}%)` : ""}`
+        : "投票データなし"
+    }
+  >
+    {/* center axis */}
+    <div class="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--color-border-strong)] z-10"></div>
+    {/* fail bar — left */}
+    {failPct > 0 && (
+      <div
+        class="absolute top-0 bottom-0 right-1/2 bg-[var(--color-fail)] origin-right"
+        style={`width: ${failPct}%`}
+      ></div>
+    )}
+    {/* pass bar — right */}
+    {passPct > 0 && (
+      <div
+        class="absolute top-0 bottom-0 left-1/2 bg-gradient-to-r from-[var(--color-gold-deep)] to-[var(--color-gold)] origin-left"
+        style={`width: ${passPct}%`}
+      ></div>
+    )}
+  </div>
+  {(absent > 0 || unknown > 0) && (
+    <div class="text-[10px] text-[var(--color-text-subtle)] tracking-wider">
+      {absent > 0 && <span>欠席 {absent}</span>}
+      {absent > 0 && unknown > 0 && <span class="mx-1">·</span>}
+      {unknown > 0 && <span>未確認 {unknown}</span>}
+      <span class="ml-2">/ 合計 {total + unknown}</span>
+    </div>
+  )}
+</div>

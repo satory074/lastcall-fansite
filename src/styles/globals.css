@@ -19,6 +19,7 @@
   --color-gold: #d4af37;
   --color-gold-bright: #f0d264;
   --color-gold-deep: #8a7022;
+  --color-gold-glow: rgba(212, 175, 55, 0.12);
 
   /* Semantic */
   --color-pass: #d4af37;
@@ -31,10 +32,17 @@
   --font-serif: "Noto Serif JP", "Times New Roman", "游明朝", "Yu Mincho", serif;
   --font-display: "Inter", "Noto Sans JP", system-ui, sans-serif;
 
+  /* Japanese-tuned leading */
+  --leading-jp-body: 1.85;
+  --leading-jp-tight: 1.6;
+  --leading-jp-display: 1.18;
+
   /* Motion */
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --duration-short: 180ms;
   --duration-base: 260ms;
+  --duration-long: 420ms;
 }
 
 * {
@@ -47,17 +55,38 @@ html {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* dark mode best practice: slight letter-spacing + lifted line-height */
-  letter-spacing: 0.01em;
-  line-height: 1.65;
+  /* JP最適化: palt で全角プロポーショナルメトリクス、line-height は漢字想定で広めに */
+  font-feature-settings: "palt" 1, "kern" 1;
+  letter-spacing: 0.02em;
+  line-height: var(--leading-jp-body);
   scroll-behavior: smooth;
+  text-spacing-trim: trim-start;
 }
 
 body {
   min-height: 100vh;
+  /* radial gradient (gold glow) + 微細ノイズで質感を出す。
+     ノイズは SVG turbulence の data-URL、mix-blend-mode で滲ませる */
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212, 175, 55, 0.04), transparent 60%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(212, 175, 55, 0.06), transparent 60%),
     var(--color-bg);
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.65 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: overlay;
+}
+
+main, header, footer {
+  position: relative;
+  z-index: 1;
 }
 
 a {
@@ -75,15 +104,16 @@ a:hover {
   color: #000;
 }
 
-/* Display typography utility — for hero / section heroes */
+/* Display typography — Mincho 見出し。漢字密度を活かすため tracking を詰める */
 .font-display-serif {
   font-family: var(--font-serif);
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.1;
+  line-height: var(--leading-jp-display);
+  font-feature-settings: "palt" 1;
 }
 
-/* Eyebrow / kicker — small uppercase label */
+/* Eyebrow / kicker */
 .eyebrow {
   font-family: var(--font-display);
   font-size: 0.6875rem;
@@ -91,9 +121,9 @@ a:hover {
   text-transform: uppercase;
   color: var(--color-gold);
   font-weight: 500;
+  line-height: 1.4;
 }
 
-/* Section header — uppercase muted label with hairline */
 .section-eyebrow {
   font-family: var(--font-display);
   font-size: 0.75rem;
@@ -104,6 +134,7 @@ a:hover {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
+  line-height: 1.4;
 }
 .section-eyebrow::before {
   content: "";
@@ -112,64 +143,151 @@ a:hover {
   background: var(--color-border-strong);
 }
 
-/* Card — base surface elevated above bg */
+/* Card — base elevated surface */
 .card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: 0.625rem;
+  border-radius: 0.75rem;
   transition: border-color var(--duration-base) var(--ease-out-soft),
-              transform var(--duration-base) var(--ease-out-soft),
+              transform var(--duration-base) var(--ease-spring),
               box-shadow var(--duration-base) var(--ease-out-soft);
 }
 .card:hover {
-  border-color: rgba(212, 175, 55, 0.45);
-  box-shadow: 0 4px 24px -8px rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 12px 36px -10px var(--color-gold-glow),
+              0 2px 6px -2px rgba(0, 0, 0, 0.4);
 }
 
-/* Focus ring — accessibility */
+/* Hairline divider — section breaks */
+.hairline {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-border-strong) 20%,
+    var(--color-border-strong) 80%,
+    transparent
+  );
+}
+
+/* Focus ring */
 :focus-visible {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
   border-radius: 0.25rem;
 }
 
-/* ネタバレ配慮 (既存ロジックそのまま) */
-html:not(.show-spoilers) .spoiler:not(.spoiler-revealed) {
-  filter: blur(8px);
+/* -------------------------------------------------------------------
+   Spoiler — 3-tier granularity
+   状態:
+     html.spoilers-shown        : 全て表示
+     html.spoilers-results-only : 結果(合否)のみ伏せ、キャスト・票内訳・コメントは表示
+     (default / spoilers-hidden): 全て伏せ
+   要素側はクラスで階層を示す:
+     .spoiler[data-spoiler-level="result"]  : 合否・LC/NOTHING の総合判定
+     .spoiler[data-spoiler-level="vote"]    : 個別の投票
+     .spoiler[data-spoiler-level="comment"] : 審査員コメント
+   .spoiler のままなら "vote" 扱い（既存互換）
+   .spoiler-block は段落用、デフォルトは "comment" 扱い
+   ------------------------------------------------------------------- */
+
+/* デフォルト = 全て隠す */
+html:not(.spoilers-shown):not(.spoilers-results-only) .spoiler:not(.spoiler-revealed),
+html.spoilers-results-only .spoiler[data-spoiler-level="result"]:not(.spoiler-revealed),
+html:not(.spoilers-shown):not(.spoilers-results-only) .spoiler:not([data-spoiler-level]):not(.spoiler-revealed) {
+  filter: blur(7px);
   cursor: pointer;
   user-select: none;
-  transition: filter 0.15s ease;
+  transition: filter 0.18s var(--ease-out-soft);
   position: relative;
+  isolation: isolate;
 }
-html:not(.show-spoilers) .spoiler:not(.spoiler-revealed):hover {
-  filter: blur(4px);
+html:not(.spoilers-shown):not(.spoilers-results-only) .spoiler:not(.spoiler-revealed):hover,
+html.spoilers-results-only .spoiler[data-spoiler-level="result"]:not(.spoiler-revealed):hover,
+html:not(.spoilers-shown):not(.spoilers-results-only) .spoiler:not([data-spoiler-level]):not(.spoiler-revealed):hover {
+  filter: blur(3px);
 }
-html:not(.show-spoilers) .spoiler:not(.spoiler-revealed)::after {
+html:not(.spoilers-shown):not(.spoilers-results-only) .spoiler:not(.spoiler-revealed)::after,
+html.spoilers-results-only .spoiler[data-spoiler-level="result"]:not(.spoiler-revealed)::after,
+html:not(.spoilers-shown):not(.spoilers-results-only) .spoiler:not([data-spoiler-level]):not(.spoiler-revealed)::after {
   content: "タップで表示";
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
   color: var(--color-text-muted);
   filter: blur(0);
-  background: color-mix(in oklab, var(--color-bg) 30%, transparent);
+  background: color-mix(in oklab, var(--color-bg) 25%, transparent);
   pointer-events: none;
   border-radius: inherit;
 }
-html:not(.show-spoilers) .spoiler-block:not(.spoiler-revealed) {
+
+html:not(.spoilers-shown):not(.spoilers-results-only) .spoiler-block:not(.spoiler-revealed),
+html.spoilers-results-only .spoiler-block[data-spoiler-level="result"]:not(.spoiler-revealed) {
   filter: blur(6px);
   cursor: pointer;
   user-select: none;
-  transition: filter 0.15s ease;
+  transition: filter 0.18s var(--ease-out-soft);
 }
-html:not(.show-spoilers) .spoiler-block:not(.spoiler-revealed):hover {
-  filter: blur(3px);
+html:not(.spoilers-shown):not(.spoilers-results-only) .spoiler-block:not(.spoiler-revealed):hover,
+html.spoilers-results-only .spoiler-block[data-spoiler-level="result"]:not(.spoiler-revealed):hover {
+  filter: blur(2.5px);
 }
 
-/* 旧 var(--color-bg-elevated/card) 互換 — 既存コンポーネントで参照されているため alias を残す */
+/* Legacy alias: 旧 .show-spoilers クラス互換（既存コンポーネントが参照） */
+html.show-spoilers .spoiler,
+html.show-spoilers .spoiler-block {
+  filter: none !important;
+  cursor: auto;
+}
+
+/* 旧 var alias — 既存コンポーネントが参照しているため残す */
 :root {
   --color-bg-elevated: var(--color-surface);
   --color-bg-card: var(--color-card);
+}
+
+/* -------------------------------------------------------------------
+   Motion safety: reduced-motion で全モーション無効化
+   ------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -------------------------------------------------------------------
+   View Transitions — cross-document (Chrome 126+/Safari 18+)
+   thumbnail を回詳細とつなぐ
+   ------------------------------------------------------------------- */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 280ms;
+  animation-timing-function: var(--ease-out-soft);
+}
+
+/* -------------------------------------------------------------------
+   Scroll-driven reveal — matrix rows etc.
+   animation-timeline: view() 対応ブラウザでフェード
+   ------------------------------------------------------------------- */
+@supports (animation-timeline: view()) {
+  .reveal-on-scroll {
+    animation: reveal-fade linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+  @keyframes reveal-fade {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
