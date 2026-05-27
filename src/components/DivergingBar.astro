@@ -33,9 +33,29 @@ const heights: Record<NonNullable<Props["size"]>, string> = {
   lg: "h-3.5",
 };
 
-// 中心 0 基準で、票割合を %幅に。記録 0 件の場合は中央線のみ
-const passPct = recorded > 0 ? (pass / recorded) * 50 : 0; // 右側 0..50%
-const failPct = recorded > 0 ? (fail / recorded) * 50 : 0; // 左側 0..50%
+// 中心 0 基準の票割合 (％ 幅)。記録 0 件のときは中央線のみ
+const passPct = recorded > 0 ? (pass / recorded) * 50 : 0;
+const failPct = recorded > 0 ? (fail / recorded) * 50 : 0;
+
+const labelAria = recorded > 0
+  ? `LAST CALL ${pass} / NOTHING+NO CALL ${fail}${passRate !== null ? ` (合格率 ${passRate}%)` : ""}`
+  : "投票データなし";
+
+// テキスト行 (数値 + 合格率) の payload — innerHTML で復元
+const textPayload = spoiler && recorded > 0
+  ? JSON.stringify({
+      html: `<span class=\"text-[var(--color-fail)] font-semibold\">${fail}</span>` +
+            `<span class=\"mx-1 text-[var(--color-border-strong)]\">·</span>` +
+            `<span class=\"text-[var(--color-gold)] font-semibold\">${pass}</span>` +
+            (passRate !== null ? `<span class=\"ml-2 text-[var(--color-text-subtle)]\">合格率 ${passRate}%</span>` : ""),
+      aria: labelAria,
+    })
+  : null;
+
+// バー本体の payload
+const barPayload = spoiler && recorded > 0
+  ? JSON.stringify({ failPct, passPct, aria: labelAria })
+  : null;
 ---
 
 <div class="space-y-2">
@@ -47,47 +67,76 @@ const failPct = recorded > 0 ? (fail / recorded) * 50 : 0; // 左側 0..50%
         </span>
       )}
       {showLabels && recorded > 0 && (
-        <span class:list={["tabular-nums", spoiler && "spoiler"]} data-spoiler-level={spoiler ? spoilerLevel : undefined}>
-          <span class="text-[var(--color-fail)] font-semibold">{fail}</span>
-          <span class="mx-1 text-[var(--color-border-strong)]">·</span>
-          <span class="text-[var(--color-gold)] font-semibold">{pass}</span>
-          {passRate !== null && (
-            <span class="ml-2 text-[var(--color-text-subtle)]">合格率 {passRate}%</span>
-          )}
-        </span>
+        spoiler ? (
+          <span
+            class="tabular-nums lc-occluded relative"
+            data-occlusion="text"
+            data-spoiler-level={spoilerLevel}
+            data-spoiler-payload={textPayload}
+            aria-label="投票数（非表示）"
+          ><span class="lc-payload-content"></span></span>
+        ) : (
+          <span class="tabular-nums" aria-label={labelAria}>
+            <span class="text-[var(--color-fail)] font-semibold">{fail}</span>
+            <span class="mx-1 text-[var(--color-border-strong)]">·</span>
+            <span class="text-[var(--color-gold)] font-semibold">{pass}</span>
+            {passRate !== null && (
+              <span class="ml-2 text-[var(--color-text-subtle)]">合格率 {passRate}%</span>
+            )}
+          </span>
+        )
       )}
     </div>
   )}
-  <div
-    class:list={[
-      "relative rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden",
-      heights[size],
-      spoiler && "spoiler-block",
-    ]}
-    data-spoiler-level={spoiler ? spoilerLevel : undefined}
-    aria-label={
-      recorded > 0
-        ? `LAST CALL ${pass} / NOTHING+NO CALL ${fail}${passRate !== null ? ` (合格率 ${passRate}%)` : ""}`
-        : "投票データなし"
-    }
-  >
-    {/* center axis */}
-    <div class="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--color-border-strong)] z-10"></div>
-    {/* fail bar — left */}
-    {failPct > 0 && (
+  {spoiler && recorded > 0 ? (
+    <div
+      class:list={[
+        "relative rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden lc-occluded",
+        heights[size],
+      ]}
+      data-occlusion="bar"
+      data-spoiler-level={spoilerLevel}
+      data-spoiler-payload={barPayload}
+      aria-label="投票結果（非表示）"
+    >
+      {/* center axis */}
+      <div class="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--color-border-strong)] z-10"></div>
+      {/* fail bar — left (SSR では width:0、hydrator が設定) */}
       <div
+        data-bar="fail"
         class="absolute top-0 bottom-0 right-1/2 bg-[var(--color-fail)] origin-right"
-        style={`width: ${failPct}%`}
+        style="width: 0%"
       ></div>
-    )}
-    {/* pass bar — right */}
-    {passPct > 0 && (
+      {/* pass bar — right (SSR では width:0、hydrator が設定) */}
       <div
+        data-bar="pass"
         class="absolute top-0 bottom-0 left-1/2 bg-gradient-to-r from-[var(--color-gold-deep)] to-[var(--color-gold)] origin-left"
-        style={`width: ${passPct}%`}
+        style="width: 0%"
       ></div>
-    )}
-  </div>
+    </div>
+  ) : (
+    <div
+      class:list={[
+        "relative rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden",
+        heights[size],
+      ]}
+      aria-label={labelAria}
+    >
+      <div class="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--color-border-strong)] z-10"></div>
+      {failPct > 0 && (
+        <div
+          class="absolute top-0 bottom-0 right-1/2 bg-[var(--color-fail)] origin-right"
+          style={`width: ${failPct}%`}
+        ></div>
+      )}
+      {passPct > 0 && (
+        <div
+          class="absolute top-0 bottom-0 left-1/2 bg-gradient-to-r from-[var(--color-gold-deep)] to-[var(--color-gold)] origin-left"
+          style={`width: ${passPct}%`}
+        ></div>
+      )}
+    </div>
+  )}
   {(absent > 0 || unknown > 0) && (
     <div class="text-[10px] text-[var(--color-text-subtle)] tracking-wider">
       {absent > 0 && <span>欠席 {absent}</span>}

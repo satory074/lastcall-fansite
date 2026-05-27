@@ -1,0 +1,66 @@
+---
+/**
+ * 合否バッジ — payload-first occlusion で表示。
+ * 6 箇所 (EpisodeCard / PersonCard / VoteTable / cinderellas[slug] /
+ *  episodes[id] / people.astro マトリックス) の重複を統一する。
+ */
+type Result = "pass" | "fail";
+type Variant = "pill" | "pill-large" | "pill-mini" | "feature";
+
+interface Props {
+  result: Result;
+  variant?: Variant;
+  /** 表示テキスト override (default は LC / NOTHING) */
+  label?: string;
+  /** ARIA 用の補助説明 */
+  ariaPrefix?: string;
+}
+
+const { result, variant = "pill", label, ariaPrefix } = Astro.props;
+
+const passClass: Record<Variant, string> = {
+  pill: "bg-[var(--color-gold)] text-black",
+  "pill-large": "bg-[var(--color-gold)] text-black",
+  "pill-mini": "bg-[var(--color-gold)] text-black",
+  feature: "bg-[var(--color-gold)] text-black",
+};
+const failClass: Record<Variant, string> = {
+  pill: "bg-black/70 text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
+  "pill-large": "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
+  "pill-mini": "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
+  feature: "bg-transparent text-[var(--color-text-subtle)] border border-[var(--color-border-strong)]",
+};
+
+const sizeClass: Record<Variant, string> = {
+  pill: "font-display tracking-[0.2em] text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur inline-flex items-center justify-center",
+  "pill-large": "font-display tracking-[0.22em] text-[11px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center justify-center",
+  "pill-mini": "inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider",
+  feature: "font-display tracking-[0.18em] text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center justify-center shrink-0",
+};
+
+const defaultLabel: Record<Variant, Record<Result, string>> = {
+  pill: { pass: "LAST CALL", fail: "NOTHING" },
+  "pill-large": { pass: "LAST CALL · 合格", fail: "NOTHING · 不合格" },
+  "pill-mini": { pass: "LC", fail: "NO" },
+  feature: { pass: "LAST CALL", fail: "NOTHING" },
+};
+
+const displayLabel = label ?? defaultLabel[variant][result];
+const colorClass = result === "pass" ? passClass[variant] : failClass[variant];
+
+const aria = `${ariaPrefix ? ariaPrefix + " " : ""}${result === "pass" ? "合格" : "不合格"}`;
+
+const payload = JSON.stringify({
+  cls: colorClass,
+  label: displayLabel,
+  aria,
+});
+---
+
+<span
+  class:list={[sizeClass[variant], "lc-occluded"]}
+  data-occlusion="chip"
+  data-spoiler-level="result"
+  data-spoiler-payload={payload}
+  aria-label="ネタバレ非表示"
+></span>

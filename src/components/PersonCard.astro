@@ -1,5 +1,6 @@
 ---
 import SnsLinks from "./SnsLinks.astro";
+import SpoilerBadge from "./SpoilerBadge.astro";
 
 interface Sns {
   x?: string;
@@ -37,20 +38,13 @@ const hasSignatureSlot = Astro.slots.has("signature");
       </div>
     </div>
     {badge && (
-      <span
-        class:list={[
-          "shrink-0 font-display tracking-[0.18em] text-[10px] font-semibold px-2 py-0.5 rounded-full",
-          badge.tone === "neutral" ? "" : "spoiler",
-          badge.tone === "pass"
-            ? "bg-[var(--color-gold)] text-black"
-            : badge.tone === "fail"
-              ? "bg-transparent text-[var(--color-text-subtle)] border border-[var(--color-border-strong)]"
-              : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border)]",
-        ]}
-        data-spoiler-level={badge.tone !== "neutral" ? "result" : undefined}
-      >
-        {badge.label}
-      </span>
+      badge.tone === "neutral" ? (
+        <span class="shrink-0 font-display tracking-[0.18em] text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border)]">
+          {badge.label}
+        </span>
+      ) : (
+        <SpoilerBadge result={badge.tone} variant="feature" label={badge.label} ariaPrefix={name} />
+      )
     )}
   </div>
   {hasSignatureSlot && (

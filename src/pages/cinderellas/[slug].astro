@@ -4,6 +4,7 @@ import Layout from "../../components/Layout.astro";
 import SnsLinks from "../../components/SnsLinks.astro";
 import EpisodeCard from "../../components/EpisodeCard.astro";
 import DivergingBar from "../../components/DivergingBar.astro";
+import SpoilerBadge from "../../components/SpoilerBadge.astro";
 
 export async function getStaticPaths() {
   const cinderellas = await getCollection("cinderellas");
@@ -47,17 +48,7 @@ const hasData = pass + fail > 0;
             <span class="text-base font-sans text-[var(--color-text-muted)] ml-3 tabular-nums align-middle">{cinderella.data.age}歳</span>
           )}
         </h1>
-        <span
-          class:list={[
-            "spoiler font-display tracking-[0.22em] text-[11px] font-semibold px-3 py-1.5 rounded-full",
-            cinderella.data.result === "pass"
-              ? "bg-[var(--color-gold)] text-black"
-              : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
-          ]}
-          data-spoiler-level="result"
-        >
-          {cinderella.data.result === "pass" ? "LAST CALL · 合格" : "NOTHING · 不合格"}
-        </span>
+        <SpoilerBadge result={cinderella.data.result} variant="pill-large" ariaPrefix={cinderella.data.name} />
       </div>
     </header>
 
@@ -87,9 +78,13 @@ const hasData = pass + fail > 0;
     {cinderella.data.background && (
       <section class="space-y-3">
         <h2 class="section-eyebrow">Background</h2>
-        <p class="spoiler-block text-sm sm:text-base leading-[1.85] text-[var(--color-text)]" data-spoiler-level="comment">
-          {cinderella.data.background}
-        </p>
+        <p
+          class="lc-occluded relative block text-sm sm:text-base leading-[1.85] text-[var(--color-text)]"
+          data-occlusion="block"
+          data-spoiler-level="comment"
+          data-spoiler-payload={JSON.stringify({ text: cinderella.data.background, aria: "Background" })}
+          aria-label="Background（非表示）"
+        ><span class="lc-payload-content"></span></p>
       </section>
     )}
 

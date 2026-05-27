@@ -150,6 +150,12 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
       </nav>
     </header>
 
+    <noscript>
+      <div class="bg-[var(--color-surface)] border-b border-[var(--color-border)] text-[12px] text-[var(--color-text-muted)] px-4 py-2 text-center leading-relaxed">
+        JavaScript が無効です。ネタバレ防止モードは「全隠し」固定になります。モード切替や個別解除を行うには JavaScript を有効にしてください。
+      </div>
+    </noscript>
+
     <main id="lc-main" class="flex-1">
       <slot />
     </main>
@@ -192,10 +198,47 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
         return "hidden";
       }
 
+      // payload を元に DOM へ本値を書き戻し、.lc-revealed を付与
+      function hydrateElement(el: HTMLElement) {
+        if (el.classList.contains("lc-revealed")) return;
+        const raw = el.getAttribute("data-spoiler-payload");
+        if (!raw) {
+          el.classList.add("lc-revealed");
+          return;
+        }
+        let p: Record<string, any>;
+        try { p = JSON.parse(raw); } catch (_) { return; }
+
+        const occ = el.dataset.occlusion;
+        if (occ === "chip") {
+          if (typeof p.cls === "string") el.className = (el.className + " " + p.cls).trim();
+          if (typeof p.label === "string") el.textContent = p.label;
+          if (typeof p.aria === "string") {
+            el.setAttribute("aria-label", p.aria);
+            el.setAttribute("title", p.aria);
+          }
+          if (typeof p.vote === "string") el.setAttribute("data-vote", p.vote);
+        } else if (occ === "bar") {
+          const failEl = el.querySelector<HTMLElement>("[data-bar=fail]");
+          const passEl = el.querySelector<HTMLElement>("[data-bar=pass]");
+          if (failEl && typeof p.failPct === "number") failEl.style.width = p.failPct + "%";
+          if (passEl && typeof p.passPct === "number") passEl.style.width = p.passPct + "%";
+          if (typeof p.aria === "string") el.setAttribute("aria-label", p.aria);
+        } else {
+          // text / block: 子要素 (.lc-payload-content) のテキストを書き戻す
+          const slot = el.querySelector<HTMLElement>(".lc-payload-content");
+          if (slot && typeof p.html === "string") slot.innerHTML = p.html;
+          else if (slot && typeof p.text === "string") slot.textContent = p.text;
+          else if (typeof p.text === "string") el.textContent = p.text;
+          if (typeof p.aria === "string") el.setAttribute("aria-label", p.aria);
+        }
+        el.classList.add("lc-revealed");
+      }
+
       function applyMode(mode: Mode) {
+        const prev = (Object.entries(CLASSES) as Array<[Mode, string]>).find(([_, c]) => root.classList.contains(c))?.[0] ?? "hidden";
         for (const m of Object.values(CLASSES)) root.classList.remove(m);
         root.classList.add(CLASSES[mode]);
-        // legacy alias for any leftover .show-spoilers references
         root.classList.toggle("show-spoilers", mode === "shown");
         for (const b of buttons) {
           const active = b.dataset.mode === mode;
@@ -205,9 +248,26 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
           b.classList.toggle("font-semibold", active);
           b.classList.toggle("text-[var(--color-text-muted)]", !active);
         }
-        try {
-          localStorage.setItem("lc-spoilers", mode);
-        } catch (_) {}
+        try { localStorage.setItem("lc-spoilers", mode); } catch (_) {}
+
+        // hydrate: モードに応じて該当要素を本値で復元。
+        // 一度 hydrate された要素は className を直接変更しているため、
+        // 「より隠す方向」への切替 (例: shown → hidden) は location.reload() で安全リセット。
+        const willHideMore =
+          (prev === "shown" && mode !== "shown") ||
+          (prev === "results-only" && mode === "hidden");
+        if (willHideMore && document.querySelector(".lc-occluded.lc-revealed")) {
+          location.reload();
+          return;
+        }
+        const all = document.querySelectorAll<HTMLElement>(".lc-occluded:not(.lc-revealed)");
+        for (const el of all) {
+          const lv = (el.dataset.spoilerLevel ?? "vote") as "result" | "vote" | "comment";
+          const reveal =
+            mode === "shown" ||
+            (mode === "results-only" && lv !== "result");
+          if (reveal) hydrateElement(el);
+        }
       }
 
       applyMode(readMode());
@@ -218,19 +278,36 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
         });
       }
 
-      // 個別の .spoiler クリックで一時的に表示（全表示モードのときは何もしない）
+      // 個別の occlusion 要素クリックで一時的に表示
       document.addEventListener("click", (ev) => {
         if (root.classList.contains("spoilers-shown")) return;
         const target = ev.target as HTMLElement | null;
-        const el = target?.closest<HTMLElement>(".spoiler, .spoiler-block");
+        const el = target?.closest<HTMLElement>(".lc-occluded:not(.lc-revealed)");
         if (!el) return;
-        // results-only モードのとき、result 以外のスポイラーは元々ぼかされていない → reveal 不要
+        // results-only モード: result 以外は既に hydrate 済み
+        if (root.classList.contains("spoilers-results-only")) {
+          const lv = el.dataset.spoilerLevel ?? "vote";
+          if (lv !== "result") return;
+        }
+        // 親リンクのナビゲーションを抑止
+        if (el.closest("a")) {
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+        hydrateElement(el);
+      });
+
+      // 旧 .spoiler / .spoiler-block 要素の互換クリック解除 (alias)
+      document.addEventListener("click", (ev) => {
+        if (root.classList.contains("spoilers-shown")) return;
+        const target = ev.target as HTMLElement | null;
+        const el = target?.closest<HTMLElement>(".spoiler:not(.lc-occluded):not(.spoiler-revealed), .spoiler-block:not(.lc-occluded):not(.spoiler-revealed)");
+        if (!el) return;
         if (root.classList.contains("spoilers-results-only")) {
           const lv = el.dataset.spoilerLevel;
           if (lv && lv !== "result") return;
         }
-        // 親リンクと競合する場合はナビゲーションを止める
-        if (el.closest("a") && !el.classList.contains("spoiler-revealed")) {
+        if (el.closest("a")) {
           ev.preventDefault();
           ev.stopPropagation();
         }

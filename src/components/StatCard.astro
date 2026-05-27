@@ -14,7 +14,7 @@ const {
   sublabel,
   accent = "neutral",
   spoiler = false,
-  spoilerLevel,
+  spoilerLevel = "vote",
 } = Astro.props;
 
 const accentColor: Record<NonNullable<Props["accent"]>, string> = {
@@ -22,22 +22,36 @@ const accentColor: Record<NonNullable<Props["accent"]>, string> = {
   neutral: "text-[var(--color-text)]",
   fail: "text-[var(--color-text-muted)]",
 };
+
+const valueStr = String(value);
+const payload = spoiler ? JSON.stringify({ text: valueStr, aria: `${label}: ${valueStr}` }) : null;
 ---
 
 <div class="card px-4 py-4 sm:px-5 sm:py-5 flex flex-col gap-1.5 min-w-0">
   <div class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)] font-medium">
     {label}
   </div>
-  <div
-    class:list={[
-      "font-display-serif text-3xl sm:text-4xl tabular-nums leading-none",
-      accentColor[accent],
-      spoiler && "spoiler",
-    ]}
-    data-spoiler-level={spoiler ? spoilerLevel : undefined}
-  >
-    {value}
-  </div>
+  {spoiler ? (
+    <div
+      class:list={[
+        "font-display-serif text-3xl sm:text-4xl tabular-nums leading-none lc-occluded relative",
+        accentColor[accent],
+      ]}
+      data-occlusion="text"
+      data-spoiler-level={spoilerLevel}
+      data-spoiler-payload={payload}
+      aria-label="数値（非表示）"
+    ><span class="lc-payload-content"></span></div>
+  ) : (
+    <div
+      class:list={[
+        "font-display-serif text-3xl sm:text-4xl tabular-nums leading-none",
+        accentColor[accent],
+      ]}
+    >
+      {value}
+    </div>
+  )}
   {sublabel && (
     <div class="text-[11px] text-[var(--color-text-muted)] tracking-wide truncate">
       {sublabel}

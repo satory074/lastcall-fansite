@@ -2,6 +2,7 @@
 import type { CollectionEntry } from "astro:content";
 import { getEntry } from "astro:content";
 import { siteLink, youtubeThumb } from "../lib/url";
+import SpoilerBadge from "./SpoilerBadge.astro";
 
 interface Props {
   episode: CollectionEntry<"episodes">;
@@ -64,17 +65,7 @@ const transitionName = `ep-${episode.data.id}-thumb`;
     )}
     {variant !== "compact" && result && (
       <div class="absolute top-3 right-3">
-        <span
-          class:list={[
-            "spoiler font-display tracking-[0.2em] text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur",
-            result === "pass"
-              ? "bg-[var(--color-gold)] text-black"
-              : "bg-black/70 text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
-          ]}
-          data-spoiler-level="result"
-        >
-          {result === "pass" ? "LAST CALL" : "NOTHING"}
-        </span>
+        <SpoilerBadge result={result} variant="pill" />
       </div>
     )}
     {variant === "default" && (
@@ -96,16 +87,8 @@ const transitionName = `ep-${episode.data.id}-thumb`;
         <span class="text-[var(--color-gold)]">#{episode.data.id}</span>
         <span>{dateLabel}</span>
         {result && (
-          <span
-            class:list={[
-              "spoiler ml-auto px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wider",
-              result === "pass"
-                ? "bg-[var(--color-gold)] text-black"
-                : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
-            ]}
-            data-spoiler-level="result"
-          >
-            {result === "pass" ? "LC" : "NO"}
+          <span class="ml-auto inline-flex">
+            <SpoilerBadge result={result} variant="pill-mini" />
           </span>
         )}
       </div>
@@ -140,11 +123,19 @@ const transitionName = `ep-${episode.data.id}-thumb`;
       <div class="flex items-end justify-between gap-3">
         <div class="flex flex-col gap-1 min-w-0">
           {total > 0 ? (
-            <div class="spoiler inline-flex items-center gap-2 text-xs text-[var(--color-text-muted)] tabular-nums" data-spoiler-level="result">
-              <span>LAST CALL <span class="text-[var(--color-gold)] font-semibold">{pass}</span></span>
-              <span class="text-[var(--color-border-strong)]">/</span>
-              <span>NOTHING <span class="font-semibold">{fail}</span></span>
-            </div>
+            <div
+              class="lc-occluded relative text-xs text-[var(--color-text-muted)] tabular-nums"
+              data-occlusion="text"
+              data-spoiler-level="result"
+              data-spoiler-payload={JSON.stringify({
+                html:
+                  `<span>LAST CALL <span class=\"text-[var(--color-gold)] font-semibold\">${pass}</span></span>` +
+                  `<span class=\"mx-1 text-[var(--color-border-strong)]\">/</span>` +
+                  `<span>NOTHING <span class=\"font-semibold\">${fail}</span></span>`,
+                aria: `LAST CALL ${pass} / NOTHING ${fail}`,
+              })}
+              aria-label="票数（非表示）"
+            ><span class="lc-payload-content inline-flex items-center gap-2"></span></div>
           ) : (
             <span class="text-[10px] tracking-wider text-[var(--color-text-subtle)] uppercase">
               票データ収集中

@@ -5,6 +5,7 @@ import YouTubeEmbed from "../../components/YouTubeEmbed.astro";
 import VoteTable from "../../components/VoteTable.astro";
 import SnsLinks from "../../components/SnsLinks.astro";
 import EpisodeCard from "../../components/EpisodeCard.astro";
+import SpoilerBadge from "../../components/SpoilerBadge.astro";
 import { siteLink, youtubeUrl } from "../../lib/url";
 
 export async function getStaticPaths() {
@@ -42,17 +43,7 @@ const transitionName = `ep-${episode.data.id}-thumb`;
           {dateLabel}
         </span>
         {cinderella && (
-          <span
-            class:list={[
-              "spoiler font-display tracking-[0.2em] text-[10px] font-semibold px-2.5 py-1 rounded-full",
-              cinderella.data.result === "pass"
-                ? "bg-[var(--color-gold)] text-black"
-                : "bg-transparent text-[var(--color-text-subtle)] border border-[var(--color-border-strong)]",
-            ]}
-            data-spoiler-level="result"
-          >
-            {cinderella.data.result === "pass" ? "LAST CALL · 合格" : "NOTHING · 不合格"}
-          </span>
+          <SpoilerBadge result={cinderella.data.result} variant="pill-large" ariaPrefix={cinderella.data.name} />
         )}
       </div>
       <h1 class="font-display-serif text-2xl sm:text-[2.5rem] leading-[1.2] text-[var(--color-text)]">
@@ -74,9 +65,13 @@ const transitionName = `ep-${episode.data.id}-thumb`;
     </header>
 
     {episode.data.summary && (
-      <p class="spoiler-block text-sm sm:text-base leading-[1.85] text-[var(--color-text)]" data-spoiler-level="comment">
-        {episode.data.summary}
-      </p>
+      <p
+        class="lc-occluded relative block text-sm sm:text-base leading-[1.85] text-[var(--color-text)]"
+        data-occlusion="block"
+        data-spoiler-level="comment"
+        data-spoiler-payload={JSON.stringify({ text: episode.data.summary, aria: "Summary" })}
+        aria-label="Summary（非表示）"
+      ><span class="lc-payload-content"></span></p>
     )}
 
     <section class="space-y-4">
@@ -102,22 +97,16 @@ const transitionName = `ep-${episode.data.id}-thumb`;
                 <span class="text-sm font-sans text-[var(--color-text-muted)] ml-3 tabular-nums">{cinderella.data.age}歳</span>
               )}
             </h3>
-            <span
-              class:list={[
-                "spoiler px-3 py-1 rounded-full text-[11px] font-semibold tracking-widest",
-                cinderella.data.result === "pass"
-                  ? "bg-[var(--color-gold)] text-black"
-                  : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
-              ]}
-              data-spoiler-level="result"
-            >
-              {cinderella.data.result === "pass" ? "合格" : "不合格"}
-            </span>
+            <SpoilerBadge result={cinderella.data.result} variant="pill-large" label={cinderella.data.result === "pass" ? "合格" : "不合格"} ariaPrefix={cinderella.data.name} />
           </div>
           {cinderella.data.background && (
-            <p class="spoiler-block text-sm leading-[1.85] text-[var(--color-text-muted)]" data-spoiler-level="comment">
-              {cinderella.data.background}
-            </p>
+            <p
+              class="lc-occluded relative block text-sm leading-[1.85] text-[var(--color-text-muted)]"
+              data-occlusion="block"
+              data-spoiler-level="comment"
+              data-spoiler-payload={JSON.stringify({ text: cinderella.data.background, aria: "Background" })}
+              aria-label="Background（非表示）"
+            ><span class="lc-payload-content"></span></p>
           )}
           <SnsLinks sns={cinderella.data.sns} size="sm" />
         </div>

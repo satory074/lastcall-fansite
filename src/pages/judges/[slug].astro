@@ -247,7 +247,15 @@ const flipped = (() => {
                       <VoteChip vote={h.vote} size="sm" round={h.round} judgeName={judge.data.name} />
                     </td>
                     <td class="px-3 py-2 text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed">
-                      {h.comment ? <span class="spoiler-block inline-block" data-spoiler-level="comment">{h.comment}</span> : "—"}
+                      {h.comment ? (
+                        <span
+                          class="lc-occluded relative block"
+                          data-occlusion="block"
+                          data-spoiler-level="comment"
+                          data-spoiler-payload={JSON.stringify({ text: h.comment, aria: "コメント" })}
+                          aria-label="コメント（非表示）"
+                        ><span class="lc-payload-content"></span></span>
+                      ) : "—"}
                     </td>
                   </tr>
                 ))}

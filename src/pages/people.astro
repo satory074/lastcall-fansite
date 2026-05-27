@@ -5,6 +5,7 @@ import PersonCard from "../components/PersonCard.astro";
 import VoteChip from "../components/VoteChip.astro";
 import DivergingBar from "../components/DivergingBar.astro";
 import StatCard from "../components/StatCard.astro";
+import SpoilerBadge from "../components/SpoilerBadge.astro";
 import { siteLink } from "../lib/url";
 
 // 14名固定の審査員（マトリックス列順）
@@ -101,11 +102,19 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
     <section id="cinderellas" class="space-y-6 scroll-mt-24">
       <div class="flex flex-wrap items-end justify-between gap-3">
         <h2 class="section-eyebrow">Cinderellas <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">出演回順 · {cinderellas.length} 名</span></h2>
-        <span class="spoiler text-[11px] text-[var(--color-text-muted)] tracking-wide" data-spoiler-level="result">
-          合格 <span class="text-[var(--color-gold)] font-semibold">{passEpisodes}</span>
-          <span class="mx-1 text-[var(--color-border-strong)]">/</span>
-          不合格 <span class="font-semibold">{failEpisodes}</span>
-        </span>
+        <span
+          class="lc-occluded relative text-[11px] text-[var(--color-text-muted)] tracking-wide"
+          data-occlusion="text"
+          data-spoiler-level="result"
+          data-spoiler-payload={JSON.stringify({
+            html:
+              `合格 <span class=\"text-[var(--color-gold)] font-semibold\">${passEpisodes}</span>` +
+              `<span class=\"mx-1 text-[var(--color-border-strong)]\">/</span>` +
+              `不合格 <span class=\"font-semibold\">${failEpisodes}</span>`,
+            aria: `合格 ${passEpisodes} / 不合格 ${failEpisodes}`,
+          })}
+          aria-label="合否カウント（非表示）"
+        ><span class="lc-payload-content"></span></span>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cinderellas.map((c) => (
@@ -248,32 +257,17 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
                   </td>
                   <td class="px-3 py-2.5 text-center whitespace-nowrap">
                     {result ? (
-                      <span
-                        class:list={[
-                          "spoiler inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider",
-                          result === "pass"
-                            ? "bg-[var(--color-gold)] text-black"
-                            : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
-                        ]}
-                        data-spoiler-level="result"
-                      >
-                        {result === "pass" ? "LC" : "NO"}
-                      </span>
+                      <SpoilerBadge result={result} variant="pill-mini" ariaPrefix={cinderella?.data.name ?? `#${episode.data.id}`} />
                     ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                   </td>
-                  {cells.map((cell, ji) => {
-                    const titleParts: string[] = [judges[ji].data.name];
-                    if (cell.first.comment) titleParts.push(`ファースト: ${cell.first.comment}`);
-                    if (cell.final.comment) titleParts.push(`最終: ${cell.final.comment}`);
-                    return (
-                      <td class="px-1.5 py-2 text-center align-middle" title={titleParts.join(" · ")}>
-                        <div class="inline-flex flex-col items-center gap-0.5">
-                          <VoteChip vote={cell.first.vote} size="sm" round="first" judgeName={judges[ji].data.name} />
-                          <VoteChip vote={cell.final.vote} size="sm" round="final" judgeName={judges[ji].data.name} />
-                        </div>
-                      </td>
-                    );
-                  })}
+                  {cells.map((cell, ji) => (
+                    <td class="px-1.5 py-2 text-center align-middle">
+                      <div class="inline-flex flex-col items-center gap-0.5">
+                        <VoteChip vote={cell.first.vote} size="sm" round="first" judgeName={judges[ji].data.name} />
+                        <VoteChip vote={cell.final.vote} size="sm" round="final" judgeName={judges[ji].data.name} />
+                      </div>
+                    </td>
+                  ))}
                 </tr>
               );
             })}
@@ -287,24 +281,36 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
                 </th>
                 <td class="px-3 py-2 text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap sticky left-[60px] z-10 bg-[var(--color-surface)]">合格率（最終）</td>
                 <td class="px-3 py-2 text-center text-[10px] whitespace-nowrap">
-                  <span class="spoiler" data-spoiler-level="result">
-                    <span class="text-[var(--color-gold)] font-bold tabular-nums">{overallPassRate ?? "—"}</span>
-                    {overallPassRate !== null && <span class="text-[var(--color-text-subtle)]">%</span>}
-                  </span>
+                  {overallPassRate !== null ? (
+                    <span
+                      class="lc-occluded relative inline-block"
+                      data-occlusion="text"
+                      data-spoiler-level="result"
+                      data-spoiler-payload={JSON.stringify({
+                        html: `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${overallPassRate}</span><span class=\"text-[var(--color-text-subtle)]\">%</span>`,
+                        aria: `合格率 ${overallPassRate}%`,
+                      })}
+                      aria-label="合格率（非表示）"
+                    ><span class="lc-payload-content"></span></span>
+                  ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                 </td>
                 {judgeStats.map((t) => (
                   <td class="px-1.5 py-2 text-center align-middle">
                     {t.recorded === 0 ? (
                       <span class="text-[10px] text-[var(--color-text-subtle)]">—</span>
                     ) : (
-                      <div class="spoiler inline-flex flex-col items-center text-[10px] leading-tight" data-spoiler-level="vote">
-                        <span class="text-[var(--color-gold)] font-bold tabular-nums">
-                          {t.passRate ?? 0}%
-                        </span>
-                        <span class="text-[var(--color-text-subtle)] tabular-nums text-[9px]">
-                          {t.lastCall}/{t.recorded}
-                        </span>
-                      </div>
+                      <div
+                        class="lc-occluded relative inline-flex flex-col items-center text-[10px] leading-tight"
+                        data-occlusion="text"
+                        data-spoiler-level="vote"
+                        data-spoiler-payload={JSON.stringify({
+                          html:
+                            `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${t.passRate ?? 0}%</span>` +
+                            `<span class=\"text-[var(--color-text-subtle)] tabular-nums text-[9px]\">${t.lastCall}/${t.recorded}</span>`,
+                          aria: `合格率 ${t.passRate ?? 0}% (${t.lastCall}/${t.recorded})`,
+                        })}
+                        aria-label="審査員別合格率（非表示）"
+                      ><span class="lc-payload-content inline-flex flex-col items-center"></span></div>
                     )}
                   </td>
                 ))}

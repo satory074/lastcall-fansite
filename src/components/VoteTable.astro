@@ -4,6 +4,7 @@ import type { CollectionEntry } from "astro:content";
 import { siteLink } from "../lib/url";
 import VoteChip from "./VoteChip.astro";
 import DivergingBar from "./DivergingBar.astro";
+import SpoilerBadge from "./SpoilerBadge.astro";
 
 interface Props {
   votes: CollectionEntry<"episodes">["data"]["votes"];
@@ -100,17 +101,7 @@ const hasAnyVote = votes.length > 0;
       </p>
     </div>
     {displayResult && (
-      <span
-        class:list={[
-          "spoiler font-display tracking-[0.22em] text-[11px] font-semibold px-3 py-1.5 rounded-full",
-          displayResult === "pass"
-            ? "bg-[var(--color-gold)] text-black"
-            : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-strong)]",
-        ]}
-        data-spoiler-level="result"
-      >
-        {displayResult === "pass" ? "LAST CALL · 合格" : "NOTHING · 不合格"}
-      </span>
+      <SpoilerBadge result={displayResult} variant="pill-large" />
     )}
   </header>
 
@@ -135,9 +126,15 @@ const hasAnyVote = votes.length > 0;
       spoilerLevel="vote"
     />
     {flipped > 0 && (
-      <p class="spoiler text-[11px] text-[var(--color-text-muted)] tracking-wide" data-spoiler-level="vote">
+      <p class="text-[11px] text-[var(--color-text-muted)] tracking-wide">
         ファースト → 最終で判定変更:
-        <span class="font-semibold text-[var(--color-text)] tabular-nums">{flipped}</span> 名
+        <span
+          class="lc-occluded relative font-semibold text-[var(--color-text)] tabular-nums"
+          data-occlusion="text"
+          data-spoiler-level="vote"
+          data-spoiler-payload={JSON.stringify({ text: String(flipped), aria: `${flipped} 名` })}
+          aria-label="人数（非表示）"
+        ><span class="lc-payload-content"></span></span> 名
       </p>
     )}
   </div>
@@ -214,9 +211,15 @@ const hasAnyVote = votes.length > 0;
                     <VoteChip vote={row.final.vote} size="sm" round="final" judgeName={row.judgeName} />
                   </td>
                   <td class="px-3 py-2 text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed">
-                    {comments.length > 0
-                      ? <span class="spoiler-block inline-block" data-spoiler-level="comment">{comments.join(" / ")}</span>
-                      : "—"}
+                    {comments.length > 0 ? (
+                      <span
+                        class="lc-occluded relative block"
+                        data-occlusion="block"
+                        data-spoiler-level="comment"
+                        data-spoiler-payload={JSON.stringify({ text: comments.join(" / "), aria: "コメント" })}
+                        aria-label="コメント（非表示）"
+                      ><span class="lc-payload-content"></span></span>
+                    ) : "—"}
                   </td>
                 </tr>
               );

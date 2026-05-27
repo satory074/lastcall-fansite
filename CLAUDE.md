@@ -75,15 +75,29 @@ After several iterations, the routes are:
 
 There is no `/episodes/` index or `/cinderellas/` index or `/judges/` index. The nav has only two top-level items: `出演者・審査一覧` and `このサイトについて`. Do not re-add those index pages; the home page and `/people/` cover them.
 
-### Spoiler protection is a site-wide concern
+### Spoiler protection — payload-first occlusion (v2, 2026-05 redesign)
 
-Many users land here without having seen recent episodes. Anything that reveals an outcome must be marked with `.spoiler` (inline blur) or `.spoiler-block` (text block blur). The behavior is in `src/components/Layout.astro`:
+`filter: blur()` was abandoned because it preserves color, shape, and width ratios — gold vs gray badges and DivergingBar pass/fail ratios were readable through the blur. Worse, `aria-label` / `title` / `data-vote` attributes leaked the outcome to screen readers and DevTools regardless of blur. The replacement architecture is **payload-first SSR + CSS occlusion + JS hydrator**:
 
-1. Inline `<head>` script reads `localStorage["lc-spoilers"]` and adds `show-spoilers` to `<html>` before paint (no flash).
-2. A header toggle button (id `lc-spoiler-toggle`) flips the class and persists choice.
-3. Bottom script also handles **per-element reveal** — clicking any `.spoiler` adds `.spoiler-revealed` so just that block shows.
+1. Spoiler-sensitive components (`VoteChip`, `DivergingBar`, `StatCard`, `SpoilerBadge`) **do NOT emit the real value** into SSR HTML. They emit a neutral `.lc-occluded` placeholder and stash the real value in `data-spoiler-payload` as JSON. `aria-label` defaults to `"ネタバレ非表示"` and the placeholder is decoupled from the actual outcome's color/text.
+2. `src/styles/globals.css` paints `.lc-occluded[data-occlusion="chip|bar|text|block"]` as solid surface plates. No color, width, or text leaks through.
+3. The bottom `<script>` in `src/components/Layout.astro` reads `localStorage["lc-spoilers"]` and **hydrates** matching elements: writes back `className`, `textContent` / `innerHTML`, `style.width` (for bars), and `aria-label`, then adds `.lc-revealed` to flip the CSS off.
+4. With JS disabled, every spoiler element stays occluded permanently — a `<noscript>` banner notes the limitation. Mode switching from a more-revealed to a less-revealed state issues a `location.reload()` to guarantee clean revert.
 
-When adding any new result badge, vote count, pass/fail tally, or text that includes the outcome, **annotate the element with `.spoiler`** (small inline) or `.spoiler-block` (paragraph/comment). CSS lives in `src/styles/globals.css`.
+When adding any new element that displays an outcome, **never write raw markup like** `<span class="spoiler bg-[var(--color-gold)]">合格</span>`. Reach for the existing primitives:
+
+- Result badges → `<SpoilerBadge result={...} variant="pill|pill-large|pill-mini|feature" />`
+- Single vote chip → `<VoteChip vote={...} />`
+- Pass/fail tally bar → `<DivergingBar pass={...} fail={...} />`
+- Numeric stat card → `<StatCard value={...} spoiler spoilerLevel="vote|result" />`
+
+Additional bans:
+- Never put `title=` or `aria-label=` containing the outcome literal (e.g. `aria-label="合格率 36%"`). The hydrator writes the real aria back on reveal.
+- Never write inline `style="width: NN%"` for a pass/fail ratio outside `DivergingBar`.
+- Never add a `<td title={comment}>` hover tooltip that shows comment text — comments must be wrapped in `.lc-occluded[data-occlusion="block"]` (the `/people/` matrix used to do this and was removed for this reason).
+- Verify changes in all three modes (`hidden` / `results-only` / `shown`) × JS on/off before committing.
+
+Legacy `.spoiler` / `.spoiler-block` / `.show-spoilers` class names are kept as backwards-compatibility aliases (CSS will at least hide their text), but new code must use `.lc-occluded`.
 
 ### `EpisodeCard` and `PersonCard` are the visual language
 
@@ -95,28 +109,35 @@ The matrix in `src/pages/people.astro` is a hand-rolled `<table>` with `position
 
 ### Vote visualization primitives — always reuse these
 
-When showing vote data anywhere, use the four shared primitives in `src/components/`:
+When showing vote data anywhere, use these shared primitives in `src/components/` (all wire through the v2 payload-first occlusion automatically):
 
-- **`VoteChip.astro`** — single round chip for one judge × one round. Renders as a colored circle (gold = LC, dark gray = NOTHING, hollow = NO CALL, dashed = UNKNOWN, slashed = ABSENT). Use `size: "xs" | "sm" | "md" | "lg"`. Has built-in spoiler protection (toggleable via `spoiler={false}` for legends).
-- **`VoteSignature.astro`** — horizontal strip of chips for one axis. Use `forJudge` to show that judge's votes across all episodes (the "personality fingerprint" view used on judge profile pages) or `forEpisode` to show all 14 judges' votes for one episode. Set `round: "first" | "final" | "both"`.
+- **`VoteChip.astro`** — single round chip for one judge × one round. Renders as a colored circle (gold = LC, dark gray = NOTHING, hollow = NO CALL, dashed = UNKNOWN, slashed = ABSENT). Use `size: "xs" | "sm" | "md" | "lg"`. `spoiler={false}` for legends.
+- **`VoteSignature.astro`** — horizontal strip of chips for one axis. Use `forJudge` for the per-judge time-series fingerprint, `forEpisode` for the 14-judge row. Set `round: "first" | "final" | "both"`.
 - **`DivergingBar.astro`** — pass/fail tally as a center-axis horizontal bar (gold right, dark gray left). Use anywhere a "X 票 vs Y 票" count appears. Auto-handles the `合格率 %` label.
 - **`StatCard.astro`** — large numeric stat with eyebrow + sublabel (used in season-averages dashboards on judge profiles and the matrix banner).
+- **`SpoilerBadge.astro`** — pass/fail pill badge (variants: `pill`, `pill-large`, `pill-mini`, `feature`). Use for any "合格 / 不合格" outcome chip on cards, hero, episode header, matrix cells.
 
-Whenever you'd otherwise hand-roll a "pass count / fail count" inline span or a tally table, reach for `DivergingBar` + `StatCard` instead. Hand-rolled inline tallies have been deleted — re-introducing them creates visual drift.
+Whenever you'd otherwise hand-roll a "pass count / fail count" inline span or a tally table, reach for `DivergingBar` + `StatCard` instead. Hand-rolled inline tallies have been deleted — re-introducing them creates visual drift and bypasses spoiler protection.
 
 ### 3-tier spoiler granularity
 
-The spoiler system has three states (was 2 prior to the 2026 redesign):
+The spoiler system has three states:
 
-1. `spoilers-hidden` (default) — every `.spoiler` / `.spoiler-block` is blurred.
-2. `spoilers-results-only` — only elements with `data-spoiler-level="result"` are blurred (合否 / pass-fail verdicts). Individual votes (`data-spoiler-level="vote"`) and judge comments (`data-spoiler-level="comment"`) are revealed. This is for the "I want to see who appeared and how each judge voted but not the final verdict" persona.
-3. `spoilers-shown` — everything visible.
+1. `spoilers-hidden` (default) — every `.lc-occluded` element is shown as a neutral placeholder.
+2. `spoilers-results-only` — only elements with `data-spoiler-level="result"` are occluded (合否 / pass-fail verdicts). Individual votes (`"vote"`) and judge comments (`"comment"`) are hydrated to their real values. This is for the "I want to see who appeared and how each judge voted but not the final verdict" persona.
+3. `spoilers-shown` — all `.lc-occluded` are hydrated to their real values.
 
 Annotation conventions on the element:
-- `data-spoiler-level="result"` — pass/fail badges, "合格率 X%", overall verdict bars, cinderella `result` badges.
-- `data-spoiler-level="vote"` — individual `<VoteChip>` and per-round tallies.
+- `data-spoiler-level="result"` — pass/fail badges, "合格率 X%", overall verdict bars, cinderella `result` badges, per-episode aggregate counts.
+- `data-spoiler-level="vote"` — individual `<VoteChip>` and per-round tallies (per-judge season averages).
 - `data-spoiler-level="comment"` — judge comments and `background` text.
-- No `data-spoiler-level` on `.spoiler` = treated as `"vote"` (legacy default).
+- No `data-spoiler-level` = treated as `"vote"`.
+
+Each `.lc-occluded` also carries `data-occlusion` to tell the CSS which neutralization shape to apply:
+- `data-occlusion="chip"` — round single-token badge (`VoteChip`, `SpoilerBadge`)
+- `data-occlusion="bar"`  — horizontal diverging bar (`DivergingBar`)
+- `data-occlusion="text"` — inline numeric / single-line text (`StatCard` value, `DivergingBar` label, tally counts)
+- `data-occlusion="block"` — paragraph (judge comments, `background`, episode `summary`)
 
 The state class lives on `<html>` (`spoilers-hidden` / `spoilers-results-only` / `spoilers-shown`). Storage key is `lc-spoilers` with value `"hidden" | "results-only" | "shown"`. Toggle UI is a 3-button segmented control in `Layout.astro` header. `.show-spoilers` is kept as a legacy alias of `spoilers-shown`.
 

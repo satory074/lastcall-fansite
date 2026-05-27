@@ -46,23 +46,36 @@ const ariaLabel = (() => {
   return parts.join(" / ");
 })();
 
-// vote / 未確認 / 欠席 はネタバレ保護対象（ABSENT/UNKNOWN は仕様上隠す必要は薄いが、列の判別を防ぐため統一）
-const spoilerClass = spoiler && vote !== "UNKNOWN" ? "spoiler" : "";
-const dataLevel = vote === "LAST CALL" || vote === "NOTHING" ? "vote" : undefined;
+const baseClass = "inline-flex items-center justify-center rounded-full font-bold leading-none tracking-tight transition-transform";
+
+// UNKNOWN は元から判別不能 (?) なので occlusion 不要。
+// それ以外で spoiler=true なら payload 化 (SSR では本値・aria・class を出さない)
+const isOccluded = spoiler && vote !== "UNKNOWN";
+const dataLevel: "vote" | undefined = vote === "LAST CALL" || vote === "NOTHING" ? "vote" : undefined;
+
+const payload = isOccluded
+  ? JSON.stringify({
+      cls: variants[vote],
+      label: labels[vote],
+      aria: ariaLabel,
+      vote,
+    })
+  : null;
 ---
 
-<span
-  class:list={[
-    "inline-flex items-center justify-center rounded-full font-bold leading-none tracking-tight transition-transform",
-    sizePx[size].box,
-    sizePx[size].text,
-    variants[vote],
-    spoilerClass,
-  ]}
-  data-spoiler-level={dataLevel}
-  data-vote={vote}
-  aria-label={ariaLabel}
-  title={ariaLabel}
->
-  {labels[vote]}
-</span>
+{isOccluded ? (
+  <span
+    class:list={[baseClass, sizePx[size].box, sizePx[size].text, "lc-occluded"]}
+    data-occlusion="chip"
+    data-spoiler-level={dataLevel}
+    data-spoiler-payload={payload}
+    aria-label="ネタバレ非表示"
+  ></span>
+) : (
+  <span
+    class:list={[baseClass, sizePx[size].box, sizePx[size].text, variants[vote]]}
+    aria-label={ariaLabel}
+  >
+    {labels[vote]}
+  </span>
+)}
