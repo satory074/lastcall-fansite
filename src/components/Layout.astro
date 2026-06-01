@@ -57,7 +57,7 @@ const breadcrumbSchema =
 ---
 
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-base={base}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -140,6 +140,16 @@ const breadcrumbSchema =
               );
             })}
           </nav>
+          {/* グローバル検索 */}
+          <button
+            type="button"
+            id="lc-search-open"
+            class="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-bg)_60%,transparent)] px-2.5 sm:px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-border-strong)] transition"
+            aria-label="サイト内を検索"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span class="hidden sm:inline text-[11px] tracking-wider">検索</span>
+          </button>
           {/* Spoiler 3-state segmented control */}
           <div
             id="lc-spoiler-toggle"
@@ -225,6 +235,26 @@ const breadcrumbSchema =
         </ol>
       </nav>
     )}
+
+    {/* 検索オーバーレイ（JSで開閉） */}
+    <div id="lc-search" hidden class="fixed inset-0 z-[70] flex items-start justify-center px-4 pt-[12vh]">
+      <div id="lc-search-backdrop" class="absolute inset-0 bg-[color-mix(in_oklab,var(--color-bg)_70%,transparent)] backdrop-blur-sm"></div>
+      <div role="dialog" aria-modal="true" aria-label="サイト内検索" class="relative w-full max-w-lg rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-card)] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.7)] overflow-hidden">
+        <div class="flex items-center gap-2.5 px-4 py-3 border-b border-[var(--color-border)]">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="text-[var(--color-text-subtle)]"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            id="lc-search-input"
+            type="search"
+            autocomplete="off"
+            placeholder="回・シンデレラ・審査員を検索…"
+            class="flex-1 bg-transparent text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none"
+          />
+          <kbd class="hidden sm:block text-[10px] text-[var(--color-text-subtle)] border border-[var(--color-border)] rounded px-1.5 py-0.5">Esc</kbd>
+        </div>
+        <ul id="lc-search-results" class="max-h-[55vh] overflow-y-auto py-1.5"></ul>
+        <p id="lc-search-empty" hidden class="px-4 py-6 text-center text-xs text-[var(--color-text-subtle)]">該当する項目がありません。</p>
+      </div>
+    </div>
 
     <main id="lc-main" class="flex-1">
       <slot />
@@ -407,6 +437,85 @@ const breadcrumbSchema =
         }
         el.classList.add("spoiler-revealed");
       });
+    </script>
+
+    <script>
+      // グローバル検索: ビルド時生成の /search-index.json を初回オープン時に取得し、
+      // 名前・回・属性の部分一致で絞り込む。合否などのスポイラーは索引に含まれない。
+      type SearchItem = { type: string; label: string; sub: string; url: string; terms: string };
+      const overlay = document.getElementById("lc-search");
+      const openBtn = document.getElementById("lc-search-open");
+      const input = document.getElementById("lc-search-input") as HTMLInputElement | null;
+      const list = document.getElementById("lc-search-results");
+      const empty = document.getElementById("lc-search-empty");
+      const backdrop = document.getElementById("lc-search-backdrop");
+
+      if (overlay && openBtn && input && list && empty) {
+        const TYPE_LABEL: Record<string, string> = {
+          episode: "回",
+          cinderella: "シンデレラ",
+          judge: "審査員",
+        };
+        let index: SearchItem[] | null = null;
+        let loading = false;
+        const base = document.documentElement.getAttribute("data-base") ?? "";
+
+        async function ensureIndex() {
+          if (index || loading) return;
+          loading = true;
+          try {
+            const res = await fetch(base + "/search-index.json");
+            index = (await res.json()) as SearchItem[];
+          } catch (_) {
+            index = [];
+          }
+          loading = false;
+        }
+
+        function render(q: string) {
+          if (!index) return;
+          const query = q.trim().toLowerCase();
+          const matches = query
+            ? index.filter((it) => it.terms.includes(query)).slice(0, 24)
+            : [];
+          list!.innerHTML = matches
+            .map(
+              (m) =>
+                `<li><a href="${m.url}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-[color-mix(in_oklab,var(--color-gold)_8%,transparent)] transition">
+                  <span class="shrink-0 text-[9px] tracking-wider uppercase text-[var(--color-text-subtle)] border border-[var(--color-border)] rounded px-1.5 py-0.5">${TYPE_LABEL[m.type] ?? m.type}</span>
+                  <span class="min-w-0"><span class="block text-sm text-[var(--color-text)] truncate">${m.label}</span><span class="block text-[11px] text-[var(--color-text-subtle)] truncate">${m.sub}</span></span>
+                </a></li>`
+            )
+            .join("");
+          empty!.hidden = !(query && matches.length === 0);
+        }
+
+        async function open() {
+          overlay!.hidden = false;
+          document.body.style.overflow = "hidden";
+          await ensureIndex();
+          input!.value = "";
+          render("");
+          input!.focus();
+        }
+        function close() {
+          overlay!.hidden = true;
+          document.body.style.overflow = "";
+        }
+
+        openBtn.addEventListener("click", open);
+        backdrop?.addEventListener("click", close);
+        input.addEventListener("input", () => render(input!.value));
+        document.addEventListener("keydown", (ev) => {
+          if (ev.key === "Escape" && !overlay!.hidden) close();
+          // "/" でクイックオープン（入力中は除く）
+          const tag = (ev.target as HTMLElement | null)?.tagName;
+          if (ev.key === "/" && overlay!.hidden && tag !== "INPUT" && tag !== "TEXTAREA") {
+            ev.preventDefault();
+            open();
+          }
+        });
+      }
     </script>
   </body>
 </html>

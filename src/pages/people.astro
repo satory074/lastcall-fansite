@@ -116,19 +116,31 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
           aria-label="合否カウント（非表示）"
         ><span class="lc-payload-content"></span></span>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="lc-listctl flex flex-wrap items-center gap-2 text-[11px]" hidden data-grid="lc-grid-cinderellas">
+        <input type="search" autocomplete="off" data-listfilter placeholder="名前で絞り込み…" class="flex-1 min-w-[10rem] max-w-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-3 py-1.5 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:border-[var(--color-border-strong)]" />
+        <label class="flex items-center gap-1.5 text-[var(--color-text-subtle)]">並べ替え
+          <select data-listsort class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-2.5 py-1.5 text-[var(--color-text-muted)] focus:outline-none">
+            <option value="ep">出演回順</option>
+            <option value="name">名前順</option>
+          </select>
+        </label>
+        <span data-listcount class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
+      </div>
+      <div id="lc-grid-cinderellas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cinderellas.map((c) => (
-          <PersonCard
-            name={c.data.name}
-            href={siteLink(`/cinderellas/${c.id}/`)}
-            subtitle={c.data.age ? `${c.data.age}歳` : undefined}
-            meta={`#${c.data.episodeId} 出演`}
-            badge={{
-              label: c.data.result === "pass" ? "LAST CALL" : "NOTHING",
-              tone: c.data.result === "pass" ? "pass" : "fail",
-            }}
-            sns={c.data.sns}
-          />
+          <div class="lc-pcard contents" data-name={c.data.name} data-ep={c.data.episodeId}>
+            <PersonCard
+              name={c.data.name}
+              href={siteLink(`/cinderellas/${c.id}/`)}
+              subtitle={c.data.age ? `${c.data.age}歳` : undefined}
+              meta={`#${c.data.episodeId} 出演`}
+              badge={{
+                label: c.data.result === "pass" ? "LAST CALL" : "NOTHING",
+                tone: c.data.result === "pass" ? "pass" : "fail",
+              }}
+              sns={c.data.sns}
+            />
+          </div>
         ))}
       </div>
     </section>
@@ -136,30 +148,47 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
     {/* Judges */}
     <section id="judges" class="space-y-6 scroll-mt-24">
       <h2 class="section-eyebrow">Judges <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">固定 {judges.length} 名</span></h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="lc-listctl flex flex-wrap items-center gap-2 text-[11px]" hidden data-grid="lc-grid-judges">
+        <input type="search" autocomplete="off" data-listfilter placeholder="名前・エリアで絞り込み…" class="flex-1 min-w-[10rem] max-w-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-3 py-1.5 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:border-[var(--color-border-strong)]" />
+        <label class="flex items-center gap-1.5 text-[var(--color-text-subtle)]">並べ替え
+          <select data-listsort class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-2.5 py-1.5 text-[var(--color-text-muted)] focus:outline-none">
+            <option value="name">名前順</option>
+            <option value="age">年齢順</option>
+          </select>
+        </label>
+        <span data-listcount class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
+      </div>
+      <div id="lc-grid-judges" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {judges.map((j, i) => {
           const s = judgeStats[i];
           return (
-            <PersonCard
-              name={j.data.name}
-              href={siteLink(`/judges/${j.id}/`)}
-              subtitle={j.data.area ?? j.data.store}
-              meta={j.data.age ? `${j.data.age}歳` : undefined}
-              sns={j.data.sns}
+            <div
+              class="lc-pcard contents"
+              data-name={`${j.data.name} ${j.data.nameKana ?? ""} ${j.data.area ?? ""} ${j.data.store ?? ""}`}
+              data-sortname={j.data.nameKana ?? j.data.name}
+              data-age={j.data.age ?? 0}
             >
-              {s.recorded > 0 && (
-                <Fragment slot="signature">
-                  <DivergingBar
-                    pass={s.lastCall}
-                    fail={s.nothing + s.noCall}
-                    label="最終ジャッジ傾向"
-                    size="sm"
-                    spoilerLevel="vote"
-                    showLabels={true}
-                  />
-                </Fragment>
-              )}
-            </PersonCard>
+              <PersonCard
+                name={j.data.name}
+                href={siteLink(`/judges/${j.id}/`)}
+                subtitle={j.data.area ?? j.data.store}
+                meta={j.data.age ? `${j.data.age}歳` : undefined}
+                sns={j.data.sns}
+              >
+                {s.recorded > 0 && (
+                  <Fragment slot="signature">
+                    <DivergingBar
+                      pass={s.lastCall}
+                      fail={s.nothing + s.noCall}
+                      label="最終ジャッジ傾向"
+                      size="sm"
+                      spoilerLevel="vote"
+                      showLabels={true}
+                    />
+                  </Fragment>
+                )}
+              </PersonCard>
+            </div>
           );
         })}
       </div>
@@ -396,6 +425,47 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
       });
     }
     updateCount();
+  })();
+
+  // シンデレラ / 審査員グリッドのテキスト絞り込み + 並べ替え（スポイラー非依存）。
+  (function initListControls() {
+    const controls = Array.from(document.querySelectorAll<HTMLElement>(".lc-listctl"));
+    for (const ctl of controls) {
+      const grid = document.getElementById(ctl.dataset.grid ?? "");
+      if (!grid) continue;
+      ctl.hidden = false;
+      const items = Array.from(grid.querySelectorAll<HTMLElement>(".lc-pcard"));
+      const filterEl = ctl.querySelector<HTMLInputElement>("[data-listfilter]");
+      const sortEl = ctl.querySelector<HTMLSelectElement>("[data-listsort]");
+      const countEl = ctl.querySelector<HTMLElement>("[data-listcount]");
+      const total = items.length;
+
+      const apply = () => {
+        const q = (filterEl?.value ?? "").trim().toLowerCase();
+        let shown = 0;
+        for (const it of items) {
+          const hay = (it.dataset.name ?? "").toLowerCase();
+          const match = !q || hay.includes(q);
+          it.style.display = match ? "" : "none";
+          if (match) shown++;
+        }
+        const mode = sortEl?.value ?? "";
+        if (mode) {
+          const sorted = [...items].sort((a, b) => {
+            if (mode === "age") return Number(a.dataset.age ?? 0) - Number(b.dataset.age ?? 0);
+            if (mode === "ep") return (a.dataset.ep ?? "").localeCompare(b.dataset.ep ?? "");
+            const an = a.dataset.sortname ?? a.dataset.name ?? "";
+            const bn = b.dataset.sortname ?? b.dataset.name ?? "";
+            return an.localeCompare(bn, "ja");
+          });
+          for (const it of sorted) grid.appendChild(it);
+        }
+        if (countEl) countEl.textContent = q ? `${shown} / ${total}` : "";
+      };
+
+      filterEl?.addEventListener("input", apply);
+      sortEl?.addEventListener("change", apply);
+    }
   })();
 </script>
 
