@@ -6,7 +6,8 @@ import VoteTable from "../../components/VoteTable.astro";
 import SnsLinks from "../../components/SnsLinks.astro";
 import EpisodeCard from "../../components/EpisodeCard.astro";
 import SpoilerBadge from "../../components/SpoilerBadge.astro";
-import { siteLink, youtubeUrl } from "../../lib/url";
+import StructuredData from "../../components/StructuredData.astro";
+import { siteLink, youtubeUrl, youtubeThumb, absUrl } from "../../lib/url";
 
 export async function getStaticPaths() {
   const episodes = await getCollection("episodes");
@@ -29,12 +30,28 @@ const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : n
 
 const cleanTitle = episode.data.title.replace(/【LAST.*$/, "").trim();
 const transitionName = `ep-${episode.data.id}-thumb`;
+
+// VideoObject。合否・投票・スコアは含めない（検索結果でのネタバレ防止）。
+const videoSchema = {
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  name: `第${episode.data.id}回 ${cleanTitle}`,
+  description: episode.data.summary ?? episode.data.title,
+  uploadDate: episode.data.airedAt.toISOString(),
+  thumbnailUrl: youtubeThumb(episode.data.youtubeId),
+  embedUrl: `https://www.youtube-nocookie.com/embed/${episode.data.youtubeId}`,
+  contentUrl: youtubeUrl(episode.data.youtubeId),
+  url: absUrl(`/episodes/${episode.data.id}/`),
+  inLanguage: "ja",
+};
 ---
 
 <Layout
   title={`#${episode.data.id} ${cleanTitle}`}
   description={episode.data.summary ?? episode.data.title}
+  ogImage={youtubeThumb(episode.data.youtubeId)}
 >
+  <StructuredData slot="head" schema={videoSchema} />
   <article class="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-14">
     <header class="space-y-5">
       <div class="flex flex-wrap items-center gap-2.5">

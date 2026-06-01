@@ -7,7 +7,8 @@ import StatCard from "../../components/StatCard.astro";
 import VoteSignature from "../../components/VoteSignature.astro";
 import VoteChip from "../../components/VoteChip.astro";
 import DivergingBar from "../../components/DivergingBar.astro";
-import { siteLink } from "../../lib/url";
+import StructuredData from "../../components/StructuredData.astro";
+import { siteLink, absUrl } from "../../lib/url";
 
 export async function getStaticPaths() {
   const judges = await getCollection("judges");
@@ -84,12 +85,24 @@ const flipped = (() => {
   }
   return count;
 })();
+
+// Person。合格率・投票傾向は含めない（スポイラー防止）。
+const sameAs = Object.values(judge.data.sns).filter(Boolean);
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: judge.data.name,
+  jobTitle: "審査員",
+  url: absUrl(`/judges/${judge.id}/`),
+  ...(sameAs.length > 0 ? { sameAs } : {}),
+};
 ---
 
 <Layout
   title={judge.data.name}
   description={`LAST CALL 審査員「${judge.data.name}」のプロフィール、合格率、全回投票履歴。`}
 >
+  <StructuredData slot="head" schema={personSchema} />
   <article class="max-w-5xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12">
     <header class="space-y-5">
       <p class="eyebrow">Judge</p>

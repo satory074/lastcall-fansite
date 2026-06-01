@@ -4,7 +4,18 @@ import Layout from "../components/Layout.astro";
 import EpisodeCard from "../components/EpisodeCard.astro";
 import StatCard from "../components/StatCard.astro";
 import DivergingBar from "../components/DivergingBar.astro";
-import { siteLink } from "../lib/url";
+import StructuredData from "../components/StructuredData.astro";
+import { siteLink, absUrl } from "../lib/url";
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "LAST CALL 非公式ファンサイト",
+  url: absUrl("/"),
+  inLanguage: "ja",
+  description:
+    "YouTubeオーディション番組「LAST CALL（ラストコール）」の各回・出演者・投票結果をまとめる非公式ファンサイト。",
+};
 
 const episodes = (await getCollection("episodes")).sort(
   (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
@@ -31,6 +42,7 @@ const archive = rest.slice(2);
 ---
 
 <Layout>
+  <StructuredData slot="head" schema={websiteSchema} />
   {/* Hero — oversized editorial type */}
   <section class="relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none">

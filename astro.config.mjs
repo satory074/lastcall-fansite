@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
+import sitemap from "@astrojs/sitemap";
 
 // GitHub Pages のプロジェクトページ運用前提。
 // カスタムドメインにする場合は base を空文字に変更すること。
@@ -11,6 +12,7 @@ export default defineConfig({
   site: `https://${ghUser}.github.io`,
   base: `/${repoName}`,
   trailingSlash: "always",
+  integrations: [sitemap()],
   vite: {
     // Tailwind v4 Vite plugin: cast to any to bridge Vite version typing mismatch
     plugins: [/** @type {any} */ (tailwindcss())],

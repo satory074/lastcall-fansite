@@ -1,0 +1,13 @@
+---
+// JSON-LD 構造化データを <head> に注入する。
+// 使い方: ページで <StructuredData slot="head" schema={...} /> と置くと
+// Layout の <slot name="head" /> に流し込まれる。
+// スポイラー配慮: 合否・スコア・投票内容は構造化データに一切含めないこと。
+interface Props {
+  schema: Record<string, unknown> | Record<string, unknown>[];
+}
+const { schema } = Astro.props;
+const json = JSON.stringify(schema);
+---
+
+<script type="application/ld+json" is:inline set:html={json} />
