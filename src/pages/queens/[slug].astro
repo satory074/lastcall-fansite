@@ -11,14 +11,14 @@ import StructuredData from "../../components/StructuredData.astro";
 import { siteLink, absUrl } from "../../lib/url";
 
 export async function getStaticPaths() {
-  const judges = await getCollection("judges");
-  return judges.map((j) => ({
+  const queens = await getCollection("queens");
+  return queens.map((j) => ({
     params: { slug: j.id },
-    props: { judge: j },
+    props: { queen: j },
   }));
 }
 
-const { judge } = Astro.props;
+const { queen } = Astro.props;
 const episodes = (await getCollection("episodes")).sort(
   (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
 );
@@ -35,11 +35,11 @@ type HistoryRow = {
 
 const history: HistoryRow[] = [];
 for (const ep of episodes) {
-  const votesForJudge = ep.data.votes.filter((vv) => vv.judge.id === judge.id);
-  if (votesForJudge.length === 0) continue;
+  const votesForQueen = ep.data.votes.filter((vv) => vv.queen.id === queen.id);
+  if (votesForQueen.length === 0) continue;
   const c = await getEntry(ep.data.cinderella);
   for (const round of ["first", "final"] as const) {
-    const v = votesForJudge.find((vv) => vv.round === round);
+    const v = votesForQueen.find((vv) => vv.round === round);
     if (!v) continue;
     history.push({
       episode: ep,
@@ -87,50 +87,50 @@ const flipped = (() => {
 })();
 
 // Person。合格率・投票傾向は含めない（スポイラー防止）。
-const sameAs = Object.values(judge.data.sns).filter(Boolean);
+const sameAs = Object.values(queen.data.sns).filter(Boolean);
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
-  name: judge.data.name,
-  jobTitle: "審査員",
-  url: absUrl(`/judges/${judge.id}/`),
+  name: queen.data.name,
+  jobTitle: "クイーン",
+  url: absUrl(`/queens/${queen.id}/`),
   ...(sameAs.length > 0 ? { sameAs } : {}),
 };
 ---
 
 <Layout
-  title={judge.data.name}
-  description={`LAST CALL 審査員「${judge.data.name}」のプロフィール、合格率、全回投票履歴。`}
+  title={queen.data.name}
+  description={`LAST CALL クイーン「${queen.data.name}」のプロフィール、合格率、全回投票履歴。`}
   breadcrumbs={[
     { label: "出演者・審査一覧", href: siteLink("/people/") },
-    { label: judge.data.name },
+    { label: queen.data.name },
   ]}
 >
   <StructuredData slot="head" schema={personSchema} />
   <article class="max-w-5xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12">
     <header class="space-y-5">
-      <p class="eyebrow">Judge</p>
+      <p class="eyebrow">Queen</p>
       <div class="space-y-2">
         <h1 class="font-display-serif text-[2.25rem] sm:text-[3.25rem] leading-[1.05] text-[var(--color-text)]">
-          {judge.data.name}
-          {judge.data.nameKana && judge.data.nameKana !== judge.data.name && (
+          {queen.data.name}
+          {queen.data.nameKana && queen.data.nameKana !== queen.data.name && (
             <span class="text-base font-sans text-[var(--color-text-muted)] ml-3 align-middle">
-              {judge.data.nameKana}
+              {queen.data.nameKana}
             </span>
           )}
         </h1>
         <div class="text-sm text-[var(--color-text-muted)] tracking-wide flex flex-wrap gap-x-3 gap-y-1">
-          {judge.data.age && <span>{judge.data.age}歳</span>}
-          {judge.data.area && <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">{judge.data.area}</span>}
-          {judge.data.store && <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">{judge.data.store}</span>}
+          {queen.data.age && <span>{queen.data.age}歳</span>}
+          {queen.data.area && <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">{queen.data.area}</span>}
+          {queen.data.store && <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">{queen.data.store}</span>}
         </div>
       </div>
     </header>
 
-    {judge.data.bio && (
+    {queen.data.bio && (
       <section class="space-y-3">
         <h2 class="section-eyebrow">Profile</h2>
-        <p class="text-sm sm:text-base leading-[1.85] text-[var(--color-text-muted)]">{judge.data.bio}</p>
+        <p class="text-sm sm:text-base leading-[1.85] text-[var(--color-text-muted)]">{queen.data.bio}</p>
       </section>
     )}
 
@@ -196,7 +196,7 @@ const personSchema = {
       <section class="space-y-3">
         <h2 class="section-eyebrow">Vote Signature <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">時系列 · 全 {episodes.length} 回</span></h2>
         <div class="card p-4 sm:p-5">
-          <VoteSignature forJudge={judge} round="both" size="sm" linkTo="episode" />
+          <VoteSignature forQueen={queen} round="both" size="sm" linkTo="episode" />
         </div>
         <div class="flex flex-wrap items-center gap-3 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
           <span class="inline-flex items-center gap-1.5">
@@ -218,7 +218,7 @@ const personSchema = {
 
     <section class="space-y-3">
       <h2 class="section-eyebrow">SNS</h2>
-      <SnsLinks sns={judge.data.sns} />
+      <SnsLinks sns={queen.data.sns} />
     </section>
 
     {/* Comments / detail table */}
@@ -261,7 +261,7 @@ const personSchema = {
                       {h.round === "first" ? "ファースト" : "最終"}
                     </td>
                     <td class="px-3 py-2 text-center">
-                      <VoteChip vote={h.vote} size="sm" round={h.round} judgeName={judge.data.name} />
+                      <VoteChip vote={h.vote} size="sm" round={h.round} queenName={queen.data.name} />
                     </td>
                     <td class="px-3 py-2 text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed">
                       {h.comment ? (
@@ -285,7 +285,7 @@ const personSchema = {
 
     {history.length === 0 && (
       <section class="card p-6 text-center text-sm text-[var(--color-text-muted)]">
-        この審査員の投票履歴データを準備中です。
+        このクイーンの投票履歴データを準備中です。
       </section>
     )}
   </article>

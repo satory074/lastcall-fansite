@@ -11,8 +11,8 @@ const snsSchema = z
   })
   .default({});
 
-const judges = defineCollection({
-  loader: glob({ pattern: "**/*.json", base: "src/content/judges" }),
+const queens = defineCollection({
+  loader: glob({ pattern: "**/*.json", base: "src/content/queens" }),
   schema: z.object({
     name: z.string(),
     nameKana: z.string().optional(),
@@ -48,7 +48,7 @@ const episodes = defineCollection({
     votes: z
       .array(
         z.object({
-          judge: reference("judges"),
+          queen: reference("queens"),
           // ファーストコール = 番組前半の暫定判定、最終ジャッジ = 合否確定の最終判定。
           // round 未指定の票は最終ジャッジ扱い（後方互換）。
           round: z.enum(["first", "final"]).default("final"),
@@ -61,4 +61,4 @@ const episodes = defineCollection({
   }),
 });
 
-export const collections = { judges, cinderellas, episodes };
+export const collections = { queens, cinderellas, episodes };

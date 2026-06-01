@@ -5,11 +5,11 @@ interface Props {
   vote: VoteValue;
   size?: "xs" | "sm" | "md" | "lg";
   round?: "first" | "final";
-  judgeName?: string;
+  queenName?: string;
   spoiler?: boolean;
 }
 
-const { vote, size = "sm", round, judgeName, spoiler = true } = Astro.props;
+const { vote, size = "sm", round, queenName, spoiler = true } = Astro.props;
 
 const sizePx: Record<NonNullable<Props["size"]>, { box: string; text: string }> = {
   xs: { box: "w-4 h-4", text: "text-[8px]" },
@@ -40,7 +40,7 @@ const labels: Record<VoteValue, string> = {
 
 const ariaLabel = (() => {
   const parts: string[] = [];
-  if (judgeName) parts.push(judgeName);
+  if (queenName) parts.push(queenName);
   if (round) parts.push(round === "first" ? "ファースト" : "最終");
   parts.push(vote === "UNKNOWN" ? "未確認" : vote === "ABSENT" ? "欠席" : vote);
   return parts.join(" / ");

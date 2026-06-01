@@ -28,9 +28,9 @@ if (appearance) {
   const finals = appearance.data.votes.filter((v) => v.round === "final");
   pass = finals.filter((v) => v.vote === "LAST CALL").length;
   fail = finals.filter((v) => v.vote === "NOTHING" || v.vote === "NO CALL").length;
-  // judge count = 14 fixed; unknown = 14 - recorded
-  const judgesCount = (await getCollection("judges")).length;
-  unknown = Math.max(0, judgesCount - finals.length);
+  // queen count = 14 fixed; unknown = 14 - recorded
+  const queensCount = (await getCollection("queens")).length;
+  unknown = Math.max(0, queensCount - finals.length);
 }
 const hasData = pass + fail > 0;
 ---

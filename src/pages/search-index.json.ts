@@ -4,7 +4,7 @@ import { siteLink } from "../lib/url";
 // クライアント検索用の軽量インデックス。
 // スポイラー配慮: 合否・投票・コメントは一切含めず、名前・回・属性のみ。
 type Item = {
-  type: "episode" | "cinderella" | "judge";
+  type: "episode" | "cinderella" | "queen";
   label: string;
   sub: string;
   url: string;
@@ -12,10 +12,10 @@ type Item = {
 };
 
 export async function GET() {
-  const [episodes, cinderellas, judges] = await Promise.all([
+  const [episodes, cinderellas, queens] = await Promise.all([
     getCollection("episodes"),
     getCollection("cinderellas"),
-    getCollection("judges"),
+    getCollection("queens"),
   ]);
 
   const items: Item[] = [];
@@ -41,13 +41,13 @@ export async function GET() {
     });
   }
 
-  for (const j of judges) {
+  for (const j of queens) {
     const sub = [j.data.area, j.data.store].filter(Boolean).join(" · ");
     items.push({
-      type: "judge",
+      type: "queen",
       label: j.data.name,
-      sub: sub || "審査員",
-      url: siteLink(`/judges/${j.id}/`),
+      sub: sub || "クイーン",
+      url: siteLink(`/queens/${j.id}/`),
       terms: `${j.data.name} ${j.data.nameKana ?? ""} ${j.data.area ?? ""} ${j.data.store ?? ""} ${j.id}`.toLowerCase(),
     });
   }

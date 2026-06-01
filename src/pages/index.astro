@@ -21,7 +21,7 @@ const episodes = (await getCollection("episodes")).sort(
   (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
 );
 const cinderellas = await getCollection("cinderellas");
-const judges = await getCollection("judges");
+const queens = await getCollection("queens");
 
 const latest = episodes[0];
 const rest = episodes.slice(1);
@@ -71,7 +71,7 @@ const archive = rest.slice(2);
             YouTube 配信のキャバ嬢オーディション番組
             <a href="https://lastcall.jp/" target="_blank" rel="noopener" class="text-[var(--color-text)] underline decoration-[var(--color-border-strong)] hover:decoration-[var(--color-gold)]">LAST CALL</a>
             の各回・シンデレラ・14 名のレジェンドキャバ嬢による審査結果を、
-            <span class="text-[var(--color-text)]">回ごと</span>・<span class="text-[var(--color-text)]">審査員ごと</span>に横断できる索引として整理。
+            <span class="text-[var(--color-text)]">回ごと</span>・<span class="text-[var(--color-text)]">クイーンごと</span>に横断できる索引として整理。
           </p>
           <div class="flex flex-wrap gap-3 pt-1">
             <a
@@ -101,7 +101,7 @@ const archive = rest.slice(2);
     <section class="grid grid-cols-3 gap-3 sm:gap-5 -mt-4">
       <StatCard label="Episodes" value={episodes.length} sublabel="配信済み回数" />
       <StatCard label="Cinderellas" value={cinderellas.length} sublabel="登場した志願者" />
-      <StatCard label="Judges" value={judges.length} sublabel="固定レジェンド" />
+      <StatCard label="Queens" value={queens.length} sublabel="固定レジェンド" />
     </section>
 
     {/* Onboarding — 番組の仕組みとサイトの使い方（事実のみ） */}

@@ -15,46 +15,46 @@ const { votes, cinderellaResult } = Astro.props;
 
 type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
 
-const allJudges = (await getCollection("judges")).sort((a, b) =>
+const allQueens = (await getCollection("queens")).sort((a, b) =>
   a.data.name.localeCompare(b.data.name, "ja")
 );
 
-const recordedJudges = await getEntries(votes.map((v) => v.judge));
-const judgeMap = new Map(recordedJudges.map((j) => [j.id, j]));
-const extraVotes = votes.filter((v) => !allJudges.some((j) => j.id === v.judge.id));
+const recordedQueens = await getEntries(votes.map((v) => v.queen));
+const queenMap = new Map(recordedQueens.map((j) => [j.id, j]));
+const extraVotes = votes.filter((v) => !allQueens.some((j) => j.id === v.queen.id));
 
-const lookup = (judgeId: string, round: "first" | "final") =>
-  votes.find((v) => v.judge.id === judgeId && v.round === round);
+const lookup = (queenId: string, round: "first" | "final") =>
+  votes.find((v) => v.queen.id === queenId && v.round === round);
 
 type Row = {
-  judgeId: string;
-  judgeName: string;
-  judgeHref: string | null;
+  queenId: string;
+  queenName: string;
+  queenHref: string | null;
   first: { vote: VoteValue; comment?: string };
   final: { vote: VoteValue; comment?: string };
 };
 
-const baseRows: Row[] = allJudges.map((j) => {
+const baseRows: Row[] = allQueens.map((j) => {
   const f = lookup(j.id, "first");
   const l = lookup(j.id, "final");
   return {
-    judgeId: j.id,
-    judgeName: j.data.name,
-    judgeHref: siteLink(`/judges/${j.id}/`),
+    queenId: j.id,
+    queenName: j.data.name,
+    queenHref: siteLink(`/queens/${j.id}/`),
     first: { vote: f ? f.vote : "UNKNOWN", comment: f?.comment },
     final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
   };
 });
 
-const extraJudgeIds = Array.from(new Set(extraVotes.map((v) => v.judge.id)));
-const extraRows: Row[] = extraJudgeIds.map((id) => {
-  const j = judgeMap.get(id);
+const extraQueenIds = Array.from(new Set(extraVotes.map((v) => v.queen.id)));
+const extraRows: Row[] = extraQueenIds.map((id) => {
+  const j = queenMap.get(id);
   const f = lookup(id, "first");
   const l = lookup(id, "final");
   return {
-    judgeId: id,
-    judgeName: j?.data.name ?? "ゲスト審査員",
-    judgeHref: j ? siteLink(`/judges/${j.id}/`) : null,
+    queenId: id,
+    queenName: j?.data.name ?? "ゲストクイーン",
+    queenHref: j ? siteLink(`/queens/${j.id}/`) : null,
     first: { vote: f ? f.vote : "UNKNOWN", comment: f?.comment },
     final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
   };
@@ -95,9 +95,9 @@ const hasAnyVote = votes.length > 0;
 <section class="space-y-6">
   <header class="flex flex-wrap items-end justify-between gap-3">
     <div class="space-y-1">
-      <h2 class="section-eyebrow">Judges &amp; Votes</h2>
+      <h2 class="section-eyebrow">Queens &amp; Votes</h2>
       <p class="text-xs text-[var(--color-text-muted)] tracking-wide">
-        固定 14 名審査員 × 2 ラウンド（ファーストコール / 最終ジャッジ）
+        固定 14 名クイーン × 2 ラウンド（ファーストコール / 最終ジャッジ）
       </p>
     </div>
     {displayResult && (
@@ -139,7 +139,7 @@ const hasAnyVote = votes.length > 0;
     )}
   </div>
 
-  {/* Judge signature row — 14 chips */}
+  {/* Queen signature row — 14 chips */}
   <div class="card p-4 sm:p-5 space-y-3">
     <div class="flex items-baseline justify-between gap-3">
       <h3 class="text-[11px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] font-medium">
@@ -151,13 +151,13 @@ const hasAnyVote = votes.length > 0;
     </div>
     <div class="flex flex-wrap gap-1.5 sm:gap-2">
       {rows.map((r) => (
-        <a href={r.judgeHref ?? "#"} class="group flex flex-col items-center gap-0.5">
+        <a href={r.queenHref ?? "#"} class="group flex flex-col items-center gap-0.5">
           <span class="flex flex-col items-center gap-0.5">
-            <VoteChip vote={r.first.vote} size="sm" round="first" judgeName={r.judgeName} />
-            <VoteChip vote={r.final.vote} size="sm" round="final" judgeName={r.judgeName} />
+            <VoteChip vote={r.first.vote} size="sm" round="first" queenName={r.queenName} />
+            <VoteChip vote={r.final.vote} size="sm" round="final" queenName={r.queenName} />
           </span>
           <span class="text-[9px] leading-none text-[var(--color-text-subtle)] tracking-tight group-hover:text-[var(--color-gold-bright)] transition max-w-[60px] truncate text-center">
-            {r.judgeName}
+            {r.queenName}
           </span>
         </a>
       ))}
@@ -182,7 +182,7 @@ const hasAnyVote = votes.length > 0;
         <table class="min-w-full text-sm">
           <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
             <tr>
-              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">審査員</th>
+              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">クイーン</th>
               <th class="text-center font-medium px-3 py-2 whitespace-nowrap">First</th>
               <th class="text-center font-medium px-3 py-2 whitespace-nowrap">Final</th>
               <th class="text-left font-medium px-3 py-2">コメント</th>
@@ -196,19 +196,19 @@ const hasAnyVote = votes.length > 0;
               return (
                 <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
                   <td class="px-3 py-2 whitespace-nowrap">
-                    {row.judgeHref ? (
-                      <a href={row.judgeHref} class="hover:text-[var(--color-gold-bright)] transition">
-                        {row.judgeName}
+                    {row.queenHref ? (
+                      <a href={row.queenHref} class="hover:text-[var(--color-gold-bright)] transition">
+                        {row.queenName}
                       </a>
                     ) : (
-                      <span>{row.judgeName}</span>
+                      <span>{row.queenName}</span>
                     )}
                   </td>
                   <td class="px-3 py-2 text-center">
-                    <VoteChip vote={row.first.vote} size="sm" round="first" judgeName={row.judgeName} />
+                    <VoteChip vote={row.first.vote} size="sm" round="first" queenName={row.queenName} />
                   </td>
                   <td class="px-3 py-2 text-center">
-                    <VoteChip vote={row.final.vote} size="sm" round="final" judgeName={row.judgeName} />
+                    <VoteChip vote={row.final.vote} size="sm" round="final" queenName={row.queenName} />
                   </td>
                   <td class="px-3 py-2 text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed">
                     {comments.length > 0 ? (
@@ -232,7 +232,7 @@ const hasAnyVote = votes.length > 0;
 
   {finalTally.unknown > 0 && (
     <p class="text-[11px] text-[var(--color-text-subtle)] tracking-wide">
-      「未確認」は本編未視聴のため個別投票が未記録の審査員です。<code class="text-[var(--color-text-muted)]">src/content/episodes/{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1] ?? "<ID>"}.json</code> の <code class="text-[var(--color-text-muted)]">votes</code> に <code class="text-[var(--color-text-muted)]">round: "first" | "final"</code> 指定で追加してください。
+      「未確認」は本編未視聴のため個別投票が未記録のクイーンです。<code class="text-[var(--color-text-muted)]">src/content/episodes/{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1] ?? "<ID>"}.json</code> の <code class="text-[var(--color-text-muted)]">votes</code> に <code class="text-[var(--color-text-muted)]">round: "first" | "final"</code> 指定で追加してください。
     </p>
   )}
 </section>

@@ -10,36 +10,36 @@ interface BaseProps {
   /** Round to display. "both" stacks first above final */
   round?: "first" | "final" | "both";
   size?: "xs" | "sm" | "md" | "lg";
-  /** Optional override of which episodes/judges to show */
+  /** Optional override of which episodes/queens to show */
   episodeIds?: string[];
-  judgeIds?: string[];
+  queenIds?: string[];
   /** Wrap or scroll horizontally */
   wrap?: boolean;
-  /** Link each chip to the episode or judge page */
-  linkTo?: "episode" | "judge" | "none";
+  /** Link each chip to the episode or queen page */
+  linkTo?: "episode" | "queen" | "none";
 }
 
-interface ForJudgeProps extends BaseProps {
-  /** Show this judge's votes across all episodes */
-  forJudge: CollectionEntry<"judges">;
+interface ForQueenProps extends BaseProps {
+  /** Show this queen's votes across all episodes */
+  forQueen: CollectionEntry<"queens">;
   forEpisode?: never;
 }
 
 interface ForEpisodeProps extends BaseProps {
-  /** Show all judges' votes for this episode */
+  /** Show all queens' votes for this episode */
   forEpisode: CollectionEntry<"episodes">;
-  forJudge?: never;
+  forQueen?: never;
 }
 
-type Props = ForJudgeProps | ForEpisodeProps;
+type Props = ForQueenProps | ForEpisodeProps;
 
 const {
-  forJudge,
+  forQueen,
   forEpisode,
   round = "final",
   size = "sm",
   episodeIds,
-  judgeIds,
+  queenIds,
   wrap = true,
   linkTo,
 } = Astro.props as Props;
@@ -55,14 +55,14 @@ type Cell = {
 
 const cells: Cell[] = [];
 
-if (forJudge) {
+if (forQueen) {
   const eps = (await getCollection("episodes")).sort(
     (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
   );
   const filtered = episodeIds ? eps.filter((e) => episodeIds.includes(e.data.id)) : eps;
   for (const ep of filtered) {
-    const f = ep.data.votes.find((v) => v.judge.id === forJudge.id && v.round === "first");
-    const l = ep.data.votes.find((v) => v.judge.id === forJudge.id && v.round === "final");
+    const f = ep.data.votes.find((v) => v.queen.id === forQueen.id && v.round === "first");
+    const l = ep.data.votes.find((v) => v.queen.id === forQueen.id && v.round === "final");
     cells.push({
       key: ep.data.id,
       href: linkTo === "episode" || linkTo === undefined ? siteLink(`/episodes/${ep.data.id}/`) : null,
@@ -75,16 +75,16 @@ if (forJudge) {
     });
   }
 } else if (forEpisode) {
-  const allJudges = (await getCollection("judges")).sort((a, b) =>
+  const allQueens = (await getCollection("queens")).sort((a, b) =>
     a.data.name.localeCompare(b.data.name, "ja")
   );
-  const filtered = judgeIds ? allJudges.filter((j) => judgeIds.includes(j.id)) : allJudges;
+  const filtered = queenIds ? allQueens.filter((j) => queenIds.includes(j.id)) : allQueens;
   for (const j of filtered) {
-    const f = forEpisode.data.votes.find((v) => v.judge.id === j.id && v.round === "first");
-    const l = forEpisode.data.votes.find((v) => v.judge.id === j.id && v.round === "final");
+    const f = forEpisode.data.votes.find((v) => v.queen.id === j.id && v.round === "first");
+    const l = forEpisode.data.votes.find((v) => v.queen.id === j.id && v.round === "final");
     cells.push({
       key: j.id,
-      href: linkTo === "judge" || linkTo === undefined ? siteLink(`/judges/${j.id}/`) : null,
+      href: linkTo === "queen" || linkTo === undefined ? siteLink(`/queens/${j.id}/`) : null,
       label: j.data.name,
       votes: [
         { round: "first", vote: (f?.vote as VoteValue | undefined) ?? "UNKNOWN" },
@@ -111,7 +111,7 @@ const roundsToShow: ("first" | "final")[] =
                 vote={v}
                 size={size}
                 round={r}
-                judgeName={forEpisode ? cell.label : undefined}
+                queenName={forEpisode ? cell.label : undefined}
               />
             );
           })}
