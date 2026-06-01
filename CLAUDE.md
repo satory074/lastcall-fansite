@@ -72,8 +72,21 @@ After several iterations, the routes are:
 - `/people/` — unified Cinderellas + Judges + **voting matrix** (`episodes.length × judges.length` grid, sticky left columns, `<tfoot>` aggregate row)
 - `/cinderellas/[slug]/`, `/judges/[slug]/` — individual profile detail pages (no list index)
 - `/about/` — disclaimer, spoiler-toggle docs, deletion request policy
+- `/404` — custom not-found page (`src/pages/404.astro`); GitHub Pages serves `404.html`
+- `/rss.xml` (`src/pages/rss.xml.ts`) and `/search-index.json` (`src/pages/search-index.json.ts`) — non-HTML endpoints (see SEO & search below)
 
 There is no `/episodes/` index or `/cinderellas/` index or `/judges/` index. The nav has only two top-level items: `出演者・審査一覧` and `このサイトについて`. Do not re-add those index pages; the home page and `/people/` cover them.
+
+### SEO, discovery & search
+
+- **Structured data**: `src/components/StructuredData.astro` injects JSON-LD via Layout's `<slot name="head" />` (place it as `<StructuredData slot="head" schema={...} />` inside a page). Wired: `WebSite` (home), `VideoObject` (episode), `Person` (judge). Layout auto-emits `BreadcrumbList` from the `breadcrumbs` prop. **Never put pass/fail, scores, or vote outcomes in JSON-LD** — it would spoil search results.
+- **Sitemap/RSS**: `@astrojs/sitemap` integration (`astro.config.mjs`) → `sitemap-index.xml`; `robots.txt` points to it. `/rss.xml` lists episodes by `airedAt` desc, **titles + dates only** (no results).
+- **Icons/OGP**: `public/favicon.svg` + `public/og-default.png` (1200×630, regenerate with sharp from an inline SVG). Layout defaults `ogImage` to og-default; episode pages override with the YouTube thumb.
+- **Absolute URLs**: use `absUrl()` in `src/lib/url.ts` for JSON-LD / feeds (host + base path).
+- **Breadcrumbs**: pass `breadcrumbs={[{ label, href? }]}` to `<Layout>`; it prepends ホーム, renders the visual nav, and generates the matching `BreadcrumbList`. Wired on episode/cinderella/judge detail pages.
+- **Global search**: header search button opens an overlay (`#lc-search` in `Layout.astro`) that fetches `/search-index.json` once and substring-matches. The index includes names, episode numbers, and judge attributes only — **spoiler-free by construction**. `/` opens it, Esc closes.
+- **/people in-place filter/sort**: cinderella/judge grids wrap each `PersonCard` in a `display:contents` `.lc-pcard` div carrying `data-name` / `data-ep` / `data-sortname` / `data-age`; a JS controller (`.lc-listctl`) filters and reorders by **non-spoiler fields only**. Controls reveal only when JS runs.
+- **Matrix judge-column filter**: every matrix `th`/`td`/`tfoot` cell for a judge carries `data-jcol={judge.id}`; the `#lc-matrix-filter` chip panel toggles `.lc-col-off` (`display:none`) per column to shrink width on mobile. Panel is `hidden` until JS confirms support, so no-JS users keep the full table.
 
 ### Spoiler protection — payload-first occlusion (v2, 2026-05 redesign)
 
