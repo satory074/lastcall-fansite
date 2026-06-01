@@ -1,16 +1,23 @@
 ---
 import "../styles/globals.css";
 
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
 interface Props {
   title?: string;
   description?: string;
   ogImage?: string;
+  breadcrumbs?: Crumb[];
 }
 
 const {
   title = "LAST CALL 非公式ファンサイト",
   description = "YouTubeオーディション番組「LAST CALL（ラストコール）」の各回・出演者・投票結果をまとめる非公式ファンサイトです。",
   ogImage = "/lastcall-fansite/og-default.png",
+  breadcrumbs,
 } = Astro.props;
 
 const fullTitle =
@@ -29,6 +36,24 @@ const nav = [
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const linkOf = (href: string) => `${base}${href}`;
 const currentPath = Astro.url.pathname.replace(base, "") || "/";
+
+// パンくず: 先頭に「ホーム」を補い、視覚表示と BreadcrumbList JSON-LD を生成。
+const crumbs: Crumb[] = breadcrumbs
+  ? [{ label: "ホーム", href: linkOf("/") }, ...breadcrumbs]
+  : [];
+const breadcrumbSchema =
+  crumbs.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: crumbs.map((c, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: c.label,
+          ...(c.href ? { item: new URL(c.href, Astro.site).toString() } : {}),
+        })),
+      }
+    : null;
 ---
 
 <!doctype html>
@@ -55,6 +80,9 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={ogImageUrl} />
     <meta name="robots" content="index,follow" />
+    {breadcrumbSchema && (
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbSchema)} />
+    )}
     <slot name="head" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -92,7 +120,7 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
             Unofficial Archive
           </span>
         </a>
-        <div class="flex items-center gap-3 sm:gap-5">
+        <div class="flex items-center gap-3 sm:gap-5 relative">
           <nav class="hidden md:flex items-center gap-6 text-[13px]">
             {nav.map((item) => {
               const active = item.href === "/" ? currentPath === "/" : currentPath.startsWith(item.href);
@@ -138,6 +166,21 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
               <span class="hidden sm:inline ml-1">全表示</span>
             </button>
           </div>
+          {/* 初回訪問時のみ表示するネタバレモード案内（JSで制御） */}
+          <div
+            id="lc-spoiler-hint"
+            hidden
+            class="absolute right-0 top-[calc(100%+0.6rem)] z-[55] w-60 rounded-lg border border-[var(--color-gold-deep)] bg-[var(--color-surface)] px-3.5 py-3 text-left shadow-[0_12px_36px_-10px_rgba(0,0,0,0.6)]"
+            role="status"
+          >
+            <span class="absolute -top-1.5 right-8 h-3 w-3 rotate-45 border-l border-t border-[var(--color-gold-deep)] bg-[var(--color-surface)]"></span>
+            <p class="text-[12px] leading-relaxed text-[var(--color-text-muted)]">
+              合否や投票結果は<strong class="text-[var(--color-text)]">既定で非表示</strong>です。ここで表示モードを切り替えられます。
+            </p>
+            <button type="button" id="lc-spoiler-hint-close" class="mt-2 text-[11px] font-semibold text-[var(--color-gold)] hover:text-[var(--color-gold-bright)]">
+              わかった
+            </button>
+          </div>
         </div>
       </div>
       <nav class="md:hidden border-t border-[var(--color-border)]">
@@ -165,6 +208,23 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
         JavaScript が無効です。ネタバレ防止モードは「全隠し」固定になります。モード切替や個別解除を行うには JavaScript を有効にしてください。
       </div>
     </noscript>
+
+    {crumbs.length > 0 && (
+      <nav aria-label="パンくずリスト" class="border-b border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-bg)_85%,transparent)]">
+        <ol class="max-w-6xl mx-auto px-5 sm:px-8 py-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-[var(--color-text-subtle)]">
+          {crumbs.map((c, i) => (
+            <li class="flex items-center gap-2">
+              {i > 0 && <span aria-hidden="true" class="text-[var(--color-border-strong)]">/</span>}
+              {c.href && i < crumbs.length - 1 ? (
+                <a href={c.href} class="hover:text-[var(--color-gold-bright)] transition truncate max-w-[12rem]">{c.label}</a>
+              ) : (
+                <span aria-current="page" class="text-[var(--color-text-muted)] truncate max-w-[14rem]">{c.label}</span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )}
 
     <main id="lc-main" class="flex-1">
       <slot />
@@ -287,6 +347,30 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
           applyMode((b.dataset.mode as Mode) ?? "hidden");
         });
       }
+
+      // 初回訪問時のみ、ネタバレモードの案内を一度だけ表示する。
+      (function initSpoilerHint() {
+        const hint = document.getElementById("lc-spoiler-hint");
+        if (!hint) return;
+        let firstVisit = false;
+        try {
+          firstVisit =
+            localStorage.getItem("lc-spoilers") === null &&
+            localStorage.getItem("lc-spoiler-hint-seen") === null;
+        } catch (_) {}
+        if (!firstVisit) return;
+
+        const dismiss = () => {
+          hint.hidden = true;
+          try { localStorage.setItem("lc-spoiler-hint-seen", "1"); } catch (_) {}
+        };
+        hint.hidden = false;
+        document
+          .getElementById("lc-spoiler-hint-close")
+          ?.addEventListener("click", dismiss);
+        // モードを切り替えたら役目を終えるので閉じる
+        for (const b of buttons) b.addEventListener("click", dismiss, { once: true });
+      })();
 
       // 個別の occlusion 要素クリックで一時的に表示
       document.addEventListener("click", (ev) => {

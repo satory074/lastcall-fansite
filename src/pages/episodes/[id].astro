@@ -50,6 +50,7 @@ const videoSchema = {
   title={`#${episode.data.id} ${cleanTitle}`}
   description={episode.data.summary ?? episode.data.title}
   ogImage={youtubeThumb(episode.data.youtubeId)}
+  breadcrumbs={[{ label: `第${episode.data.id}回 ${cleanTitle}` }]}
 >
   <StructuredData slot="head" schema={videoSchema} />
   <article class="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-14">

@@ -5,6 +5,7 @@ import SnsLinks from "../../components/SnsLinks.astro";
 import EpisodeCard from "../../components/EpisodeCard.astro";
 import DivergingBar from "../../components/DivergingBar.astro";
 import SpoilerBadge from "../../components/SpoilerBadge.astro";
+import { siteLink } from "../../lib/url";
 
 export async function getStaticPaths() {
   const cinderellas = await getCollection("cinderellas");
@@ -37,6 +38,10 @@ const hasData = pass + fail > 0;
 <Layout
   title={cinderella.data.name}
   description={`LAST CALL #${cinderella.data.episodeId} に出演したシンデレラ「${cinderella.data.name}」のプロフィールと審査結果。`}
+  breadcrumbs={[
+    { label: "出演者・審査一覧", href: siteLink("/people/") },
+    { label: cinderella.data.name },
+  ]}
 >
   <article class="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12">
     <header class="space-y-5">

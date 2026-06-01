@@ -104,6 +104,43 @@ const archive = rest.slice(2);
       <StatCard label="Judges" value={judges.length} sublabel="固定レジェンド" />
     </section>
 
+    {/* Onboarding — 番組の仕組みとサイトの使い方（事実のみ） */}
+    <section class="space-y-6">
+      <h2 class="section-eyebrow">はじめに</h2>
+      <div class="grid gap-4 sm:gap-5 md:grid-cols-2">
+        <div class="card p-6 space-y-3">
+          <p class="eyebrow">審査の仕組み</p>
+          <p class="text-sm text-[var(--color-text-muted)] leading-[1.85]">
+            各回 1 名のシンデレラ（志願者）に対し、固定の 14 名が審査します。判定は 2 ラウンド制で、
+            番組前半の暫定判定<strong class="text-[var(--color-text)]">「ファーストコール」</strong>と、合否を確定する
+            <strong class="text-[var(--color-text)]">「最終ジャッジ」</strong>に分かれます。
+            このサイトの合格率・合否はすべて<strong class="text-[var(--color-text)]">最終ジャッジ</strong>の票で集計しています。
+          </p>
+          <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-[var(--color-text-subtle)]">
+            <span class="px-2 py-0.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]">ファーストコール</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <span class="px-2 py-0.5 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text-muted)]">最終ジャッジ</span>
+            <span class="text-[var(--color-border-strong)]">·</span>
+            <span>票種: LAST CALL / NOTHING / NO CALL</span>
+          </div>
+        </div>
+        <div class="card p-6 space-y-3">
+          <p class="eyebrow">ネタバレ表示モード</p>
+          <p class="text-sm text-[var(--color-text-muted)] leading-[1.85]">
+            合否・票内訳・コメントは<strong class="text-[var(--color-text)]">既定で非表示</strong>です。
+            画面右上のトグルで「全隠 / 結果伏 / 全表示」を切り替えられ、選択はブラウザに保存されます。
+            個別のぼかし部分はタップ／クリックでその場だけ表示できます。
+          </p>
+          <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
+            <span class="font-display tracking-[0.18em] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)]">全隠</span>
+            <span class="font-display tracking-[0.18em] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)]">結果伏</span>
+            <span class="font-display tracking-[0.18em] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-gold)] text-black">全表示</span>
+            <a href={siteLink("/about/")} class="ml-auto text-[var(--color-text-subtle)] underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)]">詳しく</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     {/* Latest episode — editorial pick */}
     {latest && (
       <section id="latest" class="space-y-6 scroll-mt-24">

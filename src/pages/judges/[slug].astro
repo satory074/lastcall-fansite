@@ -101,6 +101,10 @@ const personSchema = {
 <Layout
   title={judge.data.name}
   description={`LAST CALL 審査員「${judge.data.name}」のプロフィール、合格率、全回投票履歴。`}
+  breadcrumbs={[
+    { label: "出演者・審査一覧", href: siteLink("/people/") },
+    { label: judge.data.name },
+  ]}
 >
   <StructuredData slot="head" schema={personSchema} />
   <article class="max-w-5xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12">
