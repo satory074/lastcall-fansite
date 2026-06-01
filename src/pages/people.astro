@@ -210,6 +210,26 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
         <span>上=ファースト / 下=最終</span>
       </div>
 
+      {/* 審査員フィルタ: 列を絞ってモバイルの横幅を圧縮（JSで制御、未対応時は全表示のまま） */}
+      <div id="lc-matrix-filter" class="space-y-2.5" hidden data-total={judges.length}>
+        <div class="flex flex-wrap items-center gap-2 text-[11px]">
+          <span class="text-[var(--color-text-subtle)] tracking-wider">審査員を絞り込む</span>
+          <span id="lc-jcount" class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
+          <button type="button" data-jall="on" class="ml-auto px-2.5 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">全員</button>
+          <button type="button" data-jall="off" class="px-2.5 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">全解除</button>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          {judges.map((j) => (
+            <button
+              type="button"
+              class="lc-jchip px-2.5 py-1 rounded-full border text-[11px] tracking-wide transition"
+              data-jchip={j.id}
+              aria-pressed="true"
+            >{j.data.name}</button>
+          ))}
+        </div>
+      </div>
+
       {/* Heatmap matrix */}
       <div class="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
         <table class="text-xs lc-matrix">
@@ -219,7 +239,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
               <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-[60px] z-20 bg-[var(--color-surface)]">シンデレラ</th>
               <th scope="col" class="text-center font-medium px-3 py-3 whitespace-nowrap">結果</th>
               {judges.map((j) => (
-                <th scope="col" class="text-center font-medium px-2 py-3 whitespace-nowrap">
+                <th scope="col" data-jcol={j.id} class="text-center font-medium px-2 py-3 whitespace-nowrap">
                   <a href={siteLink(`/judges/${j.id}/`)} class="hover:text-[var(--color-gold-bright)] transition inline-block max-w-[64px] truncate text-[11px]">
                     {j.data.name}
                   </a>
@@ -261,7 +281,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
                     ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                   </td>
                   {cells.map((cell, ji) => (
-                    <td class="px-1.5 py-2 text-center align-middle">
+                    <td data-jcol={judges[ji].id} class="px-1.5 py-2 text-center align-middle">
                       <div class="inline-flex flex-col items-center gap-0.5">
                         <VoteChip vote={cell.first.vote} size="sm" round="first" judgeName={judges[ji].data.name} />
                         <VoteChip vote={cell.final.vote} size="sm" round="final" judgeName={judges[ji].data.name} />
@@ -294,8 +314,8 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
                     ><span class="lc-payload-content"></span></span>
                   ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                 </td>
-                {judgeStats.map((t) => (
-                  <td class="px-1.5 py-2 text-center align-middle">
+                {judgeStats.map((t, ji) => (
+                  <td data-jcol={judges[ji].id} class="px-1.5 py-2 text-center align-middle">
                     {t.recorded === 0 ? (
                       <span class="text-[10px] text-[var(--color-text-subtle)]">—</span>
                     ) : (
@@ -323,10 +343,70 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
   </div>
 </Layout>
 
+<script>
+  // 審査員フィルタ: 列(th/td[data-jcol])を表示/非表示にしてマトリクス幅を圧縮。
+  // JS が動く環境でのみフィルタUIを出す（未対応時は全列表示のまま）。
+  (function initMatrixFilter() {
+    const panel = document.getElementById("lc-matrix-filter");
+    const table = document.querySelector<HTMLTableElement>("table.lc-matrix");
+    if (!panel || !table) return;
+    panel.hidden = false;
+
+    const chips = Array.from(panel.querySelectorAll<HTMLButtonElement>(".lc-jchip"));
+    const counter = document.getElementById("lc-jcount");
+    const total = chips.length;
+
+    const setChipStyle = (chip: HTMLButtonElement, on: boolean) => {
+      chip.classList.toggle("border-[var(--color-gold)]", on);
+      chip.classList.toggle("bg-[color-mix(in_oklab,var(--color-gold)_14%,transparent)]", on);
+      chip.classList.toggle("text-[var(--color-gold-bright)]", on);
+      chip.classList.toggle("border-[var(--color-border)]", !on);
+      chip.classList.toggle("text-[var(--color-text-subtle)]", !on);
+    };
+
+    const setColumn = (id: string, on: boolean) => {
+      for (const cell of table.querySelectorAll<HTMLElement>(`[data-jcol="${id}"]`)) {
+        cell.classList.toggle("lc-col-off", !on);
+      }
+    };
+
+    const updateCount = () => {
+      const shown = chips.filter((c) => c.getAttribute("aria-pressed") === "true").length;
+      if (counter) counter.textContent = `表示中 ${shown} / ${total}`;
+    };
+
+    const applyChip = (chip: HTMLButtonElement, on: boolean) => {
+      chip.setAttribute("aria-pressed", String(on));
+      setChipStyle(chip, on);
+      setColumn(chip.dataset.jchip ?? "", on);
+    };
+
+    for (const chip of chips) {
+      setChipStyle(chip, true);
+      chip.addEventListener("click", () => {
+        applyChip(chip, chip.getAttribute("aria-pressed") !== "true");
+        updateCount();
+      });
+    }
+    for (const btn of panel.querySelectorAll<HTMLButtonElement>("[data-jall]")) {
+      btn.addEventListener("click", () => {
+        const on = btn.dataset.jall === "on";
+        for (const chip of chips) applyChip(chip, on);
+        updateCount();
+      });
+    }
+    updateCount();
+  })();
+</script>
+
 <style>
   /* Sticky shadow on left columns for visual separation when scrolling */
   .lc-matrix th[scope="col"]:nth-child(2),
   .lc-matrix td:nth-child(2) {
     box-shadow: 1px 0 0 var(--color-border);
+  }
+  /* 審査員フィルタで非表示にした列 */
+  .lc-matrix .lc-col-off {
+    display: none;
   }
 </style>
