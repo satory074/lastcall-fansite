@@ -70,12 +70,12 @@
       "slug": "momose-tomo",
       "name": "桃瀬とも",
       "nameKana": "ももせ とも",
-      "store": "T-STYLE ROPPONGI",
+      "store": "ベルラウンジ札幌",
       "sns": {
         "instagram": "https://www.instagram.com/tomomomose0627/",
         "tiktok": "https://www.tiktok.com/@tomomomose627"
       },
-      "storeUrl": "https://ogvj6.hp.peraichi.com/"
+      "storeUrl": "https://citygroup-s.com/shop/belle-lounge-sapporo/"
     },
     {
       "slug": "neomaru",
@@ -171,6 +171,25 @@
       },
       "store": "UNJOUR TOKYO",
       "storeUrl": "https://unjour-tokyo.jp/"
+    },
+    {
+      "slug": "yui",
+      "name": "ゆい",
+      "sns": {
+        "instagram": "https://www.instagram.com/y__chan___/"
+      },
+      "store": "FABRIC ROPPONGI",
+      "storeUrl": "https://www.instagram.com/fabric_lounge_roppongi/"
+    },
+    {
+      "slug": "riri",
+      "name": "りり",
+      "sns": {
+        "instagram": "https://www.instagram.com/rinoringooooo/",
+        "tiktok": "https://www.tiktok.com/@rinoringoooooo"
+      },
+      "store": "CLUB A",
+      "storeUrl": "https://club-a.jp.net/"
     }
   ],
   "episodes": [
@@ -1472,14 +1491,159 @@
       "youtubeId": "UFhLaMKbI84",
       "cinderella": {
         "name": "皐月りりあ",
-        "age": 22,
+        "age": 19,
         "result": "pass",
         "sns": {
           "instagram": "https://www.instagram.com/_ririaworld_/"
         }
       },
-      "votes": [],
-      "lineup": []
+      "votes": [
+        {
+          "queen": "airi",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "assun",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "himeka",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "minami-yuzuzu",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "neomaru",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "remiremi",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "runa",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "shingeki-no-noa",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "yamato-rino",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "yuipisu",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "airi",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "assun",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "himeka",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "minami-yuzuzu",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "neomaru",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "remiremi",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "runa",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "shingeki-no-noa",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "yamato-rino",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "yuipisu",
+          "round": "final",
+          "vote": "合格"
+        }
+      ],
+      "lineup": [
+        "airi",
+        "aizawa-emiri",
+        "assun",
+        "himeka",
+        "kisaragi-rei",
+        "minami-yuzuzu",
+        "momose-tomo",
+        "neomaru",
+        "remiremi",
+        "runa",
+        "shingeki-no-noa",
+        "yamato-rino",
+        "yuipisu"
+      ]
     },
     {
       "id": "010",
@@ -1491,11 +1655,145 @@
         "age": 28,
         "result": "fail",
         "sns": {
-          "instagram": "https://www.instagram.com/aoyamaserinamaru/"
+          "instagram": "https://www.instagram.com/aoyamaserinamaru"
         }
       },
-      "votes": [],
-      "lineup": []
+      "votes": [
+        {
+          "queen": "airi",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "assun",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "himeka",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "minami-yuzuzu",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "nijiho",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "runa",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "yuipisu",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "karua",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "suzune-rin",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "airi",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "assun",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "himeka",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "minami-yuzuzu",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "nijiho",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "runa",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "yuipisu",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "karua",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "suzune-rin",
+          "round": "final",
+          "vote": "不合格"
+        }
+      ],
+      "lineup": [
+        "airi",
+        "aizawa-emiri",
+        "assun",
+        "himeka",
+        "kisaragi-rei",
+        "minami-yuzuzu",
+        "momose-tomo",
+        "nijiho",
+        "runa",
+        "yuipisu",
+        "karua",
+        "suzune-rin"
+      ]
     },
     {
       "id": "012",
