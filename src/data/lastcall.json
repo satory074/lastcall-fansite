@@ -6,10 +6,12 @@
       "nameKana": "あいり",
       "age": 25,
       "area": "銀座",
-      "store": "J-VOGUE",
+      "store": "UNJOUR TOKYO",
       "sns": {
-        "instagram": "https://www.instagram.com/airi_el12/"
-      }
+        "instagram": "https://www.instagram.com/airi_el12/",
+        "tiktok": "https://www.tiktok.com/@airi_el12"
+      },
+      "storeUrl": "https://unjour-tokyo.jp/"
     },
     {
       "slug": "aizawa-emiri",
@@ -17,11 +19,12 @@
       "nameKana": "あいざわ えみり",
       "age": 37,
       "area": "歌舞伎町",
-      "store": "フォーティーファイブ（独立後アパレル「Rady」運営）",
+      "store": "FOURTY FIVE TOKYO",
       "sns": {
         "instagram": "https://www.instagram.com/emiri_aizawa/",
-        "x": "https://x.com/emirio9o1"
-      }
+        "youtube": "https://www.youtube.com/@MyLife-dt9wk"
+      },
+      "storeUrl": "https://fourty-five.com/"
     },
     {
       "slug": "assun",
@@ -31,9 +34,10 @@
       "area": "名古屋・錦",
       "store": "GLAMOROUS OVER",
       "sns": {
-        "instagram": "https://www.instagram.com/_assunsun_/",
-        "x": "https://x.com/1005Assunsun"
-      }
+        "x": "https://x.com/1005Assunsun",
+        "instagram": "https://www.instagram.com/_assunsun_/"
+      },
+      "storeUrl": "https://www.instagram.com/glamorous_over/"
     },
     {
       "slug": "himeka",
@@ -41,10 +45,12 @@
       "nameKana": "ひめか",
       "age": 25,
       "area": "北新地",
-      "store": "クラブレイズ（元クラブランス）",
+      "store": "CLUB REIMS",
       "sns": {
-        "instagram": "https://www.instagram.com/hmk_queen/"
-      }
+        "instagram": "https://www.instagram.com/hmk_queen/",
+        "tiktok": "https://www.tiktok.com/@hmk_queen2000"
+      },
+      "storeUrl": "https://club-reims.jp.net/"
     },
     {
       "slug": "kisaragi-rei",
@@ -52,10 +58,12 @@
       "nameKana": "きさらぎ れい",
       "age": 27,
       "area": "六本木",
-      "store": "クラブリオ",
+      "store": "CLUB RIO ROPPONGI",
       "sns": {
-        "instagram": "https://www.instagram.com/_reitsun_/"
-      }
+        "instagram": "https://www.instagram.com/_reitsun_/",
+        "x": "https://x.com/reitsun_R"
+      },
+      "storeUrl": "https://roppongi.clubrio.jp/"
     },
     {
       "slug": "minami-yuzu",
@@ -65,8 +73,10 @@
       "area": "ススキノ",
       "store": "BARCELONA Leicester",
       "sns": {
-        "instagram": "https://www.instagram.com/minami_yuzuzu/"
-      }
+        "instagram": "https://www.instagram.com/minami_yuzuzu/",
+        "tiktok": "https://www.tiktok.com/@minami_yuzuzu"
+      },
+      "storeUrl": "https://www.barcelona.co.jp/susukino/location/leicester/"
     },
     {
       "slug": "momose-tomo",
@@ -74,10 +84,12 @@
       "nameKana": "ももせ とも",
       "age": 39,
       "area": "ススキノ（出身）",
-      "store": "T-STYLE（複数店舗経営）",
+      "store": "T-STYLE ROPPONGI",
       "sns": {
-        "instagram": "https://www.instagram.com/tomomomose0627/"
-      }
+        "instagram": "https://www.instagram.com/tomomomose0627/",
+        "tiktok": "https://www.tiktok.com/@tomomomose627"
+      },
+      "storeUrl": "https://ogvj6.hp.peraichi.com/"
     },
     {
       "slug": "neomaru",
@@ -88,14 +100,19 @@
       "store": "POSEIDON CLUB SHINJUKU",
       "sns": {
         "instagram": "https://www.instagram.com/neomaru_7/"
-      }
+      },
+      "storeUrl": "https://www.instagram.com/poseidon_shinjuku/"
     },
     {
       "slug": "nijiho",
       "name": "にじほ",
       "nameKana": "にじほ",
       "age": 26,
-      "sns": {}
+      "sns": {
+        "instagram": "https://www.instagram.com/inu_wanwan_inu_wanwan/"
+      },
+      "store": "JUNGLE TOKYO ROPPONGI",
+      "storeUrl": "https://jungle-gt.com/"
     },
     {
       "slug": "remiremi",
@@ -103,10 +120,12 @@
       "nameKana": "れみれみ",
       "age": 27,
       "area": "六本木",
-      "store": "VENET TOKYO",
+      "store": "VENET TOKYO ROPPONGI",
       "sns": {
-        "instagram": "https://www.instagram.com/remiremi122/"
-      }
+        "instagram": "https://www.instagram.com/remiremi122/",
+        "tiktok": "https://www.tiktok.com/@remiremi122"
+      },
+      "storeUrl": "https://venet-tokyo-roppongi.jp/"
     },
     {
       "slug": "runa",
@@ -115,7 +134,11 @@
       "age": 29,
       "area": "北新地",
       "store": "CLUB NILS",
-      "sns": {}
+      "sns": {
+        "instagram": "https://www.instagram.com/runa_nils/",
+        "tiktok": "https://www.tiktok.com/@runa_nils"
+      },
+      "storeUrl": "https://club-nils.jp.net/index.html"
     },
     {
       "slug": "shingeki-noa",
@@ -125,8 +148,10 @@
       "area": "北新地（元）",
       "sns": {
         "instagram": "https://www.instagram.com/shingeki_noa/",
-        "x": "https://x.com/shingeki_noa"
-      }
+        "youtube": "https://www.youtube.com/@shingekinoa3485"
+      },
+      "store": "CLUB REIMS",
+      "storeUrl": "https://club-reims.jp.net/"
     },
     {
       "slug": "yamatorino",
@@ -134,10 +159,12 @@
       "nameKana": "やまとりの",
       "age": 29,
       "area": "歌舞伎町",
-      "store": "ジャングル東京",
+      "store": "JUNGLE TOKYO ROPPONGI",
       "sns": {
-        "instagram": "https://www.instagram.com/rinoworld_875/"
-      }
+        "x": "https://x.com/kintamabiyon",
+        "youtube": "https://www.youtube.com/@udon_sukiyaki"
+      },
+      "storeUrl": "https://jungle-gt.com/"
     },
     {
       "slug": "yuipis",
@@ -145,10 +172,12 @@
       "nameKana": "ゆいぴす",
       "age": 24,
       "area": "六本木",
-      "store": "リック東京",
+      "store": "LIRIC TOKYO ROPPONGI",
       "sns": {
-        "instagram": "https://www.instagram.com/yuipis18/"
-      }
+        "instagram": "https://www.instagram.com/yuipis18/",
+        "youtube": "https://www.youtube.com/@yuipis18"
+      },
+      "storeUrl": "https://liric-tokyo-roppongi.jp/index.html"
     }
   ],
   "episodes": [
