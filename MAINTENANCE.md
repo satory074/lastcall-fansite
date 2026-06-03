@@ -7,6 +7,17 @@ LAST CALL 非公式ファンサイトの**データ実務手順**。
 > 設計思想・スキーマ・スポイラー保護などの**仕組み**は [`CLAUDE.md`](./CLAUDE.md) を参照。
 > こちらは「実際に手を動かす手順」に絞る。
 
+## GUIエディタ（手打ちが面倒な人向け）
+
+生JSONを手で書く代わりに、ブラウザで編集できるローカルツールがある:
+**[`tools/lastcall-editor.html`](./tools/lastcall-editor.html) をダブルクリックでブラウザに開く**（ビルド不要・オフライン動作）。
+
+1. 「JSONを読み込み」で `src/data/lastcall.json` を選ぶ（またはドラッグ&ドロップ）。
+2. タブ（エピソード / シンデレラ / クイーン）で編集。**票は14クイーン×2ラウンドのドロップダウン表**で入力でき、slug 手打ち不要。新エピソードは id を自動採番。
+3. 「lastcall.json をダウンロード」で書き出し、`src/data/lastcall.json` を差し替え → `npm run build` → push。
+
+出力は元ファイルと同じ整形なので、未編集箇所は差分ゼロ。以降の手順（A〜D）は手書き・GUIどちらでも同じ結果になる。
+
 ## データファイルの構造
 
 `src/data/lastcall.json` は 3 つのトップレベル配列を持つ。`src/content.config.ts` の inline loader が

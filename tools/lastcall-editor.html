@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LAST CALL データエディタ（lastcall.json）</title>
+<style>
+  :root {
+    --bg: #f5f5f7; --panel: #fff; --line: #d9d9e0; --line2: #ececf1;
+    --text: #1b1b22; --muted: #6b6b78; --accent: #2563eb; --accent-weak: #e8efff;
+    --gold: #b8902f; --gray: #6b6b73; --warn: #b54708; --warn-bg: #fff4e5;
+    --ok: #15803d;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6;
+  }
+  header {
+    position: sticky; top: 0; z-index: 20; background: var(--panel);
+    border-bottom: 1px solid var(--line); padding: 10px 16px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  }
+  header h1 { font-size: 15px; margin: 0 12px 0 0; font-weight: 700; }
+  .grow { flex: 1; }
+  button, .btn {
+    font: inherit; cursor: pointer; border: 1px solid var(--line);
+    background: var(--panel); color: var(--text); border-radius: 7px;
+    padding: 6px 12px; line-height: 1.3;
+  }
+  button:hover { background: var(--line2); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { filter: brightness(1.08); }
+  button.danger { color: #b42318; border-color: #f1c6c2; }
+  button.danger:hover { background: #fdecea; }
+  button.mini { padding: 2px 8px; font-size: 12px; border-radius: 6px; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .status { font-size: 12.5px; color: var(--muted); }
+  .status b { color: var(--text); }
+  .status .err { color: var(--warn); }
+
+  #dropzone {
+    border: 1.5px dashed var(--line); border-radius: 8px; padding: 5px 12px;
+    color: var(--muted); font-size: 12.5px; background: var(--bg);
+  }
+  #dropzone.drag { border-color: var(--accent); background: var(--accent-weak); color: var(--accent); }
+
+  .tabs { display: flex; gap: 4px; padding: 8px 16px 0; background: var(--bg); }
+  .tabs button { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none; }
+  .tabs button.active { background: var(--panel); font-weight: 700; }
+
+  main { display: none; grid-template-columns: 260px 1fr; gap: 0; height: calc(100vh - 110px); }
+  main.show { display: grid; }
+  .empty-hint { padding: 48px 16px; color: var(--muted); text-align: center; }
+
+  .listcol { border-right: 1px solid var(--line); overflow: auto; background: var(--panel); }
+  .listcol .addrow { padding: 8px; border-bottom: 1px solid var(--line2); position: sticky; top: 0; background: var(--panel); }
+  .listcol ul { list-style: none; margin: 0; padding: 0; }
+  .listcol li {
+    padding: 7px 12px; border-bottom: 1px solid var(--line2); cursor: pointer;
+    display: flex; justify-content: space-between; gap: 8px; align-items: baseline;
+  }
+  .listcol li:hover { background: var(--line2); }
+  .listcol li.active { background: var(--accent-weak); box-shadow: inset 3px 0 0 var(--accent); }
+  .listcol li .sub { color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  .listcol li .badge { font-size: 10.5px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+
+  .detail { overflow: auto; padding: 16px 18px 60px; }
+  .detail .placeholder { color: var(--muted); padding: 40px 0; text-align: center; }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; padding: 12px 14px; background: var(--panel); }
+  legend { font-weight: 700; font-size: 12.5px; padding: 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .row { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; align-items: center; margin-bottom: 8px; }
+  .row > label { color: var(--muted); font-size: 12.5px; }
+  .row .req::after { content: " *"; color: #b42318; }
+  input[type=text], input[type=number], input[type=date], input[type=url], select, textarea {
+    font: inherit; width: 100%; padding: 6px 8px; border: 1px solid var(--line);
+    border-radius: 6px; background: #fff; color: var(--text);
+  }
+  input.bad { border-color: #e0796f; background: #fdf1ef; }
+  textarea { resize: vertical; min-height: 38px; }
+  .hint { color: var(--muted); font-size: 11.5px; margin: -3px 0 8px 132px; }
+  .inline-list .item { display: flex; gap: 6px; margin-bottom: 6px; }
+  .inline-list .item input { flex: 1; }
+
+  table.votes { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.votes th, table.votes td { border: 1px solid var(--line2); padding: 4px 6px; text-align: left; vertical-align: middle; }
+  table.votes th { background: var(--bg); position: sticky; top: 0; font-size: 11.5px; color: var(--muted); }
+  table.votes td.qname { font-weight: 600; white-space: nowrap; }
+  table.votes select { padding: 4px 6px; }
+  table.votes input { padding: 4px 6px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; border: 1px solid #0002; }
+  .dot.lc { background: var(--gold); }
+  .dot.no { background: var(--gray); }
+  .dot.noc { background: #fff; }
+  .dot.ab { background: repeating-linear-gradient(45deg,#bbb,#bbb 2px,#fff 2px,#fff 4px); }
+  .legend { font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+  .tallypill { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  details.preview { margin: 0; border-top: 1px solid var(--line); background: var(--panel); }
+  details.preview > summary { padding: 8px 16px; cursor: pointer; font-size: 12.5px; color: var(--muted); user-select: none; }
+  details.preview pre { margin: 0; max-height: 320px; overflow: auto; padding: 0 16px 16px; font-size: 12px; line-height: 1.5; }
+  .warnbox { background: var(--warn-bg); border: 1px solid #f0d6a8; color: var(--warn); border-radius: 7px; padding: 8px 10px; margin-bottom: 14px; font-size: 12.5px; }
+  .warnbox ul { margin: 4px 0 0; padding-left: 18px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 50; }
+  .toast.show { opacity: 1; }
+  code.k { background: var(--line2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>LAST CALL データエディタ</h1>
+  <label class="btn" for="fileInput">JSONを読み込み</label>
+  <input id="fileInput" type="file" accept=".json,application/json" hidden />
+  <span id="dropzone">ここに <code class="k">lastcall.json</code> をドロップ</span>
+  <span class="grow"></span>
+  <span id="status" class="status">未読み込み</span>
+  <button id="copyBtn" disabled>JSONをコピー</button>
+  <button id="downloadBtn" class="primary" disabled>lastcall.json をダウンロード</button>
+</header>
+
+<nav class="tabs" id="tabs" hidden>
+  <button data-tab="episodes" class="active">エピソード</button>
+  <button data-tab="cinderellas">シンデレラ</button>
+  <button data-tab="queens">クイーン</button>
+</nav>
+
+<div id="welcome" class="empty-hint">
+  <p>上の「JSONを読み込み」から <code class="k">src/data/lastcall.json</code> を選ぶか、ここにドラッグしてください。</p>
+  <p style="font-size:12.5px">編集後は「lastcall.json をダウンロード」で書き出し、<code class="k">src/data/lastcall.json</code> を差し替え →
+  <code class="k">npm run build</code> → push。</p>
+</div>
+
+<main id="ep" data-coll="episodes">
+  <div class="listcol">
+    <div class="addrow"><button class="mini primary" data-add="episodes">＋ 新規エピソード</button></div>
+    <ul></ul>
+  </div>
+  <div class="detail"><div class="placeholder">左の一覧から選択、または「＋ 新規エピソード」</div></div>
+</main>
+
+<main id="ci" data-coll="cinderellas">
+  <div class="listcol">
+    <div class="addrow"><button class="mini primary" data-add="cinderellas">＋ 新規シンデレラ</button></div>
+    <ul></ul>
+  </div>
+  <div class="detail"><div class="placeholder">左の一覧から選択、または「＋ 新規シンデレラ」</div></div>
+</main>
+
+<main id="qu" data-coll="queens">
+  <div class="listcol">
+    <div class="addrow"><button class="mini primary" data-add="queens">＋ 新規クイーン</button></div>
+    <ul></ul>
+  </div>
+  <div class="detail"><div class="placeholder">左の一覧から選択、または「＋ 新規クイーン」</div></div>
+</main>
+
+<details class="preview" id="previewWrap" hidden>
+  <summary>JSONプレビュー（現在の出力）</summary>
+  <pre id="preview"></pre>
+</details>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+// ---- 定数（src/content.config.ts のスキーマに対応） ----
+const QUEEN_ROSTER_NOTE = "クイーンは原則14名固定です。";
+const VOTE_OPTIONS = ["", "LAST CALL", "NOTHING", "NO CALL", "ABSENT"];
+const SNS_KEYS = ["instagram", "x", "tiktok", "youtube", "website"];
+const SLUG_RE = /^[a-z0-9-]+$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// ---- 状態 ----
+let state = null;                 // { queens:[], cinderellas:[], episodes:[] }
+let activeTab = "episodes";
+const selected = { episodes: null, cinderellas: null, queens: null }; // index
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k === "html") n.innerHTML = v;
+    else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids) n.append(kid?.nodeType ? kid : document.createTextNode(kid ?? ""));
+  return n;
+};
+
+// ---- 読み込み ----
+function loadFromText(text, name) {
+  let data;
+  try { data = JSON.parse(text); }
+  catch (e) { alert("JSONの解析に失敗しました:\n" + e.message); return; }
+  if (!data || !Array.isArray(data.queens) || !Array.isArray(data.cinderellas) || !Array.isArray(data.episodes)) {
+    alert("形式が違います。queens / cinderellas / episodes の3配列を持つ lastcall.json を読み込んでください。");
+    return;
+  }
+  state = data;
+  for (const c of ["queens", "cinderellas", "episodes"]) selected[c] = state[c].length ? 0 : null;
+  $("#welcome").hidden = true;
+  $("#tabs").hidden = false;
+  $("#previewWrap").hidden = false;
+  $("#downloadBtn").disabled = false;
+  $("#copyBtn").disabled = false;
+  renderAll();
+  toast("読み込みました: " + (name || "lastcall.json"));
+}
+
+const fileInput = $("#fileInput");
+fileInput.addEventListener("change", () => {
+  const f = fileInput.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => loadFromText(r.result, f.name);
+  r.readAsText(f);
+  fileInput.value = "";
+});
+
+const dz = $("#dropzone");
+["dragenter", "dragover"].forEach(ev => document.addEventListener(ev, e => {
+  if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); dz.classList.add("drag"); }
+}));
+["dragleave", "drop"].forEach(ev => document.addEventListener(ev, e => {
+  if (ev === "dragleave" && e.relatedTarget) return;
+  dz.classList.remove("drag");
+}));
+document.addEventListener("drop", e => {
+  if (!e.dataTransfer?.files?.length) return;
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  const r = new FileReader();
+  r.onload = () => loadFromText(r.result, f.name);
+  r.readAsText(f);
+});
+
+// ---- 出力（シリアライズ） ----
+function serialize() {
+  return JSON.stringify(state, null, 2) + "\n";
+}
+
+$("#downloadBtn").addEventListener("click", () => {
+  const blob = new Blob([serialize()], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = el("a", { href: url, download: "lastcall.json" });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast("lastcall.json をダウンロードしました");
+});
+
+$("#copyBtn").addEventListener("click", async () => {
+  const text = serialize();
+  try { await navigator.clipboard.writeText(text); toast("JSONをコピーしました"); }
+  catch {
+    const ta = el("textarea", { style: "position:fixed;opacity:0" }); ta.value = text;
+    document.body.append(ta); ta.select();
+    try { document.execCommand("copy"); toast("JSONをコピーしました"); }
+    catch { toast("コピーに失敗。プレビューから手動でコピーしてください"); }
+    ta.remove();
+  }
+});
+
+// ---- タブ ----
+$$("#tabs button").forEach(b => b.addEventListener("click", () => {
+  activeTab = b.dataset.tab;
+  $$("#tabs button").forEach(x => x.classList.toggle("active", x === b));
+  renderAll();
+}));
+
+function mainEl() { return { episodes: $("#ep"), cinderellas: $("#ci"), queens: $("#qu") }[activeTab]; }
+
+// ---- 追加 ----
+$$("[data-add]").forEach(b => b.addEventListener("click", () => addItem(b.dataset.add)));
+function addItem(coll) {
+  let item;
+  if (coll === "episodes") {
+    const ids = state.episodes.map(e => parseInt(e.id, 10)).filter(n => !isNaN(n));
+    const next = (ids.length ? Math.max(...ids) + 1 : 1).toString().padStart(3, "0");
+    item = { id: next, title: "", airedAt: "", youtubeId: "", cinderella: "", votes: [], sources: [] };
+  } else if (coll === "cinderellas") {
+    item = { slug: "", name: "", nameKana: "", age: undefined, episodeId: "", result: "fail", sns: {} };
+  } else {
+    item = { slug: "", name: "", nameKana: "", age: undefined, area: "", store: "", sns: {} };
+  }
+  state[coll].push(item);
+  selected[coll] = state[coll].length - 1;
+  if (activeTab !== coll) { activeTab = coll; $$("#tabs button").forEach(x => x.classList.toggle("active", x.dataset.tab === coll)); }
+  renderAll();
+}
+
+function deleteItem(coll, idx) {
+  const label = coll === "episodes" ? ("第" + state.episodes[idx].id + "回") : (state[coll][idx].name || state[coll][idx].slug || "(無名)");
+  if (!confirm(label + " を削除します。よろしいですか？")) return;
+  state[coll].splice(idx, 1);
+  selected[coll] = state[coll].length ? Math.min(idx, state[coll].length - 1) : null;
+  renderAll();
+}
+
+// ---- 描画 ----
+function renderAll() {
+  $$("main").forEach(m => m.classList.remove("show"));
+  if (!state) return;
+  mainEl().classList.add("show");
+  renderList();
+  renderDetail();
+  renderPreview();
+  renderStatus();
+}
+
+function renderList() {
+  const coll = activeTab;
+  const ul = $("ul", mainEl());
+  ul.innerHTML = "";
+  state[coll].forEach((item, i) => {
+    let main, sub, badge = "";
+    if (coll === "episodes") {
+      main = "第" + (item.id || "?") + "回"; sub = item.title || "（無題）";
+      const fin = (item.votes || []).filter(v => (v.round || "final") === "final").length;
+      badge = fin ? fin + "票" : "未";
+    } else {
+      main = item.name || "（無名）"; sub = item.slug || "(slug未設定)";
+      const n = Object.keys(item.sns || {}).filter(k => item.sns[k]).length;
+      badge = n ? "SNS" + n : "SNS0";
+    }
+    ul.append(el("li", { class: i === selected[coll] ? "active" : "", onclick: () => { selected[coll] = i; renderAll(); } },
+      el("span", {}, main, " ", el("span", { class: "sub" }, sub)),
+      el("span", { class: "badge" }, badge)
+    ));
+  });
+  if (!state[coll].length) ul.append(el("li", { class: "sub" }, "（まだありません）"));
+}
+
+function field(labelText, control, { req = false, hint = "" } = {}) {
+  const frag = document.createDocumentFragment();
+  frag.append(el("div", { class: "row" }, el("label", { class: req ? "req" : "" }, labelText), control));
+  if (hint) frag.append(el("div", { class: "hint" }, hint));
+  return frag;
+}
+
+function textInput(obj, key, { type = "text", placeholder = "", bad = false, on } = {}) {
+  const inp = el("input", { type, value: obj[key] ?? "", placeholder, class: bad ? "bad" : "" });
+  inp.addEventListener("input", () => {
+    let v = inp.value;
+    if (type === "number") v = v === "" ? undefined : Number(v);
+    if (v === "" && (key === "nameKana" || key === "area" || key === "store" || key === "summary" || key === "background" || key === "bio")) delete obj[key];
+    else obj[key] = v;
+    // 入力中はフォーカスを保つため detail を再描画しない（一覧/プレビュー/件数のみ更新）
+    if (on) on(); else { renderListLight(); renderPreview(); renderStatus(); }
+  });
+  // フォーカスが外れたタイミングで警告ボックス・必須欄の赤枠を更新
+  inp.addEventListener("blur", () => { if (state) renderDetail(); });
+  return inp;
+}
+
+function selectInput(obj, key, options, { on, labels } = {}) {
+  const s = el("select");
+  options.forEach(o => s.append(el("option", { value: o, selected: (obj[key] ?? "") === o }, labels ? labels(o) : (o === "" ? "—" : o))));
+  s.value = obj[key] ?? "";
+  s.addEventListener("change", () => { obj[key] = s.value; (on || (() => { renderListLight(); renderPreview(); renderStatus(); }))(); });
+  return s;
+}
+
+function snsFieldset(obj) {
+  if (!obj.sns) obj.sns = {};
+  const fs = el("fieldset", {}, el("legend", {}, "SNS（本人公式のみ・フルURL・空欄は出力しない）"));
+  SNS_KEYS.forEach(k => {
+    const inp = el("input", { type: "url", value: obj.sns[k] ?? "", placeholder: "https://…" });
+    const bad = inp.value && !/^https?:\/\//.test(inp.value);
+    if (bad) inp.classList.add("bad");
+    inp.addEventListener("input", () => {
+      if (inp.value.trim()) obj.sns[k] = inp.value.trim(); else delete obj.sns[k];
+      inp.classList.toggle("bad", inp.value && !/^https?:\/\//.test(inp.value));
+      renderListLight(); renderPreview(); renderStatus();
+    });
+    fs.append(field(k, inp));
+  });
+  return fs;
+}
+
+function inlineUrlList(arr, onChange) {
+  const wrap = el("div", { class: "inline-list" });
+  const redraw = () => {
+    wrap.innerHTML = "";
+    arr.forEach((v, i) => {
+      const inp = el("input", { type: "url", value: v, placeholder: "https://…" });
+      if (v && !/^https?:\/\//.test(v)) inp.classList.add("bad");
+      inp.addEventListener("input", () => { arr[i] = inp.value.trim(); inp.classList.toggle("bad", inp.value && !/^https?:\/\//.test(inp.value)); onChange(); });
+      wrap.append(el("div", { class: "item" }, inp,
+        el("button", { class: "mini danger", onclick: () => { arr.splice(i, 1); redraw(); onChange(); } }, "−")));
+    });
+    wrap.append(el("button", { class: "mini", onclick: () => { arr.push(""); redraw(); onChange(); } }, "＋ 追加"));
+  };
+  redraw();
+  return { wrap, redraw };
+}
+
+function renderDetail() {
+  const coll = activeTab;
+  const detail = $(".detail", mainEl());
+  detail.innerHTML = "";
+  const idx = selected[coll];
+  if (idx == null || !state[coll][idx]) { detail.append(el("div", { class: "placeholder" }, "左の一覧から選択してください")); return; }
+  const item = state[coll][idx];
+
+  // 警告ボックス
+  const warns = validateItem(coll, item, idx);
+  if (warns.length) {
+    detail.append(el("div", { class: "warnbox" }, "このエントリの注意:", el("ul", {}, ...warns.map(w => el("li", {}, w)))));
+  }
+
+  if (coll === "episodes") renderEpisode(detail, item);
+  else if (coll === "cinderellas") renderCinderella(detail, item);
+  else renderQueen(detail, item);
+
+  detail.append(el("div", { style: "margin-top:8px" },
+    el("button", { class: "danger", onclick: () => deleteItem(coll, idx) }, "このエントリを削除")));
+}
+
+function renderEpisode(detail, ep) {
+  const fs = el("fieldset", {}, el("legend", {}, "エピソード"));
+  fs.append(field("id", textInput(ep, "id", { placeholder: "020", bad: !ep.id }), { req: true, hint: "回番号。URL /episodes/{id}/ になる。3桁ゼロ埋め推奨" }));
+  fs.append(field("title", textInput(ep, "title", { placeholder: "YouTubeの動画タイトル", bad: !ep.title }), { req: true }));
+  fs.append(field("airedAt", textInput(ep, "airedAt", { type: "date" }), { hint: "配信日 YYYY-MM-DD" }));
+  fs.append(field("youtubeId", textInput(ep, "youtubeId", { placeholder: "iETjq8CqPwQ", bad: !ep.youtubeId }), { req: true, hint: "watch?v= の後ろの動画ID" }));
+  const cinOpts = ["", ...state.cinderellas.map(c => c.slug)];
+  fs.append(field("cinderella", selectInput(ep, "cinderella", cinOpts, { labels: s => s === "" ? "—（未選択）" : (s + "  " + (state.cinderellas.find(c => c.slug === s)?.name || "?")) }), { req: true, hint: "この回の志願者（シンデレラのslug）" }));
+  fs.append(field("summary", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = ep.summary ?? ""; t.addEventListener("input", () => { if (t.value.trim()) ep.summary = t.value; else delete ep.summary; renderPreview(); }); return t; })()));
+  detail.append(fs);
+
+  // sources
+  if (!Array.isArray(ep.sources)) ep.sources = [];
+  const sfs = el("fieldset", {}, el("legend", {}, "sources（出典URL）"));
+  const list = inlineUrlList(ep.sources, () => { renderPreview(); renderStatus(); });
+  sfs.append(el("div", { class: "toolbar" },
+    el("button", { class: "mini", onclick: () => {
+      if (!ep.youtubeId) { toast("先に youtubeId を入力してください"); return; }
+      const u = "https://www.youtube.com/watch?v=" + ep.youtubeId;
+      if (!ep.sources.includes(u)) ep.sources.push(u);
+      list.redraw(); renderPreview();
+    } }, "YouTube URLを補完")));
+  sfs.append(list.wrap);
+  detail.append(sfs);
+
+  // votes matrix
+  detail.append(votesFieldset(ep));
+}
+
+function votesFieldset(ep) {
+  const fs = el("fieldset", {}, el("legend", {}, "票（ファーストコール / 最終ジャッジ）"));
+  fs.append(el("div", { class: "legend" },
+    span("dot lc", "LAST CALL = 推す"), span("dot no", "NOTHING = 推さない"),
+    span("dot noc", "NO CALL = 強い不可"), span("dot ab", "ABSENT = 欠席"),
+    el("span", {}, "空 = 未記録（出力されません）")));
+
+  // 現在の票を queen×round マップに展開
+  const map = {}; // slug -> {first, final, firstC, finalC}
+  state.queens.forEach(q => map[q.slug] = { first: "", final: "", firstC: "", finalC: "" });
+  (ep.votes || []).forEach(v => {
+    const r = v.round || "final";
+    if (!map[v.queen]) map[v.queen] = { first: "", final: "", firstC: "", finalC: "" };
+    map[v.queen][r] = v.vote || "";
+    map[v.queen][r + "C"] = v.comment || "";
+  });
+
+  const commit = () => {
+    const out = [];
+    for (const r of ["first", "final"]) {
+      state.queens.forEach(q => {
+        const cell = map[q.slug];
+        if (cell[r]) {
+          const o = { queen: q.slug, round: r, vote: cell[r] };
+          if (cell[r + "C"] && cell[r + "C"].trim()) o.comment = cell[r + "C"].trim();
+          out.push(o);
+        }
+      });
+    }
+    ep.votes = out;
+    renderListLight(); renderPreview(); updateTally();
+  };
+
+  fs.append(el("div", { class: "toolbar" },
+    el("button", { class: "mini", onclick: () => { state.queens.forEach(q => { map[q.slug] = { first: "", final: "", firstC: "", finalC: "" }; }); commit(); renderDetail(); } }, "全員未記録にリセット"),
+    el("span", { class: "tallypill", id: "tally" })));
+
+  const voteSelect = (slug, r) => {
+    const s = el("select");
+    VOTE_OPTIONS.forEach(o => s.append(el("option", { value: o }, o === "" ? "— 未記録" : o)));
+    s.value = map[slug][r];
+    s.addEventListener("change", () => { map[slug][r] = s.value; commit(); });
+    return s;
+  };
+  const commentInput = (slug, r) => {
+    const i = el("input", { type: "text", placeholder: "コメント（任意）", value: map[slug][r + "C"] });
+    i.addEventListener("input", () => { map[slug][r + "C"] = i.value; commit(); });
+    return i;
+  };
+
+  const table = el("table", { class: "votes" });
+  table.append(el("thead", {}, el("tr", {},
+    el("th", {}, "クイーン"), el("th", {}, "ファースト"), el("th", {}, "first コメント"),
+    el("th", {}, "最終"), el("th", {}, "final コメント"))));
+  const tb = el("tbody");
+  state.queens.forEach(q => {
+    tb.append(el("tr", {},
+      el("td", { class: "qname" }, q.name || q.slug),
+      el("td", {}, voteSelect(q.slug, "first")),
+      el("td", {}, commentInput(q.slug, "first")),
+      el("td", {}, voteSelect(q.slug, "final")),
+      el("td", {}, commentInput(q.slug, "final"))));
+  });
+  table.append(tb);
+  fs.append(table);
+
+  function updateTally() {
+    const fin = state.queens.map(q => map[q.slug].final).filter(Boolean);
+    const lc = fin.filter(v => v === "LAST CALL").length;
+    const t = $("#tally"); if (t) t.textContent = "最終: LC " + lc + " / 記録 " + fin.length + " / 14";
+  }
+  setTimeout(updateTally, 0);
+  return fs;
+}
+
+function renderCinderella(detail, c) {
+  const fs = el("fieldset", {}, el("legend", {}, "シンデレラ（志願者）"));
+  fs.append(field("slug", textInput(c, "slug", { placeholder: "yamada-hanako", bad: !c.slug || !SLUG_RE.test(c.slug) }), { req: true, hint: "半角英数とハイフン。参照キー兼URL" }));
+  fs.append(field("name", textInput(c, "name", { bad: !c.name }), { req: true }));
+  fs.append(field("nameKana", textInput(c, "nameKana", { placeholder: "やまだ はなこ" })));
+  fs.append(field("age", textInput(c, "age", { type: "number" })));
+  fs.append(field("episodeId", selectInput(c, "episodeId", ["", ...state.episodes.map(e => e.id)], { labels: s => s === "" ? "—" : "第" + s + "回" }), { req: true, hint: "出演回の id" }));
+  fs.append(field("result", selectInput(c, "result", ["pass", "fail"], { labels: s => s === "pass" ? "pass（合格）" : "fail（不合格）" }), { req: true }));
+  fs.append(field("background", (() => { const t = el("textarea", { placeholder: "（任意・検証済みテキストのみ）" }); t.value = c.background ?? ""; t.addEventListener("input", () => { if (t.value.trim()) c.background = t.value; else delete c.background; renderPreview(); }); return t; })()));
+  detail.append(fs);
+  detail.append(snsFieldset(c));
+}
+
+function renderQueen(detail, q) {
+  const fs = el("fieldset", {}, el("legend", {}, "クイーン"));
+  fs.append(field("slug", textInput(q, "slug", { placeholder: "kisaragi-rei", bad: !q.slug || !SLUG_RE.test(q.slug) }), { req: true, hint: "半角英数とハイフン。参照キー兼URL。" + QUEEN_ROSTER_NOTE }));
+  fs.append(field("name", textInput(q, "name", { bad: !q.name }), { req: true }));
+  fs.append(field("nameKana", textInput(q, "nameKana", { placeholder: "きさらぎ れい" })));
+  fs.append(field("age", textInput(q, "age", { type: "number" })));
+  fs.append(field("area", textInput(q, "area", { placeholder: "六本木" })));
+  fs.append(field("store", textInput(q, "store", { placeholder: "クラブリオ" })));
+  fs.append(field("bio", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = q.bio ?? ""; t.addEventListener("input", () => { if (t.value.trim()) q.bio = t.value; else delete q.bio; renderPreview(); }); return t; })()));
+  detail.append(fs);
+  detail.append(snsFieldset(q));
+}
+
+function span(cls, text) { return el("span", {}, el("span", { class: cls.split(" ")[0] === "dot" ? cls : cls }), text); }
+
+// ---- バリデーション ----
+function validateItem(coll, item, idx) {
+  const w = [];
+  if (coll === "episodes") {
+    if (!item.id) w.push("id が未入力");
+    if (!item.title) w.push("title が未入力");
+    if (!item.youtubeId) w.push("youtubeId が未入力");
+    if (!item.cinderella) w.push("cinderella（志願者）が未選択");
+    else if (!state.cinderellas.some(c => c.slug === item.cinderella)) w.push("cinderella «" + item.cinderella + "» が存在しません");
+    if (item.airedAt && !DATE_RE.test(item.airedAt)) w.push("airedAt は YYYY-MM-DD 形式");
+    if (state.episodes.some((e, i) => i !== idx && e.id === item.id)) w.push("id «" + item.id + "» が重複");
+  } else {
+    if (!item.slug) w.push("slug が未入力");
+    else if (!SLUG_RE.test(item.slug)) w.push("slug は半角英数とハイフンのみ");
+    else if (state[coll].some((x, i) => i !== idx && x.slug === item.slug)) w.push("slug «" + item.slug + "» が重複");
+    if (!item.name) w.push("name が未入力");
+    if (coll === "cinderellas") {
+      if (!item.episodeId) w.push("episodeId が未入力");
+      if (item.result !== "pass" && item.result !== "fail") w.push("result は pass / fail");
+    }
+    for (const k of SNS_KEYS) if (item.sns?.[k] && !/^https?:\/\//.test(item.sns[k])) w.push("sns." + k + " はURL形式に");
+  }
+  return w;
+}
+
+function allWarnings() {
+  if (!state) return [];
+  const list = [];
+  for (const coll of ["episodes", "cinderellas", "queens"]) {
+    state[coll].forEach((item, i) => {
+      const label = coll === "episodes" ? ("ep " + (item.id || "?")) : (coll + " " + (item.slug || item.name || i));
+      validateItem(coll, item, i).forEach(w => list.push(label + ": " + w));
+    });
+  }
+  return list;
+}
+
+// ---- ステータス / プレビュー ----
+function renderStatus() {
+  if (!state) return;
+  const w = allWarnings();
+  const base = "クイーン " + state.queens.length + " / シンデレラ " + state.cinderellas.length + " / エピソード " + state.episodes.length;
+  $("#status").innerHTML = "<b>" + base + "</b>" + (w.length ? " · <span class='err'>警告 " + w.length + "</span>" : " · <span style='color:var(--ok)'>OK</span>");
+  $("#status").title = w.join("\n");
+}
+function renderPreview() { if (state) $("#preview").textContent = serialize(); }
+function renderListLight() { if (state) renderList(); }
+
+// ---- toast ----
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+</script>
+</body>
+</html>
