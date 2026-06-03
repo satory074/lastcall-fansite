@@ -325,7 +325,7 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
                   </td>
                   <td class="px-3 py-2.5 align-middle min-w-[120px]">
                     {recorded > 0 ? (
-                      <DivergingBar pass={passCount} fail={failCount} size="sm" spoilerLevel="result" showLabels={true} />
+                      <DivergingBar pass={passCount} fail={failCount} size="sm" spoilerLevel="result" showLabels={true} flip showRate={false} />
                     ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                   </td>
                   {cells.map((cell, ji) => (
@@ -368,7 +368,7 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
                 </td>
                 <td class="px-3 py-2 align-middle min-w-[120px]">
                   {overallRecorded > 0 ? (
-                    <DivergingBar pass={overallPass} fail={overallFail} size="sm" spoilerLevel="result" showLabels={true} />
+                    <DivergingBar pass={overallPass} fail={overallFail} size="sm" spoilerLevel="result" showLabels={true} flip showRate={false} />
                   ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                 </td>
                 {queenStats.map((t, ji) => (

@@ -60,7 +60,7 @@ The episode's overall 合否 verdict is **`episode.cinderella.result`** (`"pass"
 集計表示は共通ルールに従う:
 
 - **VoteTable** (`src/components/VoteTable.astro`): ラウンド別 DivergingBar 2 本（ファースト=LIKE/NOTHING、最終=合格/不合格）+ 「ファースト→最終で判定を変えたクイーン N 名」。空 lineup は「ラインナップ未記録」表示。
-- **マトリクス** (`src/pages/people.astro`): クイーン列=全エピソードの lineup の和集合、**並び順は出演回数の多い順→同数は slug 昇順**（`matrixQueens` の sort）。「結果」の右に**票数列**（各回の最終ジャッジ合否を `DivergingBar` で表示、`spoilerLevel="result"`）。lineup 外のセルは空欄。末尾 `<tfoot>` 累計行（票数列=全体集計バー、クイーン別 合格率）。
+- **マトリクス** (`src/pages/people.astro`): クイーン列=全エピソードの lineup の和集合、**並び順は出演回数の多い順→同数は slug 昇順**（`matrixQueens` の sort）。「結果」の右に**票数列**（各回の最終ジャッジ合否を `DivergingBar` で表示、`spoilerLevel="result"`、`flip showRate={false}` で**合格(金)を左・不合格(灰)を右・合格率ラベル非表示**にしてある。`DivergingBar` の既定は金右・合格率ありで、この列だけ別扱い）。lineup 外のセルは空欄。末尾 `<tfoot>` 累計行（票数列=全体集計バー、クイーン別 合格率）。
 - **クイーンプロフィール** (`src/pages/queens/[slug].astro`): そのクイーンが lineup に含まれる回のみの履歴 + 「合格率 X%（Y / Z）」+ 判定変更回数。
 
 合格率は **`round === "final"` の `合格` 票のみで集計**。ファーストコールはコンテキスト表示で結果には影響させない。
