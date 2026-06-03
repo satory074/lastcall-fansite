@@ -39,10 +39,10 @@ const sizeClass: Record<Variant, string> = {
 };
 
 const defaultLabel: Record<Variant, Record<Result, string>> = {
-  pill: { pass: "LAST CALL", fail: "NOTHING" },
-  "pill-large": { pass: "LAST CALL · 合格", fail: "NOTHING · 不合格" },
-  "pill-mini": { pass: "LC", fail: "NO" },
-  feature: { pass: "LAST CALL", fail: "NOTHING" },
+  pill: { pass: "合格", fail: "不合格" },
+  "pill-large": { pass: "合格", fail: "不合格" },
+  "pill-mini": { pass: "合", fail: "否" },
+  feature: { pass: "合格", fail: "不合格" },
 };
 
 const displayLabel = label ?? defaultLabel[variant][result];

@@ -123,7 +123,7 @@ const archive = rest.slice(2);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             <span class="px-2 py-0.5 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text-muted)]">最終ジャッジ</span>
             <span class="text-[var(--color-border-strong)]">·</span>
-            <span>票種: LAST CALL / NOTHING / NO CALL</span>
+            <span>票種: LIKE / NOTHING（ファースト）・ 合格 / 不合格（最終）</span>
           </div>
         </div>
         <div class="card p-6 space-y-3">
@@ -176,7 +176,7 @@ const archive = rest.slice(2);
         <h2 class="section-eyebrow">Overall verdict</h2>
         <div class="card p-6 sm:p-8 space-y-4">
           <p class="text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed max-w-xl">
-            全 <span class="text-[var(--color-text)]">{episodes.length}</span> 回の <span class="text-[var(--color-text)]">最終ジャッジ</span> を集計。LAST CALL（合格判定）と NOTHING / NO CALL（不合格判定）の総票数バランスです。
+            全 <span class="text-[var(--color-text)]">{episodes.length}</span> 回の <span class="text-[var(--color-text)]">最終ジャッジ</span> を集計。<span class="text-[var(--color-text)]">合格</span> と <span class="text-[var(--color-text)]">不合格</span> の総票数バランスです。
           </p>
           <DivergingBar
             pass={totalPass}

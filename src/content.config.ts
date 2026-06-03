@@ -49,10 +49,10 @@ const episodes = defineCollection({
       .array(
         z.object({
           queen: reference("queens"),
-          // ファーストコール = 番組前半の暫定票（LAST CALL / NOTHING）、
+          // ファーストコール = 番組前半の暫定票（LIKE / NOTHING）、
           // 最終ジャッジ = 合否確定票（合格 / 不合格）。round 未指定は最終扱い（後方互換）。
           round: z.enum(["first", "final"]).default("final"),
-          vote: z.enum(["LAST CALL", "NOTHING", "合格", "不合格"]),
+          vote: z.enum(["LIKE", "NOTHING", "合格", "不合格"]),
         })
       )
       .default([]),

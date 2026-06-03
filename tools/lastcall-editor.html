@@ -176,8 +176,8 @@
 
 // ---- 定数（src/content.config.ts のスキーマに対応） ----
 const QUEEN_ROSTER_NOTE = "クイーンは回ごとに出演が変わります（エピソードのラインナップで選択）。";
-// ファースト: LAST CALL / NOTHING、最終: 合格 / 不合格
-const FIRST_OPTIONS = ["", "LAST CALL", "NOTHING"];
+// ファースト: LIKE / NOTHING、最終: 合格 / 不合格
+const FIRST_OPTIONS = ["", "LIKE", "NOTHING"];
 const FINAL_OPTIONS = ["", "合格", "不合格"];
 const SNS_KEYS = ["instagram", "x", "tiktok", "youtube", "website"];
 const SLUG_RE = /^[a-z0-9-]+$/;
@@ -467,16 +467,18 @@ function renderEpisode(detail, ep) {
   cfs.append(field("合否", selectInput(cin, "result", ["fail", "pass"], { labels: s => s === "pass" ? "合格" : "不合格" }), { req: true, hint: "このシンデレラの結果（合格 / 不合格）" }));
   cfs.append(field("background", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = cin.background ?? ""; t.addEventListener("input", () => { if (t.value.trim()) cin.background = t.value; else delete cin.background; renderPreview(); }); return t; })()));
   detail.append(cfs);
-  detail.append(snsFieldset(cin));
 
   // votes matrix
   detail.append(votesFieldset(ep));
+
+  // SNS は最下部
+  detail.append(snsFieldset(cin));
 }
 
 function votesFieldset(ep) {
   const fs = el("fieldset", {}, el("legend", {}, "出演ラインナップ & 票"));
   fs.append(el("div", { class: "legend" },
-    span("dot lc", "ゴールド = LAST CALL（ファースト）/ 合格（最終）"),
+    span("dot lc", "ゴールド = LIKE（ファースト）/ 合格（最終）"),
     span("dot no", "グレー = NOTHING（ファースト）/ 不合格（最終）"),
     el("span", {}, "チェックした出演クイーンに票を入力。空=未記録")));
 
@@ -510,7 +512,7 @@ function votesFieldset(ep) {
     el("button", { class: "mini", onclick: () => { inLineup.clear(); state.queens.forEach(q => map[q.slug] = { first: "", final: "" }); commit(); renderDetail(); } }, "全員クリア"),
     el("span", { class: "tallypill", id: "tally" })));
 
-  const colorClass = v => (v === "LAST CALL" || v === "合格") ? "v-lc" : (v === "NOTHING" || v === "不合格") ? "v-no" : "";
+  const colorClass = v => (v === "LIKE" || v === "合格") ? "v-lc" : (v === "NOTHING" || v === "不合格") ? "v-no" : "";
   const voteSelect = (slug, r, opts, enabled) => {
     const s = el("select", { class: ("vsel " + colorClass(map[slug][r])).trim() });
     opts.forEach(o => s.append(el("option", { value: o }, o === "" ? "— 未記録" : o)));

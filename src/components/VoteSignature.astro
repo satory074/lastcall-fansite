@@ -4,7 +4,7 @@ import type { CollectionEntry } from "astro:content";
 import { siteLink } from "../lib/url";
 import VoteChip from "./VoteChip.astro";
 
-type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
+type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 
 interface BaseProps {
   /** Round to display. "both" stacks first above final */

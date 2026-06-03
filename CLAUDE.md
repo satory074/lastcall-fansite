@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-非公式 (unofficial) fan archive for the YouTube audition show **LAST CALL (ラストコール)**. The site indexes every aired episode (each episode = one shinderella 志願者, embedded), the master roster of queens, and — for each episode's **variable queen lineup** — each queen's vote across two rounds (ファーストコール: `LAST CALL` / `NOTHING` → 最終ジャッジ: `合格` / `不合格`). Live at https://satory074.github.io/lastcall-fansite/.
+非公式 (unofficial) fan archive for the YouTube audition show **LAST CALL (ラストコール)**. The site indexes every aired episode (each episode = one shinderella 志願者, embedded), the master roster of queens, and — for each episode's **variable queen lineup** — each queen's vote across two rounds (ファーストコール: `LIKE` / `NOTHING` → 最終ジャッジ: `合格` / `不合格`). Live at https://satory074.github.io/lastcall-fansite/.
 
 Stack: **Astro 5 + TypeScript + Tailwind v4** static site, deployed to GitHub Pages via Actions. No backend; all content is JSON in the repo.
 
@@ -40,15 +40,15 @@ The reference graph is **episode → lineup[].queen + votes[].queen** (cinderell
 **Queens are NOT fixed per episode** — each episode has its own `lineup` (a subset of the master roster). The matrix/VoteTable enumerate `episode.lineup`, not all queens. There is no "ABSENT" — a queen simply isn't in the lineup.
 
 Each lineup queen can have up to two votes — one per `round`:
-- **ファーストコール (`"first"`)**: preliminary vote, `vote ∈ {"LAST CALL", "NOTHING"}`.
+- **ファーストコール (`"first"`)**: preliminary vote, `vote ∈ {"LIKE", "NOTHING"}`.
 - **最終ジャッジ (`"final"`)**: binding vote, `vote ∈ {"合格", "不合格"}`.
 
-The vote enum is `z.enum(["LAST CALL", "NOTHING", "合格", "不合格"])` (round-appropriateness enforced by the editor, not the schema). No `comment` field. JSON example:
+The vote enum is `z.enum(["LIKE", "NOTHING", "合格", "不合格"])` (round-appropriateness enforced by the editor, not the schema). No `comment` field. JSON example:
 
 ```json
 "lineup": ["aizawa-emiri", "airi"],
 "votes": [
-  { "queen": "aizawa-emiri", "round": "first", "vote": "LAST CALL" },
+  { "queen": "aizawa-emiri", "round": "first", "vote": "LIKE" },
   { "queen": "aizawa-emiri", "round": "final", "vote": "不合格" }
 ]
 ```
@@ -59,7 +59,7 @@ The episode's overall 合否 verdict is **`episode.cinderella.result`** (`"pass"
 
 集計表示は共通ルールに従う:
 
-- **VoteTable** (`src/components/VoteTable.astro`): ラウンド別 DivergingBar 2 本（ファースト=LAST CALL/NOTHING、最終=合格/不合格）+ 「ファースト→最終で判定を変えたクイーン N 名」。空 lineup は「ラインナップ未記録」表示。
+- **VoteTable** (`src/components/VoteTable.astro`): ラウンド別 DivergingBar 2 本（ファースト=LIKE/NOTHING、最終=合格/不合格）+ 「ファースト→最終で判定を変えたクイーン N 名」。空 lineup は「ラインナップ未記録」表示。
 - **マトリクス** (`src/pages/people.astro`): 列=全エピソードの lineup の和集合。lineup 外のセルは空欄。末尾 `<tfoot>` 累計行（クイーン別 合格率）。
 - **クイーンプロフィール** (`src/pages/queens/[slug].astro`): そのクイーンが lineup に含まれる回のみの履歴 + 「合格率 X%（Y / Z）」+ 判定変更回数。
 
@@ -130,7 +130,7 @@ The matrix in `src/pages/people.astro` is a hand-rolled `<table>` with `position
 
 When showing vote data anywhere, use these shared primitives in `src/components/` (all wire through the v2 payload-first occlusion automatically):
 
-- **`VoteChip.astro`** — single round chip for one queen × one round. Colored circle: gold = `LAST CALL`/`合格`, dark gray = `NOTHING`/`不合格`, dashed = `UNKNOWN`. `VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN"`. Use `size: "xs" | "sm" | "md" | "lg"` and `round` for aria. `spoiler={false}` for legends.
+- **`VoteChip.astro`** — single round chip for one queen × one round. Colored circle: gold = `LIKE`(♥)/`合格`(合), dark gray = `NOTHING`/`不合格`, dashed = `UNKNOWN`. `VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN"`. Use `size: "xs" | "sm" | "md" | "lg"` and `round` for aria. `spoiler={false}` for legends.
 - **`VoteSignature.astro`** — horizontal strip of chips for one axis. Use `forQueen` for the per-queen time-series fingerprint (episodes where she's in the lineup), `forEpisode` for the lineup row. Set `round: "first" | "final" | "both"`.
 - **`DivergingBar.astro`** — pass/fail tally as a center-axis horizontal bar (gold right, dark gray left). Use anywhere a "X 票 vs Y 票" count appears. Auto-handles the `合格率 %` label.
 - **`StatCard.astro`** — large numeric stat with eyebrow + sublabel (used in season-averages dashboards on queen profiles and the matrix banner).
@@ -170,7 +170,7 @@ Token-driven dark theme using Material/HIG-aligned elevation (`--color-bg` < `--
 
 Stick to these for any new headings instead of inventing new heading styles. Backwards-compat aliases `--color-bg-elevated` / `--color-bg-card` exist for older markup but new code should use the canonical names.
 
-Note: `--color-fail` は意図的にグレー（`#4a4a52`）であり赤ではない。NOTHING / 不合格 バッジが赤系に見えないのは仕様で、鮮やかな赤を避けることでゴールド（LAST CALL / 合格）とのコントラストを保っている。「失敗 = 赤」の直感で塗り替えないこと。
+Note: `--color-fail` は意図的にグレー（`#4a4a52`）であり赤ではない。NOTHING / 不合格 バッジが赤系に見えないのは仕様で、鮮やかな赤を避けることでゴールド（LIKE / 合格）とのコントラストを保っている。「失敗 = 赤」の直感で塗り替えないこと。
 
 ### Japanese typography baseline
 
@@ -203,5 +203,5 @@ These are project-specific, not generic rules:
 
 - **No AI-generated prose.** The schema retains `summary` (episode) / `background` (cinderella) as optional, but historical entries were removed because paraphrases from aggregator sites introduced factual drift. Only re-add these fields with verified, citable text — never let me speculatively summarize an unseen episode. (`bio` and per-episode `sources` were removed entirely.)
 - **No performer photos.** Only YouTube thumbnails (program-issued) and YouTube embed iframes. Hosting Instagram/personal photos infringes 著作権 + 肖像権 + パブリシティ権 simultaneously — this was researched and ruled out. SNS links only.
-- **新エピソード追加手順**: edit the single file `src/data/lastcall.json` — append one `episodes[]` entry with an **embedded `cinderella` object** (`name` + `result` 合否 + sns…), a `lineup` of出演クイーンの slug, and `votes` (first: LAST CALL/NOTHING, final: 合格/不合格), then push to `main`. Schema violation fails the build before deploy. 出演クイーンごとに最大2票（`round: "first"` と `"final"`）。lineup に入れたが票未記録は `UNKNOWN` 表示。**`npm run edit` の GUI エディタ推奨**（ラインナップをチェックして票を選ぶだけ）。詳細手順は `MAINTENANCE.md`。
+- **新エピソード追加手順**: edit the single file `src/data/lastcall.json` — append one `episodes[]` entry with an **embedded `cinderella` object** (`name` + `result` 合否 + sns…), a `lineup` of出演クイーンの slug, and `votes` (first: LIKE/NOTHING, final: 合格/不合格), then push to `main`. Schema violation fails the build before deploy. 出演クイーンごとに最大2票（`round: "first"` と `"final"`）。lineup に入れたが票未記録は `UNKNOWN` 表示。**`npm run edit` の GUI エディタ推奨**（ラインナップをチェックして票を選ぶだけ）。詳細手順は `MAINTENANCE.md`。
 - **YouTube metadata via yt-dlp**: when batch-importing episode info, `uv tool install yt-dlp` and run `yt-dlp --flat-playlist --no-warnings --print "%(id)s|%(title)s|%(upload_date)s" "https://www.youtube.com/playlist?list=PLyVYYMYzNpmC183bSMhXXo04dhzYUEebI"` against the official playlist.

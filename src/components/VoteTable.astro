@@ -14,7 +14,7 @@ interface Props {
 
 const { lineup, votes, cinderellaResult } = Astro.props;
 
-type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
+type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 
 // 出演クイーンのラインナップ（回ごとに可変）。順序は lineup の指定順。
 const lineupQueens = await getEntries(lineup);
@@ -43,7 +43,7 @@ const rows: Row[] = lineupQueens.map((j) => {
 });
 
 const tallyFirst = {
-  lastCall: rows.filter((r) => r.first.vote === "LAST CALL").length,
+  lastCall: rows.filter((r) => r.first.vote === "LIKE").length,
   nothing: rows.filter((r) => r.first.vote === "NOTHING").length,
   unknown: rows.filter((r) => r.first.vote === "UNKNOWN").length,
 };
@@ -60,7 +60,7 @@ const displayResult = cinderellaResult ?? calcResult;
 
 const flipped = rows.filter((r) => {
   if (r.first.vote === "UNKNOWN" || r.final.vote === "UNKNOWN") return false;
-  const firstPass = r.first.vote === "LAST CALL";
+  const firstPass = r.first.vote === "LIKE";
   const finalPass = r.final.vote === "合格";
   return firstPass !== finalPass;
 }).length;
@@ -101,7 +101,7 @@ const hasAnyVote = votes.length > 0;
           label="ファーストコール (First)"
           size="sm"
           spoilerLevel="vote"
-          terms={{ pass: "LAST CALL", fail: "NOTHING" }}
+          terms={{ pass: "LIKE", fail: "NOTHING" }}
         />
         {flipped > 0 && (
           <p class="text-[11px] text-[var(--color-text-muted)] tracking-wide">

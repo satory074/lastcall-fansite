@@ -1,6 +1,6 @@
 ---
-// ファースト: LAST CALL / NOTHING、最終: 合格 / 不合格、未記録: UNKNOWN
-type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
+// ファースト: LIKE / NOTHING、最終: 合格 / 不合格、未記録: UNKNOWN
+type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 
 interface Props {
   vote: VoteValue;
@@ -20,8 +20,7 @@ const sizePx: Record<NonNullable<Props["size"]>, { box: string; text: string }> 
 };
 
 const variants: Record<VoteValue, string> = {
-  "LAST CALL":
-    "bg-[var(--color-gold)] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]",
+  LIKE: "bg-[var(--color-gold)] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]",
   NOTHING: "bg-[var(--color-fail)] text-white",
   合格: "bg-[var(--color-gold)] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]",
   不合格: "bg-[var(--color-fail)] text-white",
@@ -30,7 +29,7 @@ const variants: Record<VoteValue, string> = {
 };
 
 const labels: Record<VoteValue, string> = {
-  "LAST CALL": "LC",
+  LIKE: "♥",
   NOTHING: "NO",
   合格: "合",
   不合格: "否",

@@ -22,7 +22,7 @@ npm run edit
    - **YouTube**: youtubeId を入れると title / airedAt を自動取得（サムネ表示）。
    - **シンデレラ**: name・年齢・**合否（合格 / 不合格）**・SNS をその場で入力（エピソードに埋め込み）。
    - **出演ラインナップ & 票**: クイーン一覧の**チェックで出演を選び**、出演クイーンに
-     ファースト（LAST CALL / NOTHING）と最終（合格 / 不合格）を選ぶ。色分け表示。
+     ファースト（LIKE / NOTHING）と最終（合格 / 不合格）を選ぶ。色分け表示。
 3. **「ファイルに保存」**ボタンで `src/data/lastcall.json` に直接書き戻し。
 4. `npm run build` → push。
 
@@ -44,7 +44,7 @@ npm run edit
 - **`slug`**（queens）と **`id`**（episodes）が参照キー兼 URL スラッグ。
   - episode の `lineup[]` と `votes[].queen` は queen の `slug` を指す。
   - 1 文字でも誤ると `npm run build` が落ちる（＝検証になる）。
-- **票の値**: ファースト = `LAST CALL` / `NOTHING`、最終 = `合格` / `不合格`。
+- **票の値**: ファースト = `LIKE` / `NOTHING`、最終 = `合格` / `不合格`。
 - **合否**（番組としての結果）は `episode.cinderella.result`（`"pass"` / `"fail"`）。
 - **検証はビルド**: `npm run build`（または `npm run typecheck`）。
 
@@ -68,7 +68,7 @@ npm run edit
   },
   "lineup": ["airi", "kisaragi-rei", "neomaru"],
   "votes": [
-    { "queen": "airi",         "round": "first", "vote": "LAST CALL" },
+    { "queen": "airi",         "round": "first", "vote": "LIKE" },
     { "queen": "kisaragi-rei", "round": "first", "vote": "NOTHING" },
     { "queen": "airi",         "round": "final", "vote": "合格" },
     { "queen": "kisaragi-rei", "round": "final", "vote": "不合格" }

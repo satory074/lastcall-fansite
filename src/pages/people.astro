@@ -23,7 +23,7 @@ const cinderellaList = [...episodes]
   .sort((a, b) => a.data.id.localeCompare(b.data.id))
   .map((ep) => ({ ep, c: ep.data.cinderella }));
 
-type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
+type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 type Cell = {
   inLineup: boolean;
   first: { vote: VoteValue };
@@ -82,7 +82,7 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
 
 <Layout
   title="出演者・審査一覧"
-  description="LAST CALL の全シンデレラ・14名クイーン・各回の審査結果マトリックスを一覧。"
+  description="LAST CALL の全シンデレラ・出演クイーン・各回の審査結果マトリックスを一覧。"
 >
   <div class="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-16">
     <header class="space-y-5">
@@ -239,7 +239,7 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
       {/* Legend */}
       <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
         <span class="text-[var(--color-text-muted)]">ファースト:</span>
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="LAST CALL" size="xs" round="first" spoiler={false} /> LAST CALL</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="LIKE" size="xs" round="first" spoiler={false} /> LIKE</span>
         <span class="inline-flex items-center gap-1.5"><VoteChip vote="NOTHING" size="xs" round="first" spoiler={false} /> NOTHING</span>
         <span class="text-[var(--color-text-muted)] ml-1">最終:</span>
         <span class="inline-flex items-center gap-1.5"><VoteChip vote="合格" size="xs" round="final" spoiler={false} /> 合格</span>

@@ -23,7 +23,7 @@ const episodes = (await getCollection("episodes")).sort(
   (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
 );
 
-type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格";
+type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格";
 
 type HistoryRow = {
   episode: CollectionEntry<"episodes">;
@@ -52,7 +52,7 @@ for (const ep of episodes) {
 const firstList = history.filter((h) => h.round === "first");
 const finalList = history.filter((h) => h.round === "final");
 const firstTally = {
-  lastCall: firstList.filter((h) => h.vote === "LAST CALL").length,
+  lastCall: firstList.filter((h) => h.vote === "LIKE").length,
   nothing: firstList.filter((h) => h.vote === "NOTHING").length,
   total: firstList.length,
 };
@@ -77,7 +77,7 @@ const flipped = (() => {
   let count = 0;
   for (const slot of byEp.values()) {
     if (!slot.first || !slot.final) continue;
-    const firstPass = slot.first.vote === "LAST CALL";
+    const firstPass = slot.first.vote === "LIKE";
     const finalPass = slot.final.vote === "合格";
     if (firstPass !== finalPass) count++;
   }
@@ -179,7 +179,7 @@ const personSchema = {
             label="ファーストコールの傾向"
             size="sm"
             spoilerLevel="vote"
-            terms={{ pass: "LAST CALL", fail: "NOTHING" }}
+            terms={{ pass: "LIKE", fail: "NOTHING" }}
           />
         </div>
       </section>
@@ -195,7 +195,7 @@ const personSchema = {
         <div class="flex flex-wrap items-center gap-3 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
           <span class="text-[var(--color-text-muted)]">First:</span>
           <span class="inline-flex items-center gap-1.5">
-            <VoteChip vote="LAST CALL" size="xs" round="first" spoiler={false} /> LAST CALL
+            <VoteChip vote="LIKE" size="xs" round="first" spoiler={false} /> LIKE
           </span>
           <span class="inline-flex items-center gap-1.5">
             <VoteChip vote="NOTHING" size="xs" round="first" spoiler={false} /> NOTHING
