@@ -1,10 +1,10 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, getEntries } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import { siteLink } from "../lib/url";
 import VoteChip from "./VoteChip.astro";
 
-type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
+type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 
 interface BaseProps {
   /** Round to display. "both" stacks first above final */
@@ -59,7 +59,10 @@ if (forQueen) {
   const eps = (await getCollection("episodes")).sort(
     (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
   );
-  const filtered = episodeIds ? eps.filter((e) => episodeIds.includes(e.data.id)) : eps;
+  // このクイーンがラインナップに含まれる回のみ（出ていない回は表示しない）
+  const filtered = (episodeIds ? eps.filter((e) => episodeIds.includes(e.data.id)) : eps).filter(
+    (e) => e.data.lineup.some((ref) => ref.id === forQueen.id)
+  );
   for (const ep of filtered) {
     const f = ep.data.votes.find((v) => v.queen.id === forQueen.id && v.round === "first");
     const l = ep.data.votes.find((v) => v.queen.id === forQueen.id && v.round === "final");
@@ -75,10 +78,9 @@ if (forQueen) {
     });
   }
 } else if (forEpisode) {
-  const allQueens = (await getCollection("queens")).sort((a, b) =>
-    a.data.name.localeCompare(b.data.name, "ja")
-  );
-  const filtered = queenIds ? allQueens.filter((j) => queenIds.includes(j.id)) : allQueens;
+  // この回の出演ラインナップのみ（14名固定ではない）
+  const lineupQueens = await getEntries(forEpisode.data.lineup);
+  const filtered = queenIds ? lineupQueens.filter((j) => queenIds.includes(j.id)) : lineupQueens;
   for (const j of filtered) {
     const f = forEpisode.data.votes.find((v) => v.queen.id === j.id && v.round === "first");
     const l = forEpisode.data.votes.find((v) => v.queen.id === j.id && v.round === "final");

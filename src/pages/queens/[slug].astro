@@ -1,5 +1,5 @@
 ---
-import { getCollection, getEntry } from "astro:content";
+import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import Layout from "../../components/Layout.astro";
 import SnsLinks from "../../components/SnsLinks.astro";
@@ -23,49 +23,47 @@ const episodes = (await getCollection("episodes")).sort(
   (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
 );
 
-type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT";
+type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格";
 
 type HistoryRow = {
   episode: CollectionEntry<"episodes">;
   cinderellaName: string;
   round: "first" | "final";
   vote: VoteValue;
-  comment?: string;
 };
 
 const history: HistoryRow[] = [];
 for (const ep of episodes) {
   const votesForQueen = ep.data.votes.filter((vv) => vv.queen.id === queen.id);
   if (votesForQueen.length === 0) continue;
-  const c = await getEntry(ep.data.cinderella);
+  const c = ep.data.cinderella; // 埋め込み済み
   for (const round of ["first", "final"] as const) {
     const v = votesForQueen.find((vv) => vv.round === round);
     if (!v) continue;
     history.push({
       episode: ep,
-      cinderellaName: c?.data.name ?? "—",
+      cinderellaName: c.name,
       round,
-      vote: v.vote,
-      comment: v.comment,
+      vote: v.vote as VoteValue,
     });
   }
 }
 
-const roundTally = (round: "first" | "final") => {
-  const list = history.filter((h) => h.round === round);
-  return {
-    lastCall: list.filter((h) => h.vote === "LAST CALL").length,
-    nothing: list.filter((h) => h.vote === "NOTHING").length,
-    noCall: list.filter((h) => h.vote === "NO CALL").length,
-    absent: list.filter((h) => h.vote === "ABSENT").length,
-    total: list.length,
-  };
+const firstList = history.filter((h) => h.round === "first");
+const finalList = history.filter((h) => h.round === "final");
+const firstTally = {
+  lastCall: firstList.filter((h) => h.vote === "LAST CALL").length,
+  nothing: firstList.filter((h) => h.vote === "NOTHING").length,
+  total: firstList.length,
 };
-const firstTally = roundTally("first");
-const finalTally = roundTally("final");
+const finalTally = {
+  pass: finalList.filter((h) => h.vote === "合格").length,
+  fail: finalList.filter((h) => h.vote === "不合格").length,
+  total: finalList.length,
+};
 
-const passCount = finalTally.lastCall;
-const failCount = finalTally.nothing + finalTally.noCall;
+const passCount = finalTally.pass;
+const failCount = finalTally.fail;
 const total = passCount + failCount;
 const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
 
@@ -80,7 +78,7 @@ const flipped = (() => {
   for (const slot of byEp.values()) {
     if (!slot.first || !slot.final) continue;
     const firstPass = slot.first.vote === "LAST CALL";
-    const finalPass = slot.final.vote === "LAST CALL";
+    const finalPass = slot.final.vote === "合格";
     if (firstPass !== finalPass) count++;
   }
   return count;
@@ -156,17 +154,17 @@ const personSchema = {
             spoilerLevel="vote"
           />
           <StatCard
-            label="LAST CALL"
-            value={finalTally.lastCall}
+            label="合格"
+            value={finalTally.pass}
             sublabel="最終ジャッジ"
             accent="gold"
             spoiler
             spoilerLevel="vote"
           />
           <StatCard
-            label="NOTHING / NC"
-            value={finalTally.nothing + finalTally.noCall}
-            sublabel={finalTally.noCall > 0 ? `NO CALL ${finalTally.noCall} を含む` : "最終ジャッジ"}
+            label="不合格"
+            value={finalTally.fail}
+            sublabel="最終ジャッジ"
             spoiler
             spoilerLevel="vote"
           />
@@ -180,20 +178,19 @@ const personSchema = {
         </div>
         <div class="card p-5 sm:p-6 space-y-4">
           <DivergingBar
-            pass={finalTally.lastCall}
-            fail={finalTally.nothing + finalTally.noCall}
-            absent={finalTally.absent}
+            pass={finalTally.pass}
+            fail={finalTally.fail}
             label="最終ジャッジの傾向"
             size="lg"
             spoilerLevel="vote"
           />
           <DivergingBar
             pass={firstTally.lastCall}
-            fail={firstTally.nothing + firstTally.noCall}
-            absent={firstTally.absent}
+            fail={firstTally.nothing}
             label="ファーストコールの傾向"
             size="sm"
             spoilerLevel="vote"
+            terms={{ pass: "LAST CALL", fail: "NOTHING" }}
           />
         </div>
       </section>
@@ -207,17 +204,19 @@ const personSchema = {
           <VoteSignature forQueen={queen} round="both" size="sm" linkTo="episode" />
         </div>
         <div class="flex flex-wrap items-center gap-3 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
+          <span class="text-[var(--color-text-muted)]">First:</span>
           <span class="inline-flex items-center gap-1.5">
-            <VoteChip vote="LAST CALL" size="xs" spoiler={false} /> LC
+            <VoteChip vote="LAST CALL" size="xs" round="first" spoiler={false} /> LAST CALL
           </span>
           <span class="inline-flex items-center gap-1.5">
-            <VoteChip vote="NOTHING" size="xs" spoiler={false} /> NOTHING
+            <VoteChip vote="NOTHING" size="xs" round="first" spoiler={false} /> NOTHING
+          </span>
+          <span class="text-[var(--color-text-muted)] ml-1">Final:</span>
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="合格" size="xs" round="final" spoiler={false} /> 合格
           </span>
           <span class="inline-flex items-center gap-1.5">
-            <VoteChip vote="NO CALL" size="xs" spoiler={false} /> NO CALL
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <VoteChip vote="UNKNOWN" size="xs" spoiler={false} /> 未確認
+            <VoteChip vote="不合格" size="xs" round="final" spoiler={false} /> 不合格
           </span>
           <span>上=First · 下=Final</span>
         </div>
@@ -239,7 +238,7 @@ const personSchema = {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition group-open:rotate-90" aria-hidden="true">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
-              票の詳細 & コメント
+              票の詳細
             </span>
             <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider uppercase">
               {history.length} 票
@@ -253,7 +252,6 @@ const personSchema = {
                   <th class="text-left font-medium px-3 py-2 whitespace-nowrap">シンデレラ</th>
                   <th class="text-left font-medium px-3 py-2 whitespace-nowrap">ラウンド</th>
                   <th class="text-center font-medium px-3 py-2 whitespace-nowrap">投票</th>
-                  <th class="text-left font-medium px-3 py-2">コメント</th>
                 </tr>
               </thead>
               <tbody>
@@ -270,17 +268,6 @@ const personSchema = {
                     </td>
                     <td class="px-3 py-2 text-center">
                       <VoteChip vote={h.vote} size="sm" round={h.round} queenName={queen.data.name} />
-                    </td>
-                    <td class="px-3 py-2 text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed">
-                      {h.comment ? (
-                        <span
-                          class="lc-occluded relative block"
-                          data-occlusion="block"
-                          data-spoiler-level="comment"
-                          data-spoiler-payload={JSON.stringify({ text: h.comment, aria: "コメント" })}
-                          aria-label="コメント（非表示）"
-                        ><span class="lc-payload-content"></span></span>
-                      ) : "—"}
                     </td>
                   </tr>
                 ))}

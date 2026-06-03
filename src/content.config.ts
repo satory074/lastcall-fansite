@@ -27,16 +27,13 @@ const queens = defineCollection({
   }),
 });
 
-const cinderellas = defineCollection({
-  loader: () => data.cinderellas.map(({ slug, ...rest }) => ({ id: slug, ...rest })),
-  schema: z.object({
-    name: z.string(),
-    age: z.number().int().positive().optional(),
-    background: z.string().optional(),
-    episodeId: z.string(),
-    result: z.enum(["pass", "fail"]),
-    sns: snsSchema,
-  }),
+// シンデレラ（志願者）はエピソードに 1:1 で埋め込む（旧 cinderellas コレクションは廃止）。
+const cinderellaSchema = z.object({
+  name: z.string(),
+  age: z.number().int().positive().optional(),
+  background: z.string().optional(),
+  result: z.enum(["pass", "fail"]), // エピソード全体の合否（合否セレクトで設定）
+  sns: snsSchema,
 });
 
 const episodes = defineCollection({
@@ -48,16 +45,17 @@ const episodes = defineCollection({
     airedAt: z.coerce.date(),
     youtubeId: z.string(),
     summary: z.string().optional(),
-    cinderella: reference("cinderellas"),
+    cinderella: cinderellaSchema,
+    // 出演クイーンのラインナップ（回ごとに可変）。VoteTable / マトリクスはこれを列挙する。
+    lineup: z.array(reference("queens")).default([]),
     votes: z
       .array(
         z.object({
           queen: reference("queens"),
-          // ファーストコール = 番組前半の暫定判定、最終ジャッジ = 合否確定の最終判定。
-          // round 未指定の票は最終ジャッジ扱い（後方互換）。
+          // ファーストコール = 番組前半の暫定票（LAST CALL / NOTHING）、
+          // 最終ジャッジ = 合否確定票（合格 / 不合格）。round 未指定は最終扱い（後方互換）。
           round: z.enum(["first", "final"]).default("final"),
-          vote: z.enum(["LAST CALL", "NOTHING", "NO CALL", "ABSENT"]),
-          comment: z.string().optional(),
+          vote: z.enum(["LAST CALL", "NOTHING", "合格", "不合格"]),
         })
       )
       .default([]),
@@ -65,4 +63,4 @@ const episodes = defineCollection({
   }),
 });
 
-export const collections = { queens, cinderellas, episodes };
+export const collections = { queens, episodes };

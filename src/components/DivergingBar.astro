@@ -9,6 +9,8 @@ interface Props {
   spoiler?: boolean;
   spoilerLevel?: "result" | "vote" | "comment";
   showLabels?: boolean;
+  // aria 用の票種ラベル。最終=合格/不合格、ファースト=LAST CALL/NOTHING など。
+  terms?: { pass: string; fail: string };
 }
 
 const {
@@ -21,6 +23,7 @@ const {
   spoiler = true,
   spoilerLevel = "result",
   showLabels = true,
+  terms = { pass: "合格", fail: "不合格" },
 } = Astro.props;
 
 const recorded = pass + fail;
@@ -38,7 +41,7 @@ const passPct = recorded > 0 ? (pass / recorded) * 50 : 0;
 const failPct = recorded > 0 ? (fail / recorded) * 50 : 0;
 
 const labelAria = recorded > 0
-  ? `LAST CALL ${pass} / NOTHING+NO CALL ${fail}${passRate !== null ? ` (合格率 ${passRate}%)` : ""}`
+  ? `${terms.pass} ${pass} / ${terms.fail} ${fail}${passRate !== null ? ` (合格率 ${passRate}%)` : ""}`
   : "投票データなし";
 
 // テキスト行 (数値 + 合格率) の payload — innerHTML で復元

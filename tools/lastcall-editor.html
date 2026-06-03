@@ -87,6 +87,8 @@
   table.votes th, table.votes td { border: 1px solid var(--line2); padding: 4px 6px; text-align: left; vertical-align: middle; }
   table.votes th { background: var(--bg); position: sticky; top: 0; font-size: 11.5px; color: var(--muted); }
   table.votes td.qname { font-weight: 600; white-space: nowrap; }
+  table.votes tr.row-off { opacity: 0.4; }
+  table.votes tr.row-off td.qname { font-weight: 400; }
   table.votes select { padding: 4px 6px; }
   table.votes input { padding: 4px 6px; }
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; border: 1px solid #0002; }
@@ -134,7 +136,6 @@
 
 <nav class="tabs" id="tabs" hidden>
   <button data-tab="episodes" class="active">エピソード</button>
-  <button data-tab="cinderellas">シンデレラ</button>
   <button data-tab="queens">クイーン</button>
 </nav>
 
@@ -153,14 +154,6 @@
     <ul></ul>
   </div>
   <div class="detail"><div class="placeholder">左の一覧から選択、または「＋ 新規エピソード」</div></div>
-</main>
-
-<main id="ci" data-coll="cinderellas">
-  <div class="listcol">
-    <div class="addrow"><button class="mini primary" data-add="cinderellas">＋ 新規シンデレラ</button></div>
-    <ul></ul>
-  </div>
-  <div class="detail"><div class="placeholder">左の一覧から選択、または「＋ 新規シンデレラ」</div></div>
 </main>
 
 <main id="qu" data-coll="queens">
@@ -182,17 +175,19 @@
 "use strict";
 
 // ---- 定数（src/content.config.ts のスキーマに対応） ----
-const QUEEN_ROSTER_NOTE = "クイーンは原則14名固定です。";
-const VOTE_OPTIONS = ["", "LAST CALL", "NOTHING", "NO CALL", "ABSENT"];
+const QUEEN_ROSTER_NOTE = "クイーンは回ごとに出演が変わります（エピソードのラインナップで選択）。";
+// ファースト: LAST CALL / NOTHING、最終: 合格 / 不合格
+const FIRST_OPTIONS = ["", "LAST CALL", "NOTHING"];
+const FINAL_OPTIONS = ["", "合格", "不合格"];
 const SNS_KEYS = ["instagram", "x", "tiktok", "youtube", "website"];
 const SLUG_RE = /^[a-z0-9-]+$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 // ---- 状態 ----
-let state = null;                 // { queens:[], cinderellas:[], episodes:[] }
+let state = null;                 // { queens:[], episodes:[] }（シンデレラは episode に埋め込み）
 let activeTab = "episodes";
 let serverSave = false;           // edit-server 経由か（true なら「ファイルに保存」可）
-const selected = { episodes: null, cinderellas: null, queens: null }; // index
+const selected = { episodes: null, queens: null }; // index
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -213,12 +208,12 @@ function loadFromText(text, name) {
   let data;
   try { data = JSON.parse(text); }
   catch (e) { alert("JSONの解析に失敗しました:\n" + e.message); return; }
-  if (!data || !Array.isArray(data.queens) || !Array.isArray(data.cinderellas) || !Array.isArray(data.episodes)) {
-    alert("形式が違います。queens / cinderellas / episodes の3配列を持つ lastcall.json を読み込んでください。");
+  if (!data || !Array.isArray(data.queens) || !Array.isArray(data.episodes)) {
+    alert("形式が違います。queens / episodes の2配列を持つ lastcall.json を読み込んでください。");
     return;
   }
   state = data;
-  for (const c of ["queens", "cinderellas", "episodes"]) selected[c] = state[c].length ? 0 : null;
+  for (const c of ["queens", "episodes"]) selected[c] = state[c].length ? 0 : null;
   $("#welcome").hidden = true;
   $("#tabs").hidden = false;
   $("#previewWrap").hidden = false;
@@ -295,7 +290,7 @@ $$("#tabs button").forEach(b => b.addEventListener("click", () => {
   renderAll();
 }));
 
-function mainEl() { return { episodes: $("#ep"), cinderellas: $("#ci"), queens: $("#qu") }[activeTab]; }
+function mainEl() { return { episodes: $("#ep"), queens: $("#qu") }[activeTab]; }
 
 // ---- 追加 ----
 $$("[data-add]").forEach(b => b.addEventListener("click", () => addItem(b.dataset.add)));
@@ -304,10 +299,8 @@ function addItem(coll) {
   if (coll === "episodes") {
     const ids = state.episodes.map(e => parseInt(e.id, 10)).filter(n => !isNaN(n));
     const next = (ids.length ? Math.max(...ids) + 1 : 1).toString().padStart(3, "0");
-    item = { id: next, title: "", airedAt: "", youtubeId: "", cinderella: "", votes: [], sources: [] };
-  } else if (coll === "cinderellas") {
-    // result / episodeId はエピソードのフォームで設定（既定値はスキーマ充足のため）
-    item = { slug: "", name: "", episodeId: "", result: "fail", sns: {} };
+    // シンデレラはエピソードに埋め込み。lineup は出演クイーン。
+    item = { id: next, title: "", airedAt: "", youtubeId: "", cinderella: { name: "", result: "fail", sns: {} }, lineup: [], votes: [], sources: [] };
   } else {
     item = { slug: "", name: "", sns: {} };
   }
@@ -438,7 +431,6 @@ function renderDetail() {
   }
 
   if (coll === "episodes") renderEpisode(detail, item);
-  else if (coll === "cinderellas") renderCinderella(detail, item);
   else renderQueen(detail, item);
 
   detail.append(el("div", { style: "margin-top:8px" },
@@ -480,39 +472,19 @@ function renderEpisode(detail, ep) {
     }
   }
 
-  // 合否（参照先シンデレラの result を読み書き）— renderVerdict は cinderella select より先に定義
-  const verdictWrap = el("div");
-  const renderVerdict = () => {
-    verdictWrap.innerHTML = "";
-    const cin = state.cinderellas.find(c => c.slug === ep.cinderella);
-    const sel = el("select");
-    [["", "—（シンデレラ未選択）"], ["pass", "LAST CALL（合格）"], ["fail", "NO CALL（不合格）"]].forEach(([v, l]) => sel.append(el("option", { value: v }, l)));
-    sel.disabled = !cin;
-    sel.value = cin ? (cin.result || "") : "";
-    sel.addEventListener("change", () => {
-      if (!cin) return;
-      cin.result = sel.value || "fail";
-      cin.episodeId = ep.id;           // 出演回を自動リンク
-      renderListLight(); renderPreview(); renderStatus();
-    });
-    verdictWrap.append(sel);
-  };
-
-  const cinOpts = ["", ...state.cinderellas.map(c => c.slug)];
-  const cinSelect = selectInput(ep, "cinderella", cinOpts, {
-    labels: s => s === "" ? "—（未選択）" : (s + "  " + (state.cinderellas.find(c => c.slug === s)?.name || "?")),
-    on: () => {
-      const cin = state.cinderellas.find(c => c.slug === ep.cinderella);
-      if (cin) cin.episodeId = ep.id; // 出演回を自動リンク
-      renderListLight(); renderPreview(); renderStatus(); renderVerdict();
-    },
-  });
-  fs.append(field("cinderella", cinSelect, { req: true, hint: "この回の志願者（シンデレラのslug）" }));
-  fs.append(field("合否", verdictWrap, { hint: "このシンデレラの結果。LAST CALL=合格 / NO CALL=不合格" }));
-  renderVerdict();
-
   fs.append(field("summary", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = ep.summary ?? ""; t.addEventListener("input", () => { if (t.value.trim()) ep.summary = t.value; else delete ep.summary; renderPreview(); }); return t; })()));
   detail.append(fs);
+
+  // --- シンデレラ（エピソードに埋め込み）---
+  if (!ep.cinderella || typeof ep.cinderella !== "object") ep.cinderella = { name: "", result: "fail", sns: {} };
+  const cin = ep.cinderella;
+  const cfs = el("fieldset", {}, el("legend", {}, "シンデレラ（志願者）"));
+  cfs.append(field("name", textInput(cin, "name", { bad: !cin.name }), { req: true }));
+  cfs.append(field("age", textInput(cin, "age", { type: "number" })));
+  cfs.append(field("合否", selectInput(cin, "result", ["fail", "pass"], { labels: s => s === "pass" ? "合格" : "不合格" }), { req: true, hint: "このシンデレラの結果（合格 / 不合格）" }));
+  cfs.append(field("background", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = cin.background ?? ""; t.addEventListener("input", () => { if (t.value.trim()) cin.background = t.value; else delete cin.background; renderPreview(); }); return t; })()));
+  detail.append(cfs);
+  detail.append(snsFieldset(cin));
 
   // sources
   if (!Array.isArray(ep.sources)) ep.sources = [];
@@ -533,33 +505,31 @@ function renderEpisode(detail, ep) {
 }
 
 function votesFieldset(ep) {
-  const fs = el("fieldset", {}, el("legend", {}, "票（ファーストコール / 最終ジャッジ）"));
+  const fs = el("fieldset", {}, el("legend", {}, "出演ラインナップ & 票"));
   fs.append(el("div", { class: "legend" },
-    span("dot lc", "LAST CALL = 推す"), span("dot no", "NOTHING = 推さない"),
-    span("dot noc", "NO CALL = 強い不可"), span("dot ab", "ABSENT = 欠席"),
-    el("span", {}, "空 = 未記録（出力されません）"),
-    el("span", {}, "※ コメントは保持のみ・編集不可")));
+    span("dot lc", "ゴールド = LAST CALL（ファースト）/ 合格（最終）"),
+    span("dot no", "グレー = NOTHING（ファースト）/ 不合格（最終）"),
+    el("span", {}, "チェックした出演クイーンに票を入力。空=未記録")));
 
-  // 現在の票を queen×round マップに展開
-  const map = {}; // slug -> {first, final, firstC, finalC}
-  state.queens.forEach(q => map[q.slug] = { first: "", final: "", firstC: "", finalC: "" });
+  // ラインナップ・票を展開（lineup と votes の和集合をラインナップとする）
+  const inLineup = new Set((ep.lineup || []).map(String));
+  (ep.votes || []).forEach(v => inLineup.add(v.queen));
+  const map = {}; // slug -> {first, final}
+  state.queens.forEach(q => map[q.slug] = { first: "", final: "" });
   (ep.votes || []).forEach(v => {
-    const r = v.round || "final";
-    if (!map[v.queen]) map[v.queen] = { first: "", final: "", firstC: "", finalC: "" };
-    map[v.queen][r] = v.vote || "";
-    map[v.queen][r + "C"] = v.comment || "";
+    if (!map[v.queen]) map[v.queen] = { first: "", final: "" };
+    map[v.queen][v.round || "final"] = v.vote || "";
   });
 
   const commit = () => {
+    // lineup = チェックされたクイーン（state.queens の並び順）
+    ep.lineup = state.queens.filter(q => inLineup.has(q.slug)).map(q => q.slug);
     const out = [];
     for (const r of ["first", "final"]) {
       state.queens.forEach(q => {
-        const cell = map[q.slug];
-        if (cell[r]) {
-          const o = { queen: q.slug, round: r, vote: cell[r] };
-          if (cell[r + "C"] && cell[r + "C"].trim()) o.comment = cell[r + "C"].trim();
-          out.push(o);
-        }
+        if (!inLineup.has(q.slug)) return;
+        const vote = map[q.slug][r];
+        if (vote) out.push({ queen: q.slug, round: r, vote });
       });
     }
     ep.votes = out;
@@ -567,53 +537,50 @@ function votesFieldset(ep) {
   };
 
   fs.append(el("div", { class: "toolbar" },
-    el("button", { class: "mini", onclick: () => { state.queens.forEach(q => { map[q.slug] = { first: "", final: "", firstC: "", finalC: "" }; }); commit(); renderDetail(); } }, "全員未記録にリセット"),
+    el("button", { class: "mini", onclick: () => { state.queens.forEach(q => inLineup.add(q.slug)); commit(); renderDetail(); } }, "全員を出演にする"),
+    el("button", { class: "mini", onclick: () => { inLineup.clear(); state.queens.forEach(q => map[q.slug] = { first: "", final: "" }); commit(); renderDetail(); } }, "全員クリア"),
     el("span", { class: "tallypill", id: "tally" })));
 
-  const colorClass = v => v === "LAST CALL" ? "v-lc" : v === "NOTHING" ? "v-no" : v === "NO CALL" ? "v-noc" : v === "ABSENT" ? "v-ab" : "";
-  const voteSelect = (slug, r) => {
+  const colorClass = v => (v === "LAST CALL" || v === "合格") ? "v-lc" : (v === "NOTHING" || v === "不合格") ? "v-no" : "";
+  const voteSelect = (slug, r, opts, enabled) => {
     const s = el("select", { class: ("vsel " + colorClass(map[slug][r])).trim() });
-    VOTE_OPTIONS.forEach(o => s.append(el("option", { value: o }, o === "" ? "— 未記録" : o)));
+    opts.forEach(o => s.append(el("option", { value: o }, o === "" ? "— 未記録" : o)));
     s.value = map[slug][r];
+    s.disabled = !enabled;
     s.addEventListener("change", () => { map[slug][r] = s.value; s.className = ("vsel " + colorClass(s.value)).trim(); commit(); });
     return s;
   };
 
   const table = el("table", { class: "votes" });
   table.append(el("thead", {}, el("tr", {},
-    el("th", {}, "クイーン"), el("th", {}, "ファースト"), el("th", {}, "最終"))));
+    el("th", {}, "出演"), el("th", {}, "クイーン"), el("th", {}, "ファースト"), el("th", {}, "最終"))));
   const tb = el("tbody");
   state.queens.forEach(q => {
-    tb.append(el("tr", {},
+    const on = inLineup.has(q.slug);
+    const cb = el("input", { type: "checkbox" });
+    cb.checked = on;
+    cb.addEventListener("change", () => {
+      if (cb.checked) inLineup.add(q.slug);
+      else { inLineup.delete(q.slug); map[q.slug] = { first: "", final: "" }; }
+      commit(); renderDetail();
+    });
+    tb.append(el("tr", { class: on ? "" : "row-off" },
+      el("td", { style: "text-align:center" }, cb),
       el("td", { class: "qname" }, q.name || q.slug),
-      el("td", {}, voteSelect(q.slug, "first")),
-      el("td", {}, voteSelect(q.slug, "final"))));
+      el("td", {}, voteSelect(q.slug, "first", FIRST_OPTIONS, on)),
+      el("td", {}, voteSelect(q.slug, "final", FINAL_OPTIONS, on))));
   });
   table.append(tb);
   fs.append(table);
 
   function updateTally() {
-    const fin = state.queens.map(q => map[q.slug].final).filter(Boolean);
-    const lc = fin.filter(v => v === "LAST CALL").length;
-    const t = $("#tally"); if (t) t.textContent = "最終: LC " + lc + " / 記録 " + fin.length + " / 14";
+    const lineupCount = state.queens.filter(q => inLineup.has(q.slug)).length;
+    const fin = state.queens.filter(q => inLineup.has(q.slug)).map(q => map[q.slug].final).filter(Boolean);
+    const goukaku = fin.filter(v => v === "合格").length;
+    const t = $("#tally"); if (t) t.textContent = "出演 " + lineupCount + " 名 / 最終 合格 " + goukaku + " / 記録 " + fin.length;
   }
   setTimeout(updateTally, 0);
   return fs;
-}
-
-function renderCinderella(detail, c) {
-  const fs = el("fieldset", {}, el("legend", {}, "シンデレラ（志願者）"));
-  fs.append(field("slug", textInput(c, "slug", { placeholder: "yamada-hanako", bad: !c.slug || !SLUG_RE.test(c.slug) }), { req: true, hint: "半角英数とハイフン。参照キー兼URL" }));
-  fs.append(field("name", textInput(c, "name", { bad: !c.name }), { req: true }));
-  fs.append(field("age", textInput(c, "age", { type: "number" })));
-  detail.append(fs);
-  detail.append(snsFieldset(c));
-  // result / episodeId はエピソードのフォームで設定（合否セレクト＋cinderella選択で自動リンク）
-  const ep = state.episodes.find(e => e.cinderella === c.slug);
-  detail.append(el("p", { class: "note" },
-    "合否（result）と出演回（episodeId）はエピソードのフォームで設定します。"
-    + (ep ? "（現在: 第" + ep.id + "回 / " + (c.result === "pass" ? "LAST CALL 合格" : c.result === "fail" ? "NO CALL 不合格" : "未設定") + "）"
-          : "（まだどのエピソードからも参照されていません）")));
 }
 
 function renderQueen(detail, q) {
@@ -636,8 +603,7 @@ function validateItem(coll, item, idx) {
     if (!item.id) w.push("id が未入力");
     if (!item.title) w.push("title が未入力");
     if (!item.youtubeId) w.push("youtubeId が未入力");
-    if (!item.cinderella) w.push("cinderella（志願者）が未選択");
-    else if (!state.cinderellas.some(c => c.slug === item.cinderella)) w.push("cinderella «" + item.cinderella + "» が存在しません");
+    if (!item.cinderella || !item.cinderella.name) w.push("シンデレラの name が未入力");
     if (item.airedAt && !DATE_RE.test(item.airedAt)) w.push("airedAt は YYYY-MM-DD 形式");
     if (state.episodes.some((e, i) => i !== idx && e.id === item.id)) w.push("id «" + item.id + "» が重複");
   } else {
@@ -655,7 +621,7 @@ function validateItem(coll, item, idx) {
 function allWarnings() {
   if (!state) return [];
   const list = [];
-  for (const coll of ["episodes", "cinderellas", "queens"]) {
+  for (const coll of ["episodes", "queens"]) {
     state[coll].forEach((item, i) => {
       const label = coll === "episodes" ? ("ep " + (item.id || "?")) : (coll + " " + (item.slug || item.name || i));
       validateItem(coll, item, i).forEach(w => list.push(label + ": " + w));
@@ -668,7 +634,7 @@ function allWarnings() {
 function renderStatus() {
   if (!state) return;
   const w = allWarnings();
-  const base = "クイーン " + state.queens.length + " / シンデレラ " + state.cinderellas.length + " / エピソード " + state.episodes.length;
+  const base = "エピソード " + state.episodes.length + " / クイーン " + state.queens.length;
   $("#status").innerHTML = "<b>" + base + "</b>" + (w.length ? " · <span class='err'>警告 " + w.length + "</span>" : " · <span style='color:var(--ok)'>OK</span>");
   $("#status").title = w.join("\n");
 }

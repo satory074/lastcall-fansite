@@ -1,5 +1,5 @@
 ---
-import { getCollection, getEntry } from "astro:content";
+import { getCollection } from "astro:content";
 import Layout from "../components/Layout.astro";
 import PersonCard from "../components/PersonCard.astro";
 import VoteChip from "../components/VoteChip.astro";
@@ -8,55 +8,65 @@ import StatCard from "../components/StatCard.astro";
 import SpoilerBadge from "../components/SpoilerBadge.astro";
 import { siteLink } from "../lib/url";
 
-// 14名固定のクイーン（マトリックス列順）
+// 全クイーン（マスタ。グリッド表示用）
 const queens = (await getCollection("queens")).sort((a, b) =>
   a.data.name.localeCompare(b.data.name, "ja")
 );
 
-// シンデレラ（出演回順）
-const cinderellas = (await getCollection("cinderellas")).sort((a, b) =>
-  a.data.episodeId.localeCompare(b.data.episodeId)
-);
-
-// エピソード（新しい順）と各回の投票マップ
+// エピソード（新しい順）。シンデレラは埋め込み済み。
 const episodes = (await getCollection("episodes")).sort(
   (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
 );
 
-type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
+// シンデレラ一覧（出演回順）= エピソードから導出
+const cinderellaList = [...episodes]
+  .sort((a, b) => a.data.id.localeCompare(b.data.id))
+  .map((ep) => ({ ep, c: ep.data.cinderella }));
+
+type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 type Cell = {
-  first: { vote: VoteValue; comment?: string };
-  final: { vote: VoteValue; comment?: string };
+  inLineup: boolean;
+  first: { vote: VoteValue };
+  final: { vote: VoteValue };
 };
 
-const matrix = await Promise.all(
-  episodes.map(async (ep) => {
-    const cinderella = await getEntry(ep.data.cinderella);
-    const cells: Cell[] = queens.map((j) => {
-      const f = ep.data.votes.find((v) => v.queen.id === j.id && v.round === "first");
-      const l = ep.data.votes.find((v) => v.queen.id === j.id && v.round === "final");
-      return {
-        first: { vote: f ? f.vote : "UNKNOWN", comment: f?.comment },
-        final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
-      };
-    });
-    const passCount = cells.filter((c) => c.final.vote === "LAST CALL").length;
-    const failCount = cells.filter(
-      (c) => c.final.vote === "NOTHING" || c.final.vote === "NO CALL"
-    ).length;
-    return { episode: ep, cinderella, cells, passCount, failCount };
-  })
+// クイーン別の最終ジャッジ集計（出演回のみ）
+const queenFinalStats = (queenId: string) => {
+  let pass = 0;
+  let fail = 0;
+  for (const ep of episodes) {
+    const v = ep.data.votes.find((vv) => vv.queen.id === queenId && vv.round === "final");
+    if (v?.vote === "合格") pass++;
+    else if (v?.vote === "不合格") fail++;
+  }
+  const recorded = pass + fail;
+  return { pass, fail, recorded, passRate: recorded > 0 ? Math.round((pass / recorded) * 100) : null };
+};
+const queenStatsAll = queens.map((j) => queenFinalStats(j.id));
+
+// マトリクス列 = いずれかの回のラインナップに出たクイーンのみ（回ごと可変）
+const matrixQueens = queens.filter((j) =>
+  episodes.some((ep) => ep.data.lineup.some((ref) => ref.id === j.id))
 );
 
-// クイーンごとの累計
-const queenStats = queens.map((_, idx) => {
-  const lastCall = matrix.filter((m) => m.cells[idx].final.vote === "LAST CALL").length;
-  const nothing = matrix.filter((m) => m.cells[idx].final.vote === "NOTHING").length;
-  const noCall = matrix.filter((m) => m.cells[idx].final.vote === "NO CALL").length;
-  const recorded = lastCall + nothing + noCall;
-  const passRate = recorded > 0 ? Math.round((lastCall / recorded) * 100) : null;
-  return { lastCall, nothing, noCall, recorded, passRate };
+const matrix = episodes.map((ep) => {
+  const lineupIds = new Set(ep.data.lineup.map((ref) => ref.id));
+  const cells: Cell[] = matrixQueens.map((j) => {
+    const f = ep.data.votes.find((v) => v.queen.id === j.id && v.round === "first");
+    const l = ep.data.votes.find((v) => v.queen.id === j.id && v.round === "final");
+    return {
+      inLineup: lineupIds.has(j.id),
+      first: { vote: (f ? f.vote : "UNKNOWN") as VoteValue },
+      final: { vote: (l ? l.vote : "UNKNOWN") as VoteValue },
+    };
+  });
+  const passCount = cells.filter((c) => c.final.vote === "合格").length;
+  const failCount = cells.filter((c) => c.final.vote === "不合格").length;
+  return { episode: ep, cinderella: ep.data.cinderella, cells, passCount, failCount };
 });
+
+// マトリクス tfoot 用（列のクイーンのみ）
+const queenStats = matrixQueens.map((j) => queenFinalStats(j.id));
 
 // 全体集計
 const overallEpisodes = matrix.length;
@@ -66,8 +76,8 @@ const overallRecorded = overallPass + overallFail;
 const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallRecorded) * 100) : null;
 
 // 番組としての"合否"回数 (1 episode = 1 verdict)
-const passEpisodes = cinderellas.filter((c) => c.data.result === "pass").length;
-const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
+const passEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "pass").length;
+const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail").length;
 ---
 
 <Layout
@@ -81,7 +91,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
       <p class="text-sm text-[var(--color-text-muted)] leading-relaxed max-w-2xl">
         全 <span class="text-[var(--color-text)] tabular-nums">{episodes.length}</span> 回のシンデレラ
         <span class="mx-1.5 text-[var(--color-border-strong)]">·</span>
-        14 名固定クイーン
+        出演クイーン（回ごと可変）
         <span class="mx-1.5 text-[var(--color-border-strong)]">·</span>
         2 ラウンド審査の投票マトリックス。
       </p>
@@ -101,7 +111,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
     {/* Cinderellas */}
     <section id="cinderellas" class="space-y-6 scroll-mt-24">
       <div class="flex flex-wrap items-end justify-between gap-3">
-        <h2 class="section-eyebrow">Cinderellas <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">出演回順 · {cinderellas.length} 名</span></h2>
+        <h2 class="section-eyebrow">Cinderellas <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">出演回順 · {cinderellaList.length} 名</span></h2>
         <span
           class="lc-occluded relative text-[11px] text-[var(--color-text-muted)] tracking-wide"
           data-occlusion="text"
@@ -127,18 +137,18 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
         <span data-listcount class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
       </div>
       <div id="lc-grid-cinderellas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cinderellas.map((c) => (
-          <div class="lc-pcard contents" data-name={c.data.name} data-ep={c.data.episodeId}>
+        {cinderellaList.map(({ ep, c }) => (
+          <div class="lc-pcard contents" data-name={c.name} data-ep={ep.data.id}>
             <PersonCard
-              name={c.data.name}
-              href={siteLink(`/cinderellas/${c.id}/`)}
-              subtitle={c.data.age ? `${c.data.age}歳` : undefined}
-              meta={`#${c.data.episodeId} 出演`}
+              name={c.name}
+              href={siteLink(`/episodes/${ep.data.id}/`)}
+              subtitle={c.age ? `${c.age}歳` : undefined}
+              meta={`#${ep.data.id} 出演`}
               badge={{
-                label: c.data.result === "pass" ? "LAST CALL" : "NOTHING",
-                tone: c.data.result === "pass" ? "pass" : "fail",
+                label: c.result === "pass" ? "合格" : "不合格",
+                tone: c.result === "pass" ? "pass" : "fail",
               }}
-              sns={c.data.sns}
+              sns={c.sns}
             />
           </div>
         ))}
@@ -147,7 +157,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
 
     {/* Queens */}
     <section id="queens" class="space-y-6 scroll-mt-24">
-      <h2 class="section-eyebrow">Queens <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">固定 {queens.length} 名</span></h2>
+      <h2 class="section-eyebrow">Queens <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{queens.length} 名</span></h2>
       <div class="lc-listctl flex flex-wrap items-center gap-2 text-[11px]" hidden data-grid="lc-grid-queens">
         <input type="search" autocomplete="off" data-listfilter placeholder="名前・エリアで絞り込み…" class="flex-1 min-w-[10rem] max-w-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-3 py-1.5 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:border-[var(--color-border-strong)]" />
         <label class="flex items-center gap-1.5 text-[var(--color-text-subtle)]">並べ替え
@@ -160,7 +170,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
       </div>
       <div id="lc-grid-queens" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {queens.map((j, i) => {
-          const s = queenStats[i];
+          const s = queenStatsAll[i];
           return (
             <div
               class="lc-pcard contents"
@@ -178,8 +188,8 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
                 {s.recorded > 0 && (
                   <Fragment slot="signature">
                     <DivergingBar
-                      pass={s.lastCall}
-                      fail={s.nothing + s.noCall}
+                      pass={s.pass}
+                      fail={s.fail}
                       label="最終ジャッジ傾向"
                       size="sm"
                       spoilerLevel="vote"
@@ -197,9 +207,9 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
     {/* Voting Matrix — heatmap */}
     <section id="matrix" class="space-y-6 scroll-mt-24">
       <div class="space-y-3">
-        <h2 class="section-eyebrow">Voting Matrix <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{episodes.length} 回 × {queens.length} 名クイーン</span></h2>
+        <h2 class="section-eyebrow">Voting Matrix <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{episodes.length} 回 × {matrixQueens.length} 名クイーン</span></h2>
         <p class="text-xs text-[var(--color-text-muted)] leading-relaxed max-w-2xl">
-          縦=各回（新しい順）・横=クイーン。各セルは上段=<span class="text-[var(--color-text)]">ファーストコール</span> / 下段=<span class="text-[var(--color-text)]">最終ジャッジ</span>。点線輪郭は本編未視聴で未記録のセル。
+          縦=各回（新しい順）・横=クイーン。各セルは上段=<span class="text-[var(--color-text)]">ファーストコール</span> / 下段=<span class="text-[var(--color-text)]">最終ジャッジ</span>。空欄はその回のラインナップ外、点線輪郭は出演したが票未記録のセル。
         </p>
       </div>
 
@@ -216,8 +226,8 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
               spoiler
               spoilerLevel="result"
             />
-            <StatCard label="LAST CALL" value={overallPass} sublabel="最終 合格判定票" accent="gold" spoiler spoilerLevel="result" />
-            <StatCard label="NOTHING / NC" value={overallFail} sublabel="最終 不合格判定票" spoiler spoilerLevel="result" />
+            <StatCard label="合格" value={overallPass} sublabel="最終 合格票" accent="gold" spoiler spoilerLevel="result" />
+            <StatCard label="不合格" value={overallFail} sublabel="最終 不合格票" spoiler spoilerLevel="result" />
           </div>
           <DivergingBar
             pass={overallPass}
@@ -231,16 +241,18 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
 
       {/* Legend */}
       <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="LAST CALL" size="xs" spoiler={false} /> LC</span>
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="NOTHING" size="xs" spoiler={false} /> NOTHING</span>
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="NO CALL" size="xs" spoiler={false} /> NO CALL</span>
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="ABSENT" size="xs" spoiler={false} /> 欠席</span>
+        <span class="text-[var(--color-text-muted)]">ファースト:</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="LAST CALL" size="xs" round="first" spoiler={false} /> LAST CALL</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="NOTHING" size="xs" round="first" spoiler={false} /> NOTHING</span>
+        <span class="text-[var(--color-text-muted)] ml-1">最終:</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="合格" size="xs" round="final" spoiler={false} /> 合格</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="不合格" size="xs" round="final" spoiler={false} /> 不合格</span>
         <span class="inline-flex items-center gap-1.5"><VoteChip vote="UNKNOWN" size="xs" spoiler={false} /> 未確認</span>
         <span>上=ファースト / 下=最終</span>
       </div>
 
       {/* クイーンフィルタ: 列を絞ってモバイルの横幅を圧縮（JSで制御、未対応時は全表示のまま） */}
-      <div id="lc-matrix-filter" class="space-y-2.5" hidden data-total={queens.length}>
+      <div id="lc-matrix-filter" class="space-y-2.5" hidden data-total={matrixQueens.length}>
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
           <span class="text-[var(--color-text-subtle)] tracking-wider">クイーンを絞り込む</span>
           <span id="lc-jcount" class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
@@ -248,7 +260,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
           <button type="button" data-jall="off" class="px-2.5 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">全解除</button>
         </div>
         <div class="flex flex-wrap gap-1.5">
-          {queens.map((j) => (
+          {matrixQueens.map((j) => (
             <button
               type="button"
               class="lc-qchip px-2.5 py-1 rounded-full border text-[11px] tracking-wide transition"
@@ -267,7 +279,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
               <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-0 z-20 bg-[var(--color-surface)]">回</th>
               <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-[60px] z-20 bg-[var(--color-surface)]">シンデレラ</th>
               <th scope="col" class="text-center font-medium px-3 py-3 whitespace-nowrap">結果</th>
-              {queens.map((j) => (
+              {matrixQueens.map((j) => (
                 <th scope="col" data-qcol={j.id} class="text-center font-medium px-2 py-3 whitespace-nowrap">
                   <a href={siteLink(`/queens/${j.id}/`)} class="hover:text-[var(--color-gold-bright)] transition inline-block max-w-[64px] truncate text-[11px]">
                     {j.data.name}
@@ -282,7 +294,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
               const recorded = passCount + failCount;
               const calcResult: "pass" | "fail" | null =
                 recorded > 0 ? (passCount >= Math.ceil(recorded / 2) ? "pass" : "fail") : null;
-              const result = calcResult ?? cinderella?.data.result ?? null;
+              const result = calcResult ?? cinderella.result ?? null;
               return (
                 <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
                   <td class="px-3 py-2.5 whitespace-nowrap sticky left-0 z-10 bg-[var(--color-card)]">
@@ -295,26 +307,28 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
                     <div class="text-[9px] text-[var(--color-text-subtle)] tabular-nums">{dateLabel.slice(5)}</div>
                   </td>
                   <td class="px-3 py-2.5 whitespace-nowrap sticky left-[60px] z-10 bg-[var(--color-card)]">
-                    {cinderella ? (
-                      <a
-                        href={siteLink(`/cinderellas/${cinderella.id}/`)}
-                        class="text-[var(--color-text)] hover:text-[var(--color-gold-bright)] transition text-[12px]"
-                      >
-                        {cinderella.data.name}
-                      </a>
-                    ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                    <a
+                      href={siteLink(`/episodes/${episode.data.id}/`)}
+                      class="text-[var(--color-text)] hover:text-[var(--color-gold-bright)] transition text-[12px]"
+                    >
+                      {cinderella.name}
+                    </a>
                   </td>
                   <td class="px-3 py-2.5 text-center whitespace-nowrap">
                     {result ? (
-                      <SpoilerBadge result={result} variant="pill-mini" ariaPrefix={cinderella?.data.name ?? `#${episode.data.id}`} />
+                      <SpoilerBadge result={result} variant="pill-mini" ariaPrefix={cinderella.name} />
                     ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                   </td>
                   {cells.map((cell, ji) => (
-                    <td data-qcol={queens[ji].id} class="px-1.5 py-2 text-center align-middle">
-                      <div class="inline-flex flex-col items-center gap-0.5">
-                        <VoteChip vote={cell.first.vote} size="sm" round="first" queenName={queens[ji].data.name} />
-                        <VoteChip vote={cell.final.vote} size="sm" round="final" queenName={queens[ji].data.name} />
-                      </div>
+                    <td data-qcol={matrixQueens[ji].id} class="px-1.5 py-2 text-center align-middle">
+                      {cell.inLineup ? (
+                        <div class="inline-flex flex-col items-center gap-0.5">
+                          <VoteChip vote={cell.first.vote} size="sm" round="first" queenName={matrixQueens[ji].data.name} />
+                          <VoteChip vote={cell.final.vote} size="sm" round="final" queenName={matrixQueens[ji].data.name} />
+                        </div>
+                      ) : (
+                        <span class="text-[var(--color-text-subtle)] text-[10px]">·</span>
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -344,7 +358,7 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
                   ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                 </td>
                 {queenStats.map((t, ji) => (
-                  <td data-qcol={queens[ji].id} class="px-1.5 py-2 text-center align-middle">
+                  <td data-qcol={matrixQueens[ji].id} class="px-1.5 py-2 text-center align-middle">
                     {t.recorded === 0 ? (
                       <span class="text-[10px] text-[var(--color-text-subtle)]">—</span>
                     ) : (
@@ -355,8 +369,8 @@ const failEpisodes = cinderellas.filter((c) => c.data.result === "fail").length;
                         data-spoiler-payload={JSON.stringify({
                           html:
                             `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${t.passRate ?? 0}%</span>` +
-                            `<span class=\"text-[var(--color-text-subtle)] tabular-nums text-[9px]\">${t.lastCall}/${t.recorded}</span>`,
-                          aria: `合格率 ${t.passRate ?? 0}% (${t.lastCall}/${t.recorded})`,
+                            `<span class=\"text-[var(--color-text-subtle)] tabular-nums text-[9px]\">${t.pass}/${t.recorded}</span>`,
+                          aria: `合格率 ${t.passRate ?? 0}% (${t.pass}/${t.recorded})`,
                         })}
                         aria-label="クイーン別合格率（非表示）"
                       ><span class="lc-payload-content inline-flex flex-col items-center"></span></div>

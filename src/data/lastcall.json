@@ -151,172 +151,18 @@
       }
     }
   ],
-  "cinderellas": [
-    {
-      "slug": "007-cinderella",
-      "name": "シンデレラ #007",
-      "episodeId": "007",
-      "result": "fail",
-      "sns": {}
-    },
-    {
-      "slug": "017-cinderella",
-      "name": "シンデレラ #017",
-      "episodeId": "017",
-      "result": "fail",
-      "sns": {}
-    },
-    {
-      "slug": "018-cinderella",
-      "name": "シンデレラ #018",
-      "episodeId": "018",
-      "result": "fail",
-      "sns": {}
-    },
-    {
-      "slug": "aoyama-serina",
-      "name": "青山せりな",
-      "nameKana": "あおやま せりな",
-      "age": 28,
-      "episodeId": "010",
-      "result": "fail",
-      "sns": {
-        "instagram": "https://www.instagram.com/aoyamaserinamaru/"
-      }
-    },
-    {
-      "slug": "chisato",
-      "name": "ちさと",
-      "nameKana": "ちさと",
-      "age": 21,
-      "episodeId": "005",
-      "result": "pass",
-      "sns": {}
-    },
-    {
-      "slug": "emma",
-      "name": "エマ",
-      "nameKana": "エマ",
-      "age": 33,
-      "episodeId": "014",
-      "result": "fail",
-      "sns": {}
-    },
-    {
-      "slug": "fukuda-aika",
-      "name": "福田愛花",
-      "nameKana": "ふくだ あいか",
-      "age": 28,
-      "episodeId": "003",
-      "result": "pass",
-      "sns": {}
-    },
-    {
-      "slug": "hashimoto-hina",
-      "name": "橋本姫奈",
-      "nameKana": "はしもと ひな",
-      "age": 20,
-      "episodeId": "015",
-      "result": "pass",
-      "sns": {
-        "instagram": "https://www.instagram.com/amami_kumo/"
-      }
-    },
-    {
-      "slug": "hayama-midori",
-      "name": "葉山翠",
-      "nameKana": "はやま みどり",
-      "age": 26,
-      "episodeId": "002",
-      "result": "pass",
-      "sns": {}
-    },
-    {
-      "slug": "hoshino-ria",
-      "name": "星乃リア",
-      "nameKana": "ほしの りあ",
-      "age": 23,
-      "episodeId": "013",
-      "result": "fail",
-      "sns": {
-        "instagram": "https://www.instagram.com/hoshino_ria/"
-      }
-    },
-    {
-      "slug": "kobayashi-ryoka",
-      "name": "小林諒佳",
-      "nameKana": "こばやし りょうか",
-      "age": 21,
-      "episodeId": "006",
-      "result": "pass",
-      "sns": {}
-    },
-    {
-      "slug": "satsuki-riria",
-      "name": "皐月りりあ",
-      "nameKana": "さつき りりあ",
-      "age": 22,
-      "episodeId": "009",
-      "result": "pass",
-      "sns": {
-        "instagram": "https://www.instagram.com/_ririaworld_/"
-      }
-    },
-    {
-      "slug": "tameya-haruka",
-      "name": "為谷陽香",
-      "nameKana": "ためや はるか",
-      "age": 27,
-      "episodeId": "001",
-      "result": "fail",
-      "sns": {}
-    },
-    {
-      "slug": "toyoda-rika",
-      "name": "豊田りか",
-      "nameKana": "とよだ りか",
-      "age": 29,
-      "episodeId": "004",
-      "result": "fail",
-      "sns": {}
-    },
-    {
-      "slug": "tsukishiro-reia",
-      "name": "月城麗愛",
-      "nameKana": "つきしろ れあ",
-      "age": 26,
-      "episodeId": "012",
-      "result": "fail",
-      "sns": {
-        "instagram": "https://www.instagram.com/emena_999x/"
-      }
-    },
-    {
-      "slug": "yoshihara-yumeji",
-      "name": "吉原夢二",
-      "nameKana": "よしはら ゆめじ",
-      "age": 26,
-      "episodeId": "019",
-      "result": "fail",
-      "sns": {}
-    },
-    {
-      "slug": "yuna",
-      "name": "ゆな",
-      "nameKana": "ゆな",
-      "age": 28,
-      "episodeId": "008",
-      "result": "fail",
-      "sns": {}
-    }
-  ],
   "episodes": [
     {
       "id": "001",
       "title": "キャバ嬢ナメんな。母の病気のため稼ぐ彼女に突きつけた現実【LAST CALL（ラストコール） #001】",
       "airedAt": "2026-01-04",
       "youtubeId": "iETjq8CqPwQ",
-      "cinderella": "tameya-haruka",
+      "cinderella": {
+        "name": "為谷陽香",
+        "age": 27,
+        "result": "fail",
+        "sns": {}
+      },
       "votes": [
         {
           "queen": "airi",
@@ -326,8 +172,7 @@
         {
           "queen": "aizawa-emiri",
           "round": "first",
-          "vote": "NOTHING",
-          "comment": "覚悟が伝わってこない。"
+          "vote": "NOTHING"
         },
         {
           "queen": "assun",
@@ -342,8 +187,7 @@
         {
           "queen": "kisaragi-rei",
           "round": "first",
-          "vote": "LAST CALL",
-          "comment": "お母様のために頑張ろうという気持ちは本物。"
+          "vote": "LAST CALL"
         },
         {
           "queen": "minami-yuzu",
@@ -378,8 +222,7 @@
         {
           "queen": "shingeki-noa",
           "round": "first",
-          "vote": "NO CALL",
-          "comment": "今のままでは現場で通用しない。"
+          "vote": "NOTHING"
         },
         {
           "queen": "yamatorino",
@@ -394,82 +237,93 @@
         {
           "queen": "airi",
           "round": "final",
-          "vote": "LAST CALL",
-          "comment": "気持ちが嘘ではなかった。"
+          "vote": "合格"
         },
         {
           "queen": "aizawa-emiri",
           "round": "final",
-          "vote": "NOTHING",
-          "comment": "この世界はそんなに甘くない。"
+          "vote": "不合格"
         },
         {
           "queen": "assun",
           "round": "final",
-          "vote": "NOTHING",
-          "comment": "後半の発言で迷いが見えた。"
+          "vote": "不合格"
         },
         {
           "queen": "himeka",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "kisaragi-rei",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "minami-yuzu",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "momose-tomo",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "neomaru",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "nijiho",
           "round": "final",
-          "vote": "NO CALL",
-          "comment": "悪いけれど、今は推せない。"
+          "vote": "不合格"
         },
         {
           "queen": "remiremi",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "runa",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "shingeki-noa",
           "round": "final",
-          "vote": "NO CALL"
+          "vote": "不合格"
         },
         {
           "queen": "yamatorino",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "yuipis",
           "round": "final",
-          "vote": "NOTHING",
-          "comment": "ファーストでは推したけど、覚悟が見えなかった。"
+          "vote": "不合格"
         }
       ],
       "sources": [
         "https://www.youtube.com/watch?v=iETjq8CqPwQ",
         "https://ninki-jyun.com/lastcall-goukaku/"
+      ],
+      "lineup": [
+        "airi",
+        "aizawa-emiri",
+        "assun",
+        "himeka",
+        "kisaragi-rei",
+        "minami-yuzu",
+        "momose-tomo",
+        "neomaru",
+        "nijiho",
+        "remiremi",
+        "runa",
+        "shingeki-noa",
+        "yamatorino",
+        "yuipis"
       ]
     },
     {
@@ -477,19 +331,30 @@
       "title": "甘えんな！親・金・子どもを全て失った元風●嬢の最後の挑戦。【LAST CALL （ラストコール）#002】",
       "airedAt": "2026-01-11",
       "youtubeId": "dLnhXXrJGRQ",
-      "cinderella": "hayama-midori",
+      "cinderella": {
+        "name": "葉山翠",
+        "age": 26,
+        "result": "pass",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=dLnhXXrJGRQ",
         "https://ninki-jyun.com/lastcall-goukaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "003",
       "title": "90kg無職が人気キャバ嬢を夢見る現実─それは努力不足という名の\"甘え\"でしかない【LAST CALL（ラストコール） #003】",
       "airedAt": "2026-01-18",
       "youtubeId": "OUtqWyfx1Rs",
-      "cinderella": "fukuda-aika",
+      "cinderella": {
+        "name": "福田愛花",
+        "age": 28,
+        "result": "pass",
+        "sns": {}
+      },
       "votes": [
         {
           "queen": "airi",
@@ -499,8 +364,7 @@
         {
           "queen": "aizawa-emiri",
           "round": "first",
-          "vote": "NOTHING",
-          "comment": "見た目から変えていかないと。"
+          "vote": "NOTHING"
         },
         {
           "queen": "assun",
@@ -515,8 +379,7 @@
         {
           "queen": "kisaragi-rei",
           "round": "first",
-          "vote": "LAST CALL",
-          "comment": "ハングリー精神を感じる。"
+          "vote": "LAST CALL"
         },
         {
           "queen": "minami-yuzu",
@@ -536,7 +399,7 @@
         {
           "queen": "nijiho",
           "round": "first",
-          "vote": "NO CALL"
+          "vote": "NOTHING"
         },
         {
           "queen": "remiremi",
@@ -551,8 +414,7 @@
         {
           "queen": "shingeki-noa",
           "round": "first",
-          "vote": "NO CALL",
-          "comment": "この子は伸びない。"
+          "vote": "NOTHING"
         },
         {
           "queen": "yamatorino",
@@ -567,83 +429,94 @@
         {
           "queen": "airi",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "aizawa-emiri",
           "round": "final",
-          "vote": "NOTHING",
-          "comment": "意気込みは伝わるが、まだ判断できない。"
+          "vote": "不合格"
         },
         {
           "queen": "assun",
           "round": "final",
-          "vote": "LAST CALL",
-          "comment": "後半の決意を信じてみたい。"
+          "vote": "合格"
         },
         {
           "queen": "himeka",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "kisaragi-rei",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "minami-yuzu",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "momose-tomo",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "neomaru",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "nijiho",
           "round": "final",
-          "vote": "LAST CALL",
-          "comment": "迷ったけど、この子の本気を見たい。"
+          "vote": "合格"
         },
         {
           "queen": "remiremi",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "runa",
           "round": "final",
-          "vote": "LAST CALL",
-          "comment": "心の強さに賭ける。"
+          "vote": "合格"
         },
         {
           "queen": "shingeki-noa",
           "round": "final",
-          "vote": "NO CALL",
-          "comment": "覚悟だけでは商売にならない。"
+          "vote": "不合格"
         },
         {
           "queen": "yamatorino",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "yuipis",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         }
       ],
       "sources": [
         "https://www.youtube.com/watch?v=OUtqWyfx1Rs",
         "https://ninki-jyun.com/lastcall-goukaku/",
         "https://nlab.itmedia.co.jp/cont/articles/3703045/"
+      ],
+      "lineup": [
+        "airi",
+        "aizawa-emiri",
+        "assun",
+        "himeka",
+        "kisaragi-rei",
+        "minami-yuzu",
+        "momose-tomo",
+        "neomaru",
+        "nijiho",
+        "remiremi",
+        "runa",
+        "shingeki-noa",
+        "yamatorino",
+        "yuipis"
       ]
     },
     {
@@ -651,164 +524,254 @@
       "title": "全員NOTHINGの衝撃。他責思考アラサー都落ちキャバ嬢にHIMEKA「興味わかない」【LAST CALL（ラストコール）#004】",
       "airedAt": "2026-01-25",
       "youtubeId": "CztJF9wjZkg",
-      "cinderella": "toyoda-rika",
+      "cinderella": {
+        "name": "豊田りか",
+        "age": 29,
+        "result": "fail",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=CztJF9wjZkg",
         "https://ninki-jyun.com/lastcall-goukaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "005",
       "title": "女として認められたい…初の\"男性シンデレラ\"に突きつけられた女の世界の現実【LAST CALL（ラストコール）#005】",
       "airedAt": "2026-02-01",
       "youtubeId": "4dcreu2sQME",
-      "cinderella": "chisato",
+      "cinderella": {
+        "name": "ちさと",
+        "age": 21,
+        "result": "pass",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=4dcreu2sQME",
         "https://ninki-jyun.com/lastcall-goukaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "006",
       "title": "ローランドが激怒…現役青山学院大学生の母に最終通告「二度と言わないで」【LAST CALL（ラストコール）#006】",
       "airedAt": "2026-02-08",
       "youtubeId": "4qCU0k0u4kY",
-      "cinderella": "kobayashi-ryoka",
+      "cinderella": {
+        "name": "小林諒佳",
+        "age": 21,
+        "result": "pass",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=4qCU0k0u4kY",
         "https://x.com/mizoguchi_yuji/status/2020469659544535158"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "007",
       "title": "BreakingDownオーディション？\"私のほうが可愛い\"発言から場外乱闘に発展？シンデレラVS人気キャバ嬢【LAST CALL（ラストコール）#007】",
       "airedAt": "2026-02-15",
       "youtubeId": "oFolz45TFjQ",
-      "cinderella": "007-cinderella",
+      "cinderella": {
+        "name": "シンデレラ #007",
+        "result": "fail",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=oFolz45TFjQ"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "008",
       "title": "\"水商売失格\"ローランドが失望…NOと言えない川崎の現役キャバ嬢【LAST CALL（ラストコール）#008】",
       "airedAt": "2026-02-22",
       "youtubeId": "oDqJkzGR89w",
-      "cinderella": "yuna",
+      "cinderella": {
+        "name": "ゆな",
+        "age": 28,
+        "result": "fail",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=oDqJkzGR89w",
         "https://ninki-jyun.com/lastcall-goukaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "009",
       "title": "『枕してるんじゃない？』自称\"処女\"アイドルが語る業界の裏側。BreakingDown戦士が痛客で参戦。【LASTCALL(ラストコール）#009】",
       "airedAt": "2026-03-01",
       "youtubeId": "UFhLaMKbI84",
-      "cinderella": "satsuki-riria",
+      "cinderella": {
+        "name": "皐月りりあ",
+        "age": 22,
+        "result": "pass",
+        "sns": {
+          "instagram": "https://www.instagram.com/_ririaworld_/"
+        }
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=UFhLaMKbI84",
         "https://ninki-jyun.com/lastcall-goukaku/",
         "https://ninki-jyun.com/lastcallitakyaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "010",
       "title": "BreakingDown和田Pがにじほにブチギレ―番組史上最悪の空気にキャバ嬢も怒りをぶつける。【LASTCALL(ラストコール）#010】",
       "airedAt": "2026-03-08",
       "youtubeId": "_NtvQLENbLo",
-      "cinderella": "aoyama-serina",
+      "cinderella": {
+        "name": "青山せりな",
+        "age": 28,
+        "result": "fail",
+        "sns": {
+          "instagram": "https://www.instagram.com/aoyamaserinamaru/"
+        }
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=_NtvQLENbLo",
         "https://ninki-jyun.com/lastcall-goukaku/",
         "https://ninki-jyun.com/lastcallitakyaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "012",
       "title": "帰国子女ミスコンファイナリスト美女 私はスターの素質ある ビッグマウスにスターキャバ嬢激怒【LASTCALL(ラストコール）#012】",
       "airedAt": "2026-03-22",
       "youtubeId": "1OH3kURCxiI",
-      "cinderella": "tsukishiro-reia",
+      "cinderella": {
+        "name": "月城麗愛",
+        "age": 26,
+        "result": "fail",
+        "sns": {
+          "instagram": "https://www.instagram.com/emena_999x/"
+        }
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=1OH3kURCxiI",
         "https://ninki-jyun.com/lastcall-goukaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "013",
       "title": "1年後\"億女\"…元アイドル×夜職サラブレッドにレジェンドキャバ嬢騒然【LASTCALL(ラストコール）#013】",
       "airedAt": "2026-03-29",
       "youtubeId": "g9xvsTqwi1s",
-      "cinderella": "hoshino-ria",
+      "cinderella": {
+        "name": "星乃リア",
+        "age": 23,
+        "result": "fail",
+        "sns": {
+          "instagram": "https://www.instagram.com/hoshino_ria/"
+        }
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=g9xvsTqwi1s",
         "https://mayu-roro.com/hoshino-ria-lastcall-kawaii-profile/",
         "https://strong-wind8.com/hoshino-ria-idol/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "014",
       "title": "懲役4年…覚醒剤で全て失った女の\"ラストチャンス\"にローランドが激怒【LASTCALL(ラストコール）#014 】",
       "airedAt": "2026-04-05",
       "youtubeId": "zyp5KNGZqN0",
-      "cinderella": "emma",
+      "cinderella": {
+        "name": "エマ",
+        "age": 33,
+        "result": "fail",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=zyp5KNGZqN0",
         "https://ninki-jyun.com/lastcall-goukaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "015",
       "title": "ダイヤの原石 絶賛美女登場も、クイーン同士の確執が露わに激論勃発【LASTCALL(ラストコール）#015】",
       "airedAt": "2026-04-12",
       "youtubeId": "1wvt6ZjM23A",
-      "cinderella": "hashimoto-hina",
+      "cinderella": {
+        "name": "橋本姫奈",
+        "age": 20,
+        "result": "pass",
+        "sns": {
+          "instagram": "https://www.instagram.com/amami_kumo/"
+        }
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=1wvt6ZjM23A",
         "https://ninki-jyun.com/lastcall-goukaku/"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "017",
       "title": "性加害を受けた幼少期⋯AV女優からキャバ嬢に転身しオンリーワンを目指すロシアハーフ美女【LASTCALL(ラストコール）#017】",
       "airedAt": "2026-04-26",
       "youtubeId": "D2qTwAbMgYY",
-      "cinderella": "017-cinderella",
+      "cinderella": {
+        "name": "シンデレラ #017",
+        "result": "fail",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=D2qTwAbMgYY",
         "https://x.com/lastcall_krnk/status/2048399388310208872"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "018",
       "title": "圧倒的ビジュアルNo.1 青森育ちの純真ガールが流した涙の理由。「あっすんvs和田」第2ラウンド勃発【LASTCALL(ラストコール）#018】",
       "airedAt": "2026-05-03",
       "youtubeId": "daGHVq4Pp3k",
-      "cinderella": "018-cinderella",
+      "cinderella": {
+        "name": "シンデレラ #018",
+        "result": "fail",
+        "sns": {}
+      },
       "votes": [],
       "sources": [
         "https://www.youtube.com/watch?v=daGHVq4Pp3k"
-      ]
+      ],
+      "lineup": []
     },
     {
       "id": "019",
       "title": "寿命わずか…吉原６年連続No.1ソープ嬢が進撃のノアに『私を働かせて』【LASTCALL(ラストコール）#019】",
       "airedAt": "2026-05-10",
       "youtubeId": "IzqtJiai3J0",
-      "cinderella": "yoshihara-yumeji",
+      "cinderella": {
+        "name": "吉原夢二",
+        "age": 26,
+        "result": "fail",
+        "sns": {}
+      },
       "votes": [
         {
           "queen": "airi",
@@ -823,8 +786,7 @@
         {
           "queen": "assun",
           "round": "first",
-          "vote": "LAST CALL",
-          "comment": "実績がすごい。"
+          "vote": "LAST CALL"
         },
         {
           "queen": "himeka",
@@ -869,8 +831,7 @@
         {
           "queen": "shingeki-noa",
           "round": "first",
-          "vote": "NO CALL",
-          "comment": "業種が違いすぎる。"
+          "vote": "NOTHING"
         },
         {
           "queen": "yamatorino",
@@ -885,84 +846,94 @@
         {
           "queen": "airi",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "aizawa-emiri",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "assun",
           "round": "final",
-          "vote": "NOTHING",
-          "comment": "後半の答えで迷いが出てしまった。"
+          "vote": "不合格"
         },
         {
           "queen": "himeka",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "kisaragi-rei",
           "round": "final",
-          "vote": "LAST CALL",
-          "comment": "あの覚悟をキャバ嬢の世界でも見たい。"
+          "vote": "合格"
         },
         {
           "queen": "minami-yuzu",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "momose-tomo",
           "round": "final",
-          "vote": "NOTHING",
-          "comment": "うちでは扱いきれない。"
+          "vote": "不合格"
         },
         {
           "queen": "neomaru",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "nijiho",
           "round": "final",
-          "vote": "NO CALL",
-          "comment": "申し訳ないけれど、ノーコール。"
+          "vote": "不合格"
         },
         {
           "queen": "remiremi",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         },
         {
           "queen": "runa",
           "round": "final",
-          "vote": "NOTHING"
+          "vote": "不合格"
         },
         {
           "queen": "shingeki-noa",
           "round": "final",
-          "vote": "NO CALL",
-          "comment": "進撃のノアとしては、この子は推せない。"
+          "vote": "不合格"
         },
         {
           "queen": "yamatorino",
           "round": "final",
-          "vote": "NOTHING",
-          "comment": "ファーストは推したけど、最後の答えで気持ちが冷めた。"
+          "vote": "不合格"
         },
         {
           "queen": "yuipis",
           "round": "final",
-          "vote": "LAST CALL"
+          "vote": "合格"
         }
       ],
       "sources": [
         "https://www.youtube.com/watch?v=IzqtJiai3J0",
         "https://mayu-roro.com/yoshihara-yumeji-wiki-profile-lastcall/",
         "https://coki.jp/article/column/77724/"
+      ],
+      "lineup": [
+        "airi",
+        "aizawa-emiri",
+        "assun",
+        "himeka",
+        "kisaragi-rei",
+        "minami-yuzu",
+        "momose-tomo",
+        "neomaru",
+        "nijiho",
+        "remiremi",
+        "runa",
+        "shingeki-noa",
+        "yamatorino",
+        "yuipis"
       ]
     }
   ]

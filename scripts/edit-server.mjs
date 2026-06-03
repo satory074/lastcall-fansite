@@ -58,8 +58,8 @@ const server = createServer(async (req, res) => {
         let parsed;
         try { parsed = JSON.parse(body); }
         catch (e) { return send(res, 400, "Invalid JSON: " + e.message); }
-        if (!parsed || !Array.isArray(parsed.queens) || !Array.isArray(parsed.cinderellas) || !Array.isArray(parsed.episodes)) {
-          return send(res, 400, "queens / cinderellas / episodes の3配列が必要です");
+        if (!parsed || !Array.isArray(parsed.queens) || !Array.isArray(parsed.episodes)) {
+          return send(res, 400, "queens / episodes の2配列が必要です");
         }
         // エディタの出力（2スペース整形＋末尾改行）をそのまま保存
         await writeFile(DATA, body.endsWith("\n") ? body : body + "\n", "utf8");
@@ -76,7 +76,7 @@ const server = createServer(async (req, res) => {
       const thumbnail = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
       const watch = `https://www.youtube.com/watch?v=${id}`;
       // 1) yt-dlp（title + upload_date）
-      const yt = await ytDlp(id, watch);
+      const yt = await ytDlp(watch);
       if (yt) return send(res, 200, JSON.stringify({ ...yt, thumbnail, via: "yt-dlp" }), MIME[".json"]);
       // 2) oEmbed フォールバック（title のみ）
       try {
@@ -106,7 +106,7 @@ const server = createServer(async (req, res) => {
 });
 
 // yt-dlp で title と upload_date を取得。未インストール/失敗時は null。
-function ytDlp(id, watch) {
+function ytDlp(watch) {
   return new Promise((resolve) => {
     let out = "", done = false;
     const finish = (v) => { if (!done) { done = true; resolve(v); } };

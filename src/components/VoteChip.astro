@@ -1,5 +1,6 @@
 ---
-type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
+// ファースト: LAST CALL / NOTHING、最終: 合格 / 不合格、未記録: UNKNOWN
+type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 
 interface Props {
   vote: VoteValue;
@@ -22,10 +23,8 @@ const variants: Record<VoteValue, string> = {
   "LAST CALL":
     "bg-[var(--color-gold)] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]",
   NOTHING: "bg-[var(--color-fail)] text-white",
-  "NO CALL":
-    "bg-transparent text-[var(--color-text-muted)] border border-[var(--color-fail)]",
-  ABSENT:
-    "bg-[var(--color-surface)] text-[var(--color-text-subtle)] border border-[var(--color-border)]",
+  合格: "bg-[var(--color-gold)] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]",
+  不合格: "bg-[var(--color-fail)] text-white",
   UNKNOWN:
     "bg-transparent text-[var(--color-text-subtle)] border border-dashed border-[var(--color-border)]",
 };
@@ -33,8 +32,8 @@ const variants: Record<VoteValue, string> = {
 const labels: Record<VoteValue, string> = {
   "LAST CALL": "LC",
   NOTHING: "NO",
-  "NO CALL": "NC",
-  ABSENT: "—",
+  合格: "合",
+  不合格: "否",
   UNKNOWN: "?",
 };
 
@@ -42,7 +41,7 @@ const ariaLabel = (() => {
   const parts: string[] = [];
   if (queenName) parts.push(queenName);
   if (round) parts.push(round === "first" ? "ファースト" : "最終");
-  parts.push(vote === "UNKNOWN" ? "未確認" : vote === "ABSENT" ? "欠席" : vote);
+  parts.push(vote === "UNKNOWN" ? "未確認" : vote);
   return parts.join(" / ");
 })();
 
@@ -51,7 +50,7 @@ const baseClass = "inline-flex items-center justify-center rounded-full font-bol
 // UNKNOWN は元から判別不能 (?) なので occlusion 不要。
 // それ以外で spoiler=true なら payload 化 (SSR では本値・aria・class を出さない)
 const isOccluded = spoiler && vote !== "UNKNOWN";
-const dataLevel: "vote" | undefined = vote === "LAST CALL" || vote === "NOTHING" ? "vote" : undefined;
+const dataLevel: "vote" = "vote";
 
 const payload = isOccluded
   ? JSON.stringify({

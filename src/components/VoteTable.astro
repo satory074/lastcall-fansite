@@ -1,5 +1,5 @@
 ---
-import { getCollection, getEntries } from "astro:content";
+import { getEntries } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import { siteLink } from "../lib/url";
 import VoteChip from "./VoteChip.astro";
@@ -7,21 +7,17 @@ import DivergingBar from "./DivergingBar.astro";
 import SpoilerBadge from "./SpoilerBadge.astro";
 
 interface Props {
+  lineup: CollectionEntry<"episodes">["data"]["lineup"];
   votes: CollectionEntry<"episodes">["data"]["votes"];
   cinderellaResult?: "pass" | "fail";
 }
 
-const { votes, cinderellaResult } = Astro.props;
+const { lineup, votes, cinderellaResult } = Astro.props;
 
-type VoteValue = "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT" | "UNKNOWN";
+type VoteValue = "LAST CALL" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 
-const allQueens = (await getCollection("queens")).sort((a, b) =>
-  a.data.name.localeCompare(b.data.name, "ja")
-);
-
-const recordedQueens = await getEntries(votes.map((v) => v.queen));
-const queenMap = new Map(recordedQueens.map((j) => [j.id, j]));
-const extraVotes = votes.filter((v) => !allQueens.some((j) => j.id === v.queen.id));
+// 出演クイーンのラインナップ（回ごとに可変）。順序は lineup の指定順。
+const lineupQueens = await getEntries(lineup);
 
 const lookup = (queenId: string, round: "first" | "final") =>
   votes.find((v) => v.queen.id === queenId && v.round === round);
@@ -29,66 +25,47 @@ const lookup = (queenId: string, round: "first" | "final") =>
 type Row = {
   queenId: string;
   queenName: string;
-  queenHref: string | null;
-  first: { vote: VoteValue; comment?: string };
-  final: { vote: VoteValue; comment?: string };
+  queenHref: string;
+  first: { vote: VoteValue };
+  final: { vote: VoteValue };
 };
 
-const baseRows: Row[] = allQueens.map((j) => {
+const rows: Row[] = lineupQueens.map((j) => {
   const f = lookup(j.id, "first");
   const l = lookup(j.id, "final");
   return {
     queenId: j.id,
     queenName: j.data.name,
     queenHref: siteLink(`/queens/${j.id}/`),
-    first: { vote: f ? f.vote : "UNKNOWN", comment: f?.comment },
-    final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
+    first: { vote: (f ? f.vote : "UNKNOWN") as VoteValue },
+    final: { vote: (l ? l.vote : "UNKNOWN") as VoteValue },
   };
 });
 
-const extraQueenIds = Array.from(new Set(extraVotes.map((v) => v.queen.id)));
-const extraRows: Row[] = extraQueenIds.map((id) => {
-  const j = queenMap.get(id);
-  const f = lookup(id, "first");
-  const l = lookup(id, "final");
-  return {
-    queenId: id,
-    queenName: j?.data.name ?? "ゲストクイーン",
-    queenHref: j ? siteLink(`/queens/${j.id}/`) : null,
-    first: { vote: f ? f.vote : "UNKNOWN", comment: f?.comment },
-    final: { vote: l ? l.vote : "UNKNOWN", comment: l?.comment },
-  };
-});
-
-const rows = [...baseRows, ...extraRows];
-
-const tally = (round: "first" | "final") => {
-  const list = rows.map((r) => r[round].vote);
-  return {
-    lastCall: list.filter((v) => v === "LAST CALL").length,
-    nothing: list.filter((v) => v === "NOTHING").length,
-    noCall: list.filter((v) => v === "NO CALL").length,
-    absent: list.filter((v) => v === "ABSENT").length,
-    unknown: list.filter((v) => v === "UNKNOWN").length,
-  };
+const tallyFirst = {
+  lastCall: rows.filter((r) => r.first.vote === "LAST CALL").length,
+  nothing: rows.filter((r) => r.first.vote === "NOTHING").length,
+  unknown: rows.filter((r) => r.first.vote === "UNKNOWN").length,
 };
-const firstTally = tally("first");
-const finalTally = tally("final");
+const tallyFinal = {
+  pass: rows.filter((r) => r.final.vote === "合格").length,
+  fail: rows.filter((r) => r.final.vote === "不合格").length,
+  unknown: rows.filter((r) => r.final.vote === "UNKNOWN").length,
+};
 
-const finalPass = finalTally.lastCall;
-const finalFail = finalTally.nothing + finalTally.noCall;
-const totalRecorded = finalPass + finalFail;
+const totalRecorded = tallyFinal.pass + tallyFinal.fail;
 const calcResult: "pass" | "fail" | null =
-  totalRecorded > 0 ? (finalPass >= Math.ceil(totalRecorded / 2) ? "pass" : "fail") : null;
+  totalRecorded > 0 ? (tallyFinal.pass >= Math.ceil(totalRecorded / 2) ? "pass" : "fail") : null;
 const displayResult = cinderellaResult ?? calcResult;
 
 const flipped = rows.filter((r) => {
   if (r.first.vote === "UNKNOWN" || r.final.vote === "UNKNOWN") return false;
   const firstPass = r.first.vote === "LAST CALL";
-  const finalPass = r.final.vote === "LAST CALL";
+  const finalPass = r.final.vote === "合格";
   return firstPass !== finalPass;
 }).length;
 
+const hasLineup = rows.length > 0;
 const hasAnyVote = votes.length > 0;
 ---
 
@@ -97,7 +74,7 @@ const hasAnyVote = votes.length > 0;
     <div class="space-y-1">
       <h2 class="section-eyebrow">Queens &amp; Votes</h2>
       <p class="text-xs text-[var(--color-text-muted)] tracking-wide">
-        固定 14 名クイーン × 2 ラウンド（ファーストコール / 最終ジャッジ）
+        出演クイーン {hasLineup ? `${rows.length} 名` : ""} × 2 ラウンド（ファーストコール / 最終ジャッジ）
       </p>
     </div>
     {displayResult && (
@@ -105,134 +82,120 @@ const hasAnyVote = votes.length > 0;
     )}
   </header>
 
-  {/* Diverging bar — Final */}
-  <div class="card p-5 sm:p-6 space-y-5">
-    <DivergingBar
-      pass={finalTally.lastCall}
-      fail={finalTally.nothing + finalTally.noCall}
-      absent={finalTally.absent}
-      unknown={finalTally.unknown}
-      label="最終ジャッジ (Final)"
-      size="lg"
-      spoilerLevel="result"
-    />
-    <DivergingBar
-      pass={firstTally.lastCall}
-      fail={firstTally.nothing + firstTally.noCall}
-      absent={firstTally.absent}
-      unknown={firstTally.unknown}
-      label="ファーストコール (First)"
-      size="sm"
-      spoilerLevel="vote"
-    />
-    {flipped > 0 && (
-      <p class="text-[11px] text-[var(--color-text-muted)] tracking-wide">
-        ファースト → 最終で判定変更:
-        <span
-          class="lc-occluded relative font-semibold text-[var(--color-text)] tabular-nums"
-          data-occlusion="text"
-          data-spoiler-level="vote"
-          data-spoiler-payload={JSON.stringify({ text: String(flipped), aria: `${flipped} 名` })}
-          aria-label="人数（非表示）"
-        ><span class="lc-payload-content"></span></span> 名
-      </p>
-    )}
-  </div>
+  {hasLineup ? (
+    <Fragment>
+      {/* Diverging bar — Final / First */}
+      <div class="card p-5 sm:p-6 space-y-5">
+        <DivergingBar
+          pass={tallyFinal.pass}
+          fail={tallyFinal.fail}
+          unknown={tallyFinal.unknown}
+          label="最終ジャッジ (Final)"
+          size="lg"
+          spoilerLevel="result"
+        />
+        <DivergingBar
+          pass={tallyFirst.lastCall}
+          fail={tallyFirst.nothing}
+          unknown={tallyFirst.unknown}
+          label="ファーストコール (First)"
+          size="sm"
+          spoilerLevel="vote"
+          terms={{ pass: "LAST CALL", fail: "NOTHING" }}
+        />
+        {flipped > 0 && (
+          <p class="text-[11px] text-[var(--color-text-muted)] tracking-wide">
+            ファースト → 最終で判定変更:
+            <span
+              class="lc-occluded relative font-semibold text-[var(--color-text)] tabular-nums"
+              data-occlusion="text"
+              data-spoiler-level="vote"
+              data-spoiler-payload={JSON.stringify({ text: String(flipped), aria: `${flipped} 名` })}
+              aria-label="人数（非表示）"
+            ><span class="lc-payload-content"></span></span> 名
+          </p>
+        )}
+      </div>
 
-  {/* Queen signature row — 14 chips */}
-  <div class="card p-4 sm:p-5 space-y-3">
-    <div class="flex items-baseline justify-between gap-3">
-      <h3 class="text-[11px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] font-medium">
-        Vote Signature
-      </h3>
-      <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider">
-        上=First / 下=Final
-      </span>
-    </div>
-    <div class="flex flex-wrap gap-1.5 sm:gap-2">
-      {rows.map((r) => (
-        <a href={r.queenHref ?? "#"} class="group flex flex-col items-center gap-0.5">
-          <span class="flex flex-col items-center gap-0.5">
-            <VoteChip vote={r.first.vote} size="sm" round="first" queenName={r.queenName} />
-            <VoteChip vote={r.final.vote} size="sm" round="final" queenName={r.queenName} />
+      {/* Queen signature row */}
+      <div class="card p-4 sm:p-5 space-y-3">
+        <div class="flex items-baseline justify-between gap-3">
+          <h3 class="text-[11px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] font-medium">
+            Vote Signature
+          </h3>
+          <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider">
+            上=First / 下=Final
           </span>
-          <span class="text-[9px] leading-none text-[var(--color-text-subtle)] tracking-tight group-hover:text-[var(--color-gold-bright)] transition max-w-[60px] truncate text-center">
-            {r.queenName}
-          </span>
-        </a>
-      ))}
-    </div>
-  </div>
+        </div>
+        <div class="flex flex-wrap gap-1.5 sm:gap-2">
+          {rows.map((r) => (
+            <a href={r.queenHref} class="group flex flex-col items-center gap-0.5">
+              <span class="flex flex-col items-center gap-0.5">
+                <VoteChip vote={r.first.vote} size="sm" round="first" queenName={r.queenName} />
+                <VoteChip vote={r.final.vote} size="sm" round="final" queenName={r.queenName} />
+              </span>
+              <span class="text-[9px] leading-none text-[var(--color-text-subtle)] tracking-tight group-hover:text-[var(--color-gold-bright)] transition max-w-[60px] truncate text-center">
+                {r.queenName}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
 
-  {/* Detail table — collapsed by default */}
-  {hasAnyVote && (
-    <details class="card group">
-      <summary class="px-5 sm:px-6 py-3 cursor-pointer list-none flex items-center justify-between gap-3 text-sm tracking-wide select-none">
-        <span class="flex items-center gap-2">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition group-open:rotate-90" aria-hidden="true">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-          票の詳細 & コメント
-        </span>
-        <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider uppercase">
-          {votes.length} 票記録
-        </span>
-      </summary>
-      <div class="border-t border-[var(--color-border)] overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
-            <tr>
-              <th class="text-left font-medium px-3 py-2 whitespace-nowrap">クイーン</th>
-              <th class="text-center font-medium px-3 py-2 whitespace-nowrap">First</th>
-              <th class="text-center font-medium px-3 py-2 whitespace-nowrap">Final</th>
-              <th class="text-left font-medium px-3 py-2">コメント</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const comments: string[] = [];
-              if (row.first.comment) comments.push(`（ファースト）${row.first.comment}`);
-              if (row.final.comment) comments.push(`（最終）${row.final.comment}`);
-              return (
-                <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
-                  <td class="px-3 py-2 whitespace-nowrap">
-                    {row.queenHref ? (
+      {/* Detail table — collapsed by default */}
+      {hasAnyVote && (
+        <details class="card group">
+          <summary class="px-5 sm:px-6 py-3 cursor-pointer list-none flex items-center justify-between gap-3 text-sm tracking-wide select-none">
+            <span class="flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition group-open:rotate-90" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+              票の詳細
+            </span>
+            <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider uppercase">
+              {votes.length} 票記録
+            </span>
+          </summary>
+          <div class="border-t border-[var(--color-border)] overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
+                <tr>
+                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">クイーン</th>
+                  <th class="text-center font-medium px-3 py-2 whitespace-nowrap">First</th>
+                  <th class="text-center font-medium px-3 py-2 whitespace-nowrap">Final</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
+                    <td class="px-3 py-2 whitespace-nowrap">
                       <a href={row.queenHref} class="hover:text-[var(--color-gold-bright)] transition">
                         {row.queenName}
                       </a>
-                    ) : (
-                      <span>{row.queenName}</span>
-                    )}
-                  </td>
-                  <td class="px-3 py-2 text-center">
-                    <VoteChip vote={row.first.vote} size="sm" round="first" queenName={row.queenName} />
-                  </td>
-                  <td class="px-3 py-2 text-center">
-                    <VoteChip vote={row.final.vote} size="sm" round="final" queenName={row.queenName} />
-                  </td>
-                  <td class="px-3 py-2 text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed">
-                    {comments.length > 0 ? (
-                      <span
-                        class="lc-occluded relative block"
-                        data-occlusion="block"
-                        data-spoiler-level="comment"
-                        data-spoiler-payload={JSON.stringify({ text: comments.join(" / "), aria: "コメント" })}
-                        aria-label="コメント（非表示）"
-                      ><span class="lc-payload-content"></span></span>
-                    ) : "—"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </details>
-  )}
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                      <VoteChip vote={row.first.vote} size="sm" round="first" queenName={row.queenName} />
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                      <VoteChip vote={row.final.vote} size="sm" round="final" queenName={row.queenName} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      )}
 
-  {finalTally.unknown > 0 && (
-    <p class="text-[11px] text-[var(--color-text-subtle)] tracking-wide">
-      「未確認」は本編未視聴のため個別投票が未記録のクイーンです。<code class="text-[var(--color-text-muted)]">src/data/lastcall.json</code> の <code class="text-[var(--color-text-muted)]">episodes</code>（id <code class="text-[var(--color-text-muted)]">{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1] ?? "<ID>"}</code>）の <code class="text-[var(--color-text-muted)]">votes</code> に <code class="text-[var(--color-text-muted)]">round: "first" | "final"</code> 指定で追加してください。
+      {tallyFinal.unknown > 0 && (
+        <p class="text-[11px] text-[var(--color-text-subtle)] tracking-wide">
+          「未確認」はラインナップに含まれるが個別投票が未記録のクイーンです。<code class="text-[var(--color-text-muted)]">npm run edit</code> のエディタで各クイーンの票を入力できます。
+        </p>
+      )}
+    </Fragment>
+  ) : (
+    <p class="text-sm text-[var(--color-text-muted)] tracking-wide card p-5">
+      出演クイーンのラインナップが未記録です。<code class="text-[var(--color-text-muted)]">npm run edit</code> のエディタでラインナップと票を入力してください。
     </p>
   )}
 </section>

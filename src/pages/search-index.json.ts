@@ -12,9 +12,8 @@ type Item = {
 };
 
 export async function GET() {
-  const [episodes, cinderellas, queens] = await Promise.all([
+  const [episodes, queens] = await Promise.all([
     getCollection("episodes"),
-    getCollection("cinderellas"),
     getCollection("queens"),
   ]);
 
@@ -29,15 +28,14 @@ export async function GET() {
       url: siteLink(`/episodes/${ep.data.id}/`),
       terms: `${ep.data.id} ${ep.data.title} ${clean}`.toLowerCase(),
     });
-  }
-
-  for (const c of cinderellas) {
+    // シンデレラはエピソードに埋め込み。検索ヒット先はエピソードページ。
+    const c = ep.data.cinderella;
     items.push({
       type: "cinderella",
-      label: c.data.name,
-      sub: `第${c.data.episodeId}回 出演`,
-      url: siteLink(`/cinderellas/${c.id}/`),
-      terms: `${c.data.name} ${c.id}`.toLowerCase(),
+      label: c.name,
+      sub: `第${ep.data.id}回 出演`,
+      url: siteLink(`/episodes/${ep.data.id}/`),
+      terms: `${c.name} ${ep.data.id}`.toLowerCase(),
     });
   }
 

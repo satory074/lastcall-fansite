@@ -1,5 +1,5 @@
 ---
-import { getCollection, getEntry } from "astro:content";
+import { getCollection } from "astro:content";
 import Layout from "../../components/Layout.astro";
 import YouTubeEmbed from "../../components/YouTubeEmbed.astro";
 import VoteTable from "../../components/VoteTable.astro";
@@ -7,7 +7,7 @@ import SnsLinks from "../../components/SnsLinks.astro";
 import EpisodeCard from "../../components/EpisodeCard.astro";
 import SpoilerBadge from "../../components/SpoilerBadge.astro";
 import StructuredData from "../../components/StructuredData.astro";
-import { siteLink, youtubeUrl, youtubeThumb, absUrl } from "../../lib/url";
+import { youtubeUrl, youtubeThumb, absUrl } from "../../lib/url";
 
 export async function getStaticPaths() {
   const episodes = await getCollection("episodes");
@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 }
 
 const { episode } = Astro.props;
-const cinderella = await getEntry(episode.data.cinderella);
+const cinderella = episode.data.cinderella; // エピソードに埋め込み済み
 const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
 
 const allEpisodes = (await getCollection("episodes")).sort(
@@ -60,9 +60,7 @@ const videoSchema = {
         <span class="text-[10px] tracking-[0.2em] uppercase text-[var(--color-text-subtle)] tabular-nums">
           {dateLabel}
         </span>
-        {cinderella && (
-          <SpoilerBadge result={cinderella.data.result} variant="pill-large" ariaPrefix={cinderella.data.name} />
-        )}
+        <SpoilerBadge result={cinderella.result} variant="pill-large" ariaPrefix={cinderella.name} />
       </div>
       <h1 class="font-display-serif text-2xl sm:text-[2.5rem] leading-[1.2] text-[var(--color-text)]">
         {cleanTitle}
@@ -99,39 +97,32 @@ const videoSchema = {
       </div>
     </section>
 
-    {cinderella && (
-      <section class="space-y-4">
-        <h2 class="section-eyebrow">Cinderella</h2>
-        <div class="card p-6 sm:p-8 space-y-5">
-          <div class="flex flex-wrap items-baseline justify-between gap-3">
-            <h3 class="font-display-serif text-2xl sm:text-3xl">
-              <a
-                href={siteLink(`/cinderellas/${cinderella.id}/`)}
-                class="hover:text-[var(--color-gold-bright)] transition"
-              >
-                {cinderella.data.name}
-              </a>
-              {cinderella.data.age && (
-                <span class="text-sm font-sans text-[var(--color-text-muted)] ml-3 tabular-nums">{cinderella.data.age}歳</span>
-              )}
-            </h3>
-            <SpoilerBadge result={cinderella.data.result} variant="pill-large" label={cinderella.data.result === "pass" ? "合格" : "不合格"} ariaPrefix={cinderella.data.name} />
-          </div>
-          {cinderella.data.background && (
-            <p
-              class="lc-occluded relative block text-sm leading-[1.85] text-[var(--color-text-muted)]"
-              data-occlusion="block"
-              data-spoiler-level="comment"
-              data-spoiler-payload={JSON.stringify({ text: cinderella.data.background, aria: "Background" })}
-              aria-label="Background（非表示）"
-            ><span class="lc-payload-content"></span></p>
-          )}
-          <SnsLinks sns={cinderella.data.sns} size="sm" />
+    <section class="space-y-4">
+      <h2 class="section-eyebrow">Cinderella</h2>
+      <div class="card p-6 sm:p-8 space-y-5">
+        <div class="flex flex-wrap items-baseline justify-between gap-3">
+          <h3 class="font-display-serif text-2xl sm:text-3xl">
+            {cinderella.name}
+            {cinderella.age && (
+              <span class="text-sm font-sans text-[var(--color-text-muted)] ml-3 tabular-nums">{cinderella.age}歳</span>
+            )}
+          </h3>
+          <SpoilerBadge result={cinderella.result} variant="pill-large" label={cinderella.result === "pass" ? "合格" : "不合格"} ariaPrefix={cinderella.name} />
         </div>
-      </section>
-    )}
+        {cinderella.background && (
+          <p
+            class="lc-occluded relative block text-sm leading-[1.85] text-[var(--color-text-muted)]"
+            data-occlusion="block"
+            data-spoiler-level="comment"
+            data-spoiler-payload={JSON.stringify({ text: cinderella.background, aria: "Background" })}
+            aria-label="Background（非表示）"
+          ><span class="lc-payload-content"></span></p>
+        )}
+        <SnsLinks sns={cinderella.sns} size="sm" />
+      </div>
+    </section>
 
-    <VoteTable votes={episode.data.votes} cinderellaResult={cinderella?.data.result} />
+    <VoteTable lineup={episode.data.lineup} votes={episode.data.votes} cinderellaResult={cinderella.result} />
 
     {episode.data.sources.length > 0 && (
       <section class="space-y-3">

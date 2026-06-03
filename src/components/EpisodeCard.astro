@@ -1,6 +1,5 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { getEntry } from "astro:content";
 import { siteLink, youtubeThumb } from "../lib/url";
 import SpoilerBadge from "./SpoilerBadge.astro";
 
@@ -10,14 +9,14 @@ interface Props {
 }
 
 const { episode, variant = "default" } = Astro.props;
-const cinderella = await getEntry(episode.data.cinderella);
+const cinderella = episode.data.cinderella; // エピソードに埋め込み済み
 
 const finalVotes = episode.data.votes.filter((v) => v.round === "final");
-const pass = finalVotes.filter((v) => v.vote === "LAST CALL").length;
-const fail = finalVotes.filter((v) => v.vote === "NOTHING" || v.vote === "NO CALL").length;
+const pass = finalVotes.filter((v) => v.vote === "合格").length;
+const fail = finalVotes.filter((v) => v.vote === "不合格").length;
 const total = pass + fail;
 const voteResult = total > 0 ? (pass >= Math.ceil(total / 2) ? "pass" : "fail") : null;
-const result = voteResult ?? cinderella?.data.result ?? null;
+const result = voteResult ?? cinderella.result ?? null;
 
 const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
 const cleanTitle = episode.data.title.replace(/【LAST.*$/, "").replace(/\s*#\d+\s*$/, "").trim();
@@ -95,11 +94,9 @@ const transitionName = `ep-${episode.data.id}-thumb`;
       <h3 class="font-display-serif text-sm sm:text-base text-[var(--color-text)] line-clamp-2 group-hover:text-[var(--color-gold-bright)] transition leading-snug">
         {cleanTitle}
       </h3>
-      {cinderella && (
-        <p class="text-[11px] text-[var(--color-text-muted)] truncate">
-          Cinderella · {cinderella.data.name}
-        </p>
-      )}
+      <p class="text-[11px] text-[var(--color-text-muted)] truncate">
+        Cinderella · {cinderella.name}
+      </p>
     </div>
   )}
 
@@ -109,12 +106,8 @@ const transitionName = `ep-${episode.data.id}-thumb`;
       <div class="space-y-5">
         <div class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)] tabular-nums flex items-center gap-2 flex-wrap">
           <span>{dateLabel}</span>
-          {cinderella && (
-            <>
-              <span class="text-[var(--color-border-strong)]">/</span>
-              <span class="text-[var(--color-text-muted)] normal-case tracking-[0.12em]">Cinderella · {cinderella.data.name}</span>
-            </>
-          )}
+          <span class="text-[var(--color-border-strong)]">/</span>
+          <span class="text-[var(--color-text-muted)] normal-case tracking-[0.12em]">Cinderella · {cinderella.name}</span>
         </div>
         <h3 class="font-display-serif text-[26px] sm:text-[34px] text-[var(--color-text)] leading-[1.2] group-hover:text-[var(--color-gold-bright)] transition">
           {cleanTitle}
@@ -129,10 +122,10 @@ const transitionName = `ep-${episode.data.id}-thumb`;
               data-spoiler-level="result"
               data-spoiler-payload={JSON.stringify({
                 html:
-                  `<span>LAST CALL <span class=\"text-[var(--color-gold)] font-semibold\">${pass}</span></span>` +
+                  `<span>合格 <span class=\"text-[var(--color-gold)] font-semibold\">${pass}</span></span>` +
                   `<span class=\"mx-1 text-[var(--color-border-strong)]\">/</span>` +
-                  `<span>NOTHING <span class=\"font-semibold\">${fail}</span></span>`,
-                aria: `LAST CALL ${pass} / NOTHING ${fail}`,
+                  `<span>不合格 <span class=\"font-semibold\">${fail}</span></span>`,
+                aria: `合格 ${pass} / 不合格 ${fail}`,
               })}
               aria-label="票数（非表示）"
             ><span class="lc-payload-content inline-flex items-center gap-2"></span></div>

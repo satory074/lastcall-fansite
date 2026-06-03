@@ -20,16 +20,18 @@ const websiteSchema = {
 const episodes = (await getCollection("episodes")).sort(
   (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
 );
-const cinderellas = await getCollection("cinderellas");
 const queens = await getCollection("queens");
 
 const latest = episodes[0];
 const rest = episodes.slice(1);
 
+// シンデレラはエピソードに 1:1 で埋め込み → 数はエピソード数に一致
+const cinderellaCount = episodes.length;
+
 // Aggregate stats across all final votes
 const finalVotes = episodes.flatMap((ep) => ep.data.votes.filter((v) => v.round === "final"));
-const totalPass = finalVotes.filter((v) => v.vote === "LAST CALL").length;
-const totalFail = finalVotes.filter((v) => v.vote === "NOTHING" || v.vote === "NO CALL").length;
+const totalPass = finalVotes.filter((v) => v.vote === "合格").length;
+const totalFail = finalVotes.filter((v) => v.vote === "不合格").length;
 
 // Latest update date
 const latestUpdate = latest
@@ -100,8 +102,8 @@ const archive = rest.slice(2);
     {/* Stats strip */}
     <section class="grid grid-cols-3 gap-3 sm:gap-5 -mt-4">
       <StatCard label="Episodes" value={episodes.length} sublabel="配信済み回数" />
-      <StatCard label="Cinderellas" value={cinderellas.length} sublabel="登場した志願者" />
-      <StatCard label="Queens" value={queens.length} sublabel="固定レジェンド" />
+      <StatCard label="Cinderellas" value={cinderellaCount} sublabel="登場した志願者" />
+      <StatCard label="Queens" value={queens.length} sublabel="クイーン陣" />
     </section>
 
     {/* Onboarding — 番組の仕組みとサイトの使い方（事実のみ） */}
