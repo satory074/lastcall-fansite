@@ -13,6 +13,8 @@ interface Props {
   showRate?: boolean;
   // true で 合格(金)を左・不合格(灰)を右に反転
   flip?: boolean;
+  // true で中央軸ダイバージングではなく左寄せの積み上げバーにする
+  stacked?: boolean;
   // aria 用の票種ラベル。最終=合格/不合格、ファースト=LIKE/NOTHING など。
   terms?: { pass: string; fail: string };
 }
@@ -29,6 +31,7 @@ const {
   showLabels = true,
   showRate = true,
   flip = false,
+  stacked = false,
   terms = { pass: "合格", fail: "不合格" },
 } = Astro.props;
 
@@ -42,9 +45,10 @@ const heights: Record<NonNullable<Props["size"]>, string> = {
   lg: "h-3.5",
 };
 
-// 中心 0 基準の票割合 (％ 幅)。記録 0 件のときは中央線のみ
-const passPct = recorded > 0 ? (pass / recorded) * 50 : 0;
-const failPct = recorded > 0 ? (fail / recorded) * 50 : 0;
+// バー幅。stacked=左寄せ積み上げ(各 0–100%)、それ以外は中心 0 基準のダイバージング(各 0–50%)
+const span = stacked ? 100 : 50;
+const passPct = recorded > 0 ? (pass / recorded) * span : 0;
+const failPct = recorded > 0 ? (fail / recorded) * span : 0;
 
 const showRateLabel = showRate && passRate !== null;
 const labelAria = recorded > 0
@@ -70,9 +74,14 @@ const barPayload = spoiler && recorded > 0
   ? JSON.stringify({ failPct, passPct, aria: labelAria })
   : null;
 
-// バーの左右（flip 時は 合格(金) を左・不合格(灰) を右に）
-const failSide = flip ? "left-1/2 origin-left" : "right-1/2 origin-right";
-const passSide = flip ? "right-1/2 origin-right" : "left-1/2 origin-left";
+// バーの左右。stacked は左右端から詰める（pass+fail=100% で中央で接する）、
+// ダイバージングは中央軸基準。いずれも flip で 合格(金) を左に。
+const failSide = stacked
+  ? (flip ? "right-0 origin-right" : "left-0 origin-left")
+  : (flip ? "left-1/2 origin-left" : "right-1/2 origin-right");
+const passSide = stacked
+  ? (flip ? "left-0 origin-left" : "right-0 origin-right")
+  : (flip ? "right-1/2 origin-right" : "left-1/2 origin-left");
 ---
 
 <div class="space-y-2">
@@ -116,8 +125,8 @@ const passSide = flip ? "right-1/2 origin-right" : "left-1/2 origin-left";
       data-spoiler-payload={barPayload}
       aria-label="投票結果（非表示）"
     >
-      {/* center axis */}
-      <div class="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--color-border-strong)] z-10"></div>
+      {/* center axis（stacked では非表示） */}
+      {!stacked && <div class="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--color-border-strong)] z-10"></div>}
       {/* fail bar — 既定=左 / flip=右 (SSR では width:0、hydrator が設定) */}
       <div
         data-bar="fail"
@@ -139,7 +148,7 @@ const passSide = flip ? "right-1/2 origin-right" : "left-1/2 origin-left";
       ]}
       aria-label={labelAria}
     >
-      <div class="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--color-border-strong)] z-10"></div>
+      {!stacked && <div class="absolute top-0 bottom-0 left-1/2 w-px bg-[var(--color-border-strong)] z-10"></div>}
       {failPct > 0 && (
         <div
           class:list={["absolute top-0 bottom-0 bg-[var(--color-fail)]", failSide]}

@@ -44,6 +44,19 @@ const queenFinalStats = (queenId: string) => {
 };
 const queenStatsAll = queens.map((j) => queenFinalStats(j.id));
 
+// クイーン別のファースト集計（LIKE/NOTHING、出演回のみ）
+const queenFirstStats = (queenId: string) => {
+  let like = 0;
+  let nothing = 0;
+  for (const ep of episodes) {
+    const v = ep.data.votes.find((vv) => vv.queen.id === queenId && vv.round === "first");
+    if (v?.vote === "LIKE") like++;
+    else if (v?.vote === "NOTHING") nothing++;
+  }
+  const recorded = like + nothing;
+  return { like, nothing, recorded, likeRate: recorded > 0 ? Math.round((like / recorded) * 100) : null };
+};
+
 // マトリクス列 = いずれかの回のラインナップに出たクイーンのみ（回ごと可変）
 // 並び順: 出演回数の多い順（左）→ 同数は slug 昇順
 const appearanceCount = (queenId: string) =>
@@ -71,15 +84,22 @@ const matrix = episodes.map((ep) => {
   return { episode: ep, cinderella: ep.data.cinderella, cells, passCount, failCount };
 });
 
-// マトリクス tfoot 用（列のクイーンのみ）
+// マトリクス tfoot 用（列のクイーンのみ）。最終=合格率、ファースト=LIKE率
 const queenStats = matrixQueens.map((j) => queenFinalStats(j.id));
+const queenFirstStatsArr = matrixQueens.map((j) => queenFirstStats(j.id));
 
-// 全体集計
+// 全体集計（最終）
 const overallEpisodes = matrix.length;
 const overallPass = matrix.reduce((acc, m) => acc + m.passCount, 0);
 const overallFail = matrix.reduce((acc, m) => acc + m.failCount, 0);
 const overallRecorded = overallPass + overallFail;
 const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallRecorded) * 100) : null;
+
+// 全体集計（ファースト = LIKE/NOTHING）
+const overallLike = queenFirstStatsArr.reduce((acc, t) => acc + t.like, 0);
+const overallNothing = queenFirstStatsArr.reduce((acc, t) => acc + t.nothing, 0);
+const overallFirstRecorded = overallLike + overallNothing;
+const overallLikeRate = overallFirstRecorded > 0 ? Math.round((overallLike / overallFirstRecorded) * 100) : null;
 
 // 番組としての"合否"回数 (1 episode = 1 verdict)
 const passEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "pass").length;
@@ -325,7 +345,7 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
                   </td>
                   <td class="px-3 py-2.5 align-middle min-w-[120px]">
                     {recorded > 0 ? (
-                      <DivergingBar pass={passCount} fail={failCount} size="sm" spoilerLevel="result" showLabels={true} flip showRate={false} />
+                      <DivergingBar pass={passCount} fail={failCount} size="sm" spoilerLevel="result" showLabels={true} flip stacked showRate={false} />
                     ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                   </td>
                   {cells.map((cell, ji) => (
@@ -344,9 +364,57 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
               );
             })}
           </tbody>
-          {queenStats.some((t) => t.recorded > 0) && (
+          {(queenStats.some((t) => t.recorded > 0) || queenFirstStatsArr.some((t) => t.recorded > 0)) && (
             <tfoot class="border-t-2 border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text-muted)]">
+              {/* ファースト累計（LIKE率） */}
               <tr>
+                <th scope="row" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 z-10 bg-[var(--color-surface)]">
+                  累計
+                  <div class="text-[9px] text-[var(--color-text-subtle)] font-normal">ファースト</div>
+                </th>
+                <td class="px-3 py-2 text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap sticky left-[60px] z-10 bg-[var(--color-surface)]">LIKE率（ファースト）</td>
+                <td class="px-3 py-2 text-center text-[10px] whitespace-nowrap">
+                  {overallLikeRate !== null ? (
+                    <span
+                      class="lc-occluded relative inline-block"
+                      data-occlusion="text"
+                      data-spoiler-level="vote"
+                      data-spoiler-payload={JSON.stringify({
+                        html: `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${overallLikeRate}</span><span class=\"text-[var(--color-text-subtle)]\">%</span>`,
+                        aria: `LIKE率 ${overallLikeRate}%`,
+                      })}
+                      aria-label="LIKE率（非表示）"
+                    ><span class="lc-payload-content"></span></span>
+                  ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                </td>
+                <td class="px-3 py-2 align-middle min-w-[120px]">
+                  {overallFirstRecorded > 0 ? (
+                    <DivergingBar pass={overallLike} fail={overallNothing} size="sm" spoilerLevel="vote" showLabels={true} flip stacked showRate={false} terms={{ pass: "LIKE", fail: "NOTHING" }} />
+                  ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                </td>
+                {queenFirstStatsArr.map((t, ji) => (
+                  <td data-qcol={matrixQueens[ji].id} class="px-1.5 py-2 text-center align-middle">
+                    {t.recorded === 0 ? (
+                      <span class="text-[10px] text-[var(--color-text-subtle)]">—</span>
+                    ) : (
+                      <div
+                        class="lc-occluded relative inline-flex flex-col items-center text-[10px] leading-tight"
+                        data-occlusion="text"
+                        data-spoiler-level="vote"
+                        data-spoiler-payload={JSON.stringify({
+                          html:
+                            `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${t.likeRate ?? 0}%</span>` +
+                            `<span class=\"text-[var(--color-text-subtle)] tabular-nums text-[9px]\">${t.like}/${t.recorded}</span>`,
+                          aria: `LIKE率 ${t.likeRate ?? 0}% (${t.like}/${t.recorded})`,
+                        })}
+                        aria-label="クイーン別LIKE率（非表示）"
+                      ><span class="lc-payload-content inline-flex flex-col items-center"></span></div>
+                    )}
+                  </td>
+                ))}
+              </tr>
+              {/* 最終累計（合格率） */}
+              <tr class="border-t border-[var(--color-border)]">
                 <th scope="row" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 z-10 bg-[var(--color-surface)]">
                   累計
                   <div class="text-[9px] text-[var(--color-text-subtle)] font-normal">最終</div>
@@ -368,7 +436,7 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
                 </td>
                 <td class="px-3 py-2 align-middle min-w-[120px]">
                   {overallRecorded > 0 ? (
-                    <DivergingBar pass={overallPass} fail={overallFail} size="sm" spoilerLevel="result" showLabels={true} flip showRate={false} />
+                    <DivergingBar pass={overallPass} fail={overallFail} size="sm" spoilerLevel="result" showLabels={true} flip stacked showRate={false} />
                   ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                 </td>
                 {queenStats.map((t, ji) => (
