@@ -115,9 +115,10 @@
   <input id="fileInput" type="file" accept=".json,application/json" hidden />
   <span id="dropzone">ここに <code class="k">lastcall.json</code> をドロップ</span>
   <span class="grow"></span>
-  <span id="status" class="status">未読み込み</span>
+  <span id="status" class="status">読み込み中…</span>
   <button id="copyBtn" disabled>JSONをコピー</button>
-  <button id="downloadBtn" class="primary" disabled>lastcall.json をダウンロード</button>
+  <button id="saveBtn" class="primary" hidden>ファイルに保存</button>
+  <button id="downloadBtn" class="primary" disabled>ダウンロード</button>
 </header>
 
 <nav class="tabs" id="tabs" hidden>
@@ -127,9 +128,12 @@
 </nav>
 
 <div id="welcome" class="empty-hint">
-  <p>上の「JSONを読み込み」から <code class="k">src/data/lastcall.json</code> を選ぶか、ここにドラッグしてください。</p>
-  <p style="font-size:12.5px">編集後は「lastcall.json をダウンロード」で書き出し、<code class="k">src/data/lastcall.json</code> を差し替え →
-  <code class="k">npm run build</code> → push。</p>
+  <p id="autoloading">データを自動で読み込んでいます…</p>
+  <div id="autohint" hidden>
+    <p><b>自動読み込みできませんでした</b>（<code class="k">file://</code> で直接開いた場合はブラウザの制限で自動読み込みできません）。</p>
+    <p style="font-size:13px">自動で読み込むには、ターミナルで <code class="k">npm run edit</code> を実行してください（サーバが起動しブラウザが開きます。編集後は「ファイルに保存」で直接書き戻せます）。</p>
+    <p style="font-size:12.5px; color:var(--muted)">このまま手動で使う場合は、上の「JSONを読み込み」から <code class="k">src/data/lastcall.json</code> を選ぶ（またはドラッグ&ドロップ）→ 編集 → 「ダウンロード」で差し替え → <code class="k">npm run build</code> → push。</p>
+  </div>
 </div>
 
 <main id="ep" data-coll="episodes">
@@ -176,6 +180,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // ---- 状態 ----
 let state = null;                 // { queens:[], cinderellas:[], episodes:[] }
 let activeTab = "episodes";
+let serverSave = false;           // edit-server 経由か（true なら「ファイルに保存」可）
 const selected = { episodes: null, cinderellas: null, queens: null }; // index
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -250,6 +255,14 @@ $("#downloadBtn").addEventListener("click", () => {
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast("lastcall.json をダウンロードしました");
+});
+
+$("#saveBtn").addEventListener("click", async () => {
+  try {
+    const r = await fetch("/api/lastcall", { method: "PUT", headers: { "Content-Type": "application/json" }, body: serialize() });
+    if (!r.ok) throw new Error(await r.text());
+    toast("ファイルに保存しました（src/data/lastcall.json）");
+  } catch (e) { toast("保存に失敗: " + e.message + " — 「ダウンロード」で書き出してください"); }
 });
 
 $("#copyBtn").addEventListener("click", async () => {
@@ -606,6 +619,30 @@ function toast(msg) {
   const t = $("#toast"); t.textContent = msg; t.classList.add("show");
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
 }
+
+// ---- 起動時の自動読み込み ----
+async function tryFetch(url) {
+  try { const r = await fetch(url, { cache: "no-store" }); if (r.ok) return await r.text(); } catch {}
+  return null;
+}
+async function autoLoad() {
+  // 1) npm run edit のサーバAPI（保存も可能）
+  let text = await tryFetch("/api/lastcall");
+  if (text != null) {
+    serverSave = true;
+    loadFromText(text, "lastcall.json（自動読み込み）");
+    if (state) { $("#saveBtn").hidden = false; $("#downloadBtn").classList.remove("primary"); }
+    return;
+  }
+  // 2) リポジトリ直下を配信する汎用静的サーバ
+  text = await tryFetch("../src/data/lastcall.json");
+  if (text != null) { loadFromText(text, "lastcall.json（自動読み込み）"); return; }
+  // 3) file:// 等で取得不可 → 手動フォールバック
+  $("#status").textContent = "未読み込み";
+  $("#autoloading").hidden = true;
+  $("#autohint").hidden = false;
+}
+autoLoad();
 </script>
 </body>
 </html>
