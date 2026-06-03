@@ -300,7 +300,7 @@ function addItem(coll) {
     const ids = state.episodes.map(e => parseInt(e.id, 10)).filter(n => !isNaN(n));
     const next = (ids.length ? Math.max(...ids) + 1 : 1).toString().padStart(3, "0");
     // シンデレラはエピソードに埋め込み。lineup は出演クイーン。
-    item = { id: next, title: "", airedAt: "", youtubeId: "", cinderella: { name: "", result: "fail", sns: {} }, lineup: [], votes: [], sources: [] };
+    item = { id: next, title: "", airedAt: "", youtubeId: "", cinderella: { name: "", result: "fail", sns: {} }, lineup: [], votes: [] };
   } else {
     item = { slug: "", name: "", sns: {} };
   }
@@ -399,23 +399,6 @@ function snsFieldset(obj) {
   return fs;
 }
 
-function inlineUrlList(arr, onChange) {
-  const wrap = el("div", { class: "inline-list" });
-  const redraw = () => {
-    wrap.innerHTML = "";
-    arr.forEach((v, i) => {
-      const inp = el("input", { type: "url", value: v, placeholder: "https://…" });
-      if (v && !/^https?:\/\//.test(v)) inp.classList.add("bad");
-      inp.addEventListener("input", () => { arr[i] = inp.value.trim(); inp.classList.toggle("bad", inp.value && !/^https?:\/\//.test(inp.value)); onChange(); });
-      wrap.append(el("div", { class: "item" }, inp,
-        el("button", { class: "mini danger", onclick: () => { arr.splice(i, 1); redraw(); onChange(); } }, "−")));
-    });
-    wrap.append(el("button", { class: "mini", onclick: () => { arr.push(""); redraw(); onChange(); } }, "＋ 追加"));
-  };
-  redraw();
-  return { wrap, redraw };
-}
-
 function renderDetail() {
   const coll = activeTab;
   const detail = $(".detail", mainEl());
@@ -485,14 +468,6 @@ function renderEpisode(detail, ep) {
   cfs.append(field("background", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = cin.background ?? ""; t.addEventListener("input", () => { if (t.value.trim()) cin.background = t.value; else delete cin.background; renderPreview(); }); return t; })()));
   detail.append(cfs);
   detail.append(snsFieldset(cin));
-
-  // sources（外部出典のみ。YouTube は youtubeId から自動でリンクされるため入れない）
-  if (!Array.isArray(ep.sources)) ep.sources = [];
-  const sfs = el("fieldset", {}, el("legend", {}, "sources（外部出典URL）"));
-  sfs.append(el("p", { class: "note" }, "ニュース・本人SNS・プロフィール等の出典。YouTube動画は youtubeId から自動リンクされるので入れない。"));
-  const list = inlineUrlList(ep.sources, () => { renderPreview(); renderStatus(); });
-  sfs.append(list.wrap);
-  detail.append(sfs);
 
   // votes matrix
   detail.append(votesFieldset(ep));
@@ -583,7 +558,6 @@ function renderQueen(detail, q) {
   fs.append(field("name", textInput(q, "name", { bad: !q.name }), { req: true }));
   fs.append(field("store", textInput(q, "store", { placeholder: "クラブリオ" }), { hint: "店名" }));
   fs.append(field("storeUrl", textInput(q, "storeUrl", { type: "url", placeholder: "https://…（お店のURL・任意）", bad: q.storeUrl && !/^https?:\/\//.test(q.storeUrl) }), { hint: "店舗の公式サイト/SNS等。空ならリンク無し" }));
-  fs.append(field("bio", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = q.bio ?? ""; t.addEventListener("input", () => { if (t.value.trim()) q.bio = t.value; else delete q.bio; renderPreview(); }); return t; })()));
   detail.append(fs);
   detail.append(snsFieldset(q));
 }

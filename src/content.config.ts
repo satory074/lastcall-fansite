@@ -22,7 +22,6 @@ const queens = defineCollection({
     area: z.string().optional(),
     store: z.string().optional(),
     storeUrl: z.string().url().optional(),
-    bio: z.string().optional(),
     sns: snsSchema,
   }),
 });
@@ -59,7 +58,6 @@ const episodes = defineCollection({
         })
       )
       .default([]),
-    sources: z.array(z.string().url()).default([]),
   }),
 });
 

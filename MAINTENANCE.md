@@ -37,7 +37,7 @@ npm run edit
 ```json
 {
   "queens":   [ /* 全クイーンのマスタ。slug + プロフィール + sns(+storeUrl) */ ],
-  "episodes": [ /* 各回。id + メタ + cinderella(埋め込み) + lineup + votes + sources */ ]
+  "episodes": [ /* 各回。id + メタ + cinderella(埋め込み) + lineup + votes */ ]
 }
 ```
 
@@ -72,13 +72,11 @@ npm run edit
     { "queen": "kisaragi-rei", "round": "first", "vote": "NOTHING" },
     { "queen": "airi",         "round": "final", "vote": "合格" },
     { "queen": "kisaragi-rei", "round": "final", "vote": "不合格" }
-  ],
-  "sources": ["https://（ニュースや本人SNS等の外部出典）"]
+  ]
 }
 ```
 
 - `cinderella` は**埋め込みオブジェクト**（旧 cinderellas 配列は廃止）。`result` が番組の合否。
-- `sources` は**外部出典のみ**（ニュース・本人SNS・プロフィール等）。YouTube動画は `youtubeId` から自動でリンクされるので入れない（無ければ `[]`）。
 - `lineup` = その回に出演したクイーンの slug。**ここに無いクイーンはそのエピソードに出ない**。
 - `votes` は lineup のクイーンのみ。票の取れたラウンドだけでも可（未記録は `UNKNOWN` 表示）。
 - 完全な実例は `episodes` の id `001` / `003` / `019`（14名ラインナップ＋全票）。

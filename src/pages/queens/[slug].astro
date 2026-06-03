@@ -133,13 +133,6 @@ const personSchema = {
       </div>
     </header>
 
-    {queen.data.bio && (
-      <section class="space-y-3">
-        <h2 class="section-eyebrow">Profile</h2>
-        <p class="text-sm sm:text-base leading-[1.85] text-[var(--color-text-muted)]">{queen.data.bio}</p>
-      </section>
-    )}
-
     {/* Season Averages — stat cards + diverging bar */}
     {total > 0 && (
       <section class="space-y-5">
