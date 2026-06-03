@@ -1,0 +1,969 @@
+{
+  "queens": [
+    {
+      "slug": "airi",
+      "name": "あいり",
+      "nameKana": "あいり",
+      "age": 25,
+      "area": "銀座",
+      "store": "J-VOGUE",
+      "sns": {
+        "instagram": "https://www.instagram.com/airi_el12/"
+      }
+    },
+    {
+      "slug": "aizawa-emiri",
+      "name": "愛沢えみり",
+      "nameKana": "あいざわ えみり",
+      "age": 37,
+      "area": "歌舞伎町",
+      "store": "フォーティーファイブ（独立後アパレル「Rady」運営）",
+      "sns": {
+        "instagram": "https://www.instagram.com/emiri_aizawa/",
+        "x": "https://x.com/emirio9o1"
+      }
+    },
+    {
+      "slug": "assun",
+      "name": "あっすん",
+      "nameKana": "あっすん",
+      "age": 30,
+      "area": "名古屋・錦",
+      "store": "GLAMOROUS OVER",
+      "sns": {
+        "instagram": "https://www.instagram.com/_assunsun_/",
+        "x": "https://x.com/1005Assunsun"
+      }
+    },
+    {
+      "slug": "himeka",
+      "name": "HIMEKA",
+      "nameKana": "ひめか",
+      "age": 25,
+      "area": "北新地",
+      "store": "クラブレイズ（元クラブランス）",
+      "sns": {
+        "instagram": "https://www.instagram.com/hmk_queen/"
+      }
+    },
+    {
+      "slug": "kisaragi-rei",
+      "name": "如月れい",
+      "nameKana": "きさらぎ れい",
+      "age": 27,
+      "area": "六本木",
+      "store": "クラブリオ",
+      "sns": {
+        "instagram": "https://www.instagram.com/_reitsun_/"
+      }
+    },
+    {
+      "slug": "minami-yuzu",
+      "name": "南柚子",
+      "nameKana": "みなみ ゆず",
+      "age": 27,
+      "area": "ススキノ",
+      "store": "BARCELONA Leicester",
+      "sns": {
+        "instagram": "https://www.instagram.com/minami_yuzuzu/"
+      }
+    },
+    {
+      "slug": "momose-tomo",
+      "name": "桃瀬とも",
+      "nameKana": "ももせ とも",
+      "age": 39,
+      "area": "ススキノ（出身）",
+      "store": "T-STYLE（複数店舗経営）",
+      "sns": {
+        "instagram": "https://www.instagram.com/tomomomose0627/"
+      }
+    },
+    {
+      "slug": "neomaru",
+      "name": "ねおまる",
+      "nameKana": "ねおまる",
+      "age": 24,
+      "area": "歌舞伎町",
+      "store": "POSEIDON CLUB SHINJUKU",
+      "sns": {
+        "instagram": "https://www.instagram.com/neomaru_7/"
+      }
+    },
+    {
+      "slug": "nijiho",
+      "name": "にじほ",
+      "nameKana": "にじほ",
+      "age": 26,
+      "sns": {}
+    },
+    {
+      "slug": "remiremi",
+      "name": "れみれみ",
+      "nameKana": "れみれみ",
+      "age": 27,
+      "area": "六本木",
+      "store": "VENET TOKYO",
+      "sns": {
+        "instagram": "https://www.instagram.com/remiremi122/"
+      }
+    },
+    {
+      "slug": "runa",
+      "name": "るな",
+      "nameKana": "るな（ぶるな）",
+      "age": 29,
+      "area": "北新地",
+      "store": "CLUB NILS",
+      "sns": {}
+    },
+    {
+      "slug": "shingeki-noa",
+      "name": "進撃のノア",
+      "nameKana": "しんげきのノア",
+      "age": 31,
+      "area": "北新地（元）",
+      "sns": {
+        "instagram": "https://www.instagram.com/shingeki_noa/",
+        "x": "https://x.com/shingeki_noa"
+      }
+    },
+    {
+      "slug": "yamatorino",
+      "name": "ヤマトリノ",
+      "nameKana": "やまとりの",
+      "age": 29,
+      "area": "歌舞伎町",
+      "store": "ジャングル東京",
+      "sns": {
+        "instagram": "https://www.instagram.com/rinoworld_875/"
+      }
+    },
+    {
+      "slug": "yuipis",
+      "name": "ゆいぴす",
+      "nameKana": "ゆいぴす",
+      "age": 24,
+      "area": "六本木",
+      "store": "リック東京",
+      "sns": {
+        "instagram": "https://www.instagram.com/yuipis18/"
+      }
+    }
+  ],
+  "cinderellas": [
+    {
+      "slug": "007-cinderella",
+      "name": "シンデレラ #007",
+      "episodeId": "007",
+      "result": "fail",
+      "sns": {}
+    },
+    {
+      "slug": "017-cinderella",
+      "name": "シンデレラ #017",
+      "episodeId": "017",
+      "result": "fail",
+      "sns": {}
+    },
+    {
+      "slug": "018-cinderella",
+      "name": "シンデレラ #018",
+      "episodeId": "018",
+      "result": "fail",
+      "sns": {}
+    },
+    {
+      "slug": "aoyama-serina",
+      "name": "青山せりな",
+      "nameKana": "あおやま せりな",
+      "age": 28,
+      "episodeId": "010",
+      "result": "fail",
+      "sns": {
+        "instagram": "https://www.instagram.com/aoyamaserinamaru/"
+      }
+    },
+    {
+      "slug": "chisato",
+      "name": "ちさと",
+      "nameKana": "ちさと",
+      "age": 21,
+      "episodeId": "005",
+      "result": "pass",
+      "sns": {}
+    },
+    {
+      "slug": "emma",
+      "name": "エマ",
+      "nameKana": "エマ",
+      "age": 33,
+      "episodeId": "014",
+      "result": "fail",
+      "sns": {}
+    },
+    {
+      "slug": "fukuda-aika",
+      "name": "福田愛花",
+      "nameKana": "ふくだ あいか",
+      "age": 28,
+      "episodeId": "003",
+      "result": "pass",
+      "sns": {}
+    },
+    {
+      "slug": "hashimoto-hina",
+      "name": "橋本姫奈",
+      "nameKana": "はしもと ひな",
+      "age": 20,
+      "episodeId": "015",
+      "result": "pass",
+      "sns": {
+        "instagram": "https://www.instagram.com/amami_kumo/"
+      }
+    },
+    {
+      "slug": "hayama-midori",
+      "name": "葉山翠",
+      "nameKana": "はやま みどり",
+      "age": 26,
+      "episodeId": "002",
+      "result": "pass",
+      "sns": {}
+    },
+    {
+      "slug": "hoshino-ria",
+      "name": "星乃リア",
+      "nameKana": "ほしの りあ",
+      "age": 23,
+      "episodeId": "013",
+      "result": "fail",
+      "sns": {
+        "instagram": "https://www.instagram.com/hoshino_ria/"
+      }
+    },
+    {
+      "slug": "kobayashi-ryoka",
+      "name": "小林諒佳",
+      "nameKana": "こばやし りょうか",
+      "age": 21,
+      "episodeId": "006",
+      "result": "pass",
+      "sns": {}
+    },
+    {
+      "slug": "satsuki-riria",
+      "name": "皐月りりあ",
+      "nameKana": "さつき りりあ",
+      "age": 22,
+      "episodeId": "009",
+      "result": "pass",
+      "sns": {
+        "instagram": "https://www.instagram.com/_ririaworld_/"
+      }
+    },
+    {
+      "slug": "tameya-haruka",
+      "name": "為谷陽香",
+      "nameKana": "ためや はるか",
+      "age": 27,
+      "episodeId": "001",
+      "result": "fail",
+      "sns": {}
+    },
+    {
+      "slug": "toyoda-rika",
+      "name": "豊田りか",
+      "nameKana": "とよだ りか",
+      "age": 29,
+      "episodeId": "004",
+      "result": "fail",
+      "sns": {}
+    },
+    {
+      "slug": "tsukishiro-reia",
+      "name": "月城麗愛",
+      "nameKana": "つきしろ れあ",
+      "age": 26,
+      "episodeId": "012",
+      "result": "fail",
+      "sns": {
+        "instagram": "https://www.instagram.com/emena_999x/"
+      }
+    },
+    {
+      "slug": "yoshihara-yumeji",
+      "name": "吉原夢二",
+      "nameKana": "よしはら ゆめじ",
+      "age": 26,
+      "episodeId": "019",
+      "result": "fail",
+      "sns": {}
+    },
+    {
+      "slug": "yuna",
+      "name": "ゆな",
+      "nameKana": "ゆな",
+      "age": 28,
+      "episodeId": "008",
+      "result": "fail",
+      "sns": {}
+    }
+  ],
+  "episodes": [
+    {
+      "id": "001",
+      "title": "キャバ嬢ナメんな。母の病気のため稼ぐ彼女に突きつけた現実【LAST CALL（ラストコール） #001】",
+      "airedAt": "2026-01-04",
+      "youtubeId": "iETjq8CqPwQ",
+      "cinderella": "tameya-haruka",
+      "votes": [
+        {
+          "queen": "airi",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "first",
+          "vote": "NOTHING",
+          "comment": "覚悟が伝わってこない。"
+        },
+        {
+          "queen": "assun",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "himeka",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "first",
+          "vote": "LAST CALL",
+          "comment": "お母様のために頑張ろうという気持ちは本物。"
+        },
+        {
+          "queen": "minami-yuzu",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "neomaru",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "nijiho",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "remiremi",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "runa",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "shingeki-noa",
+          "round": "first",
+          "vote": "NO CALL",
+          "comment": "今のままでは現場で通用しない。"
+        },
+        {
+          "queen": "yamatorino",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "yuipis",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "airi",
+          "round": "final",
+          "vote": "LAST CALL",
+          "comment": "気持ちが嘘ではなかった。"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "final",
+          "vote": "NOTHING",
+          "comment": "この世界はそんなに甘くない。"
+        },
+        {
+          "queen": "assun",
+          "round": "final",
+          "vote": "NOTHING",
+          "comment": "後半の発言で迷いが見えた。"
+        },
+        {
+          "queen": "himeka",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "minami-yuzu",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "neomaru",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "nijiho",
+          "round": "final",
+          "vote": "NO CALL",
+          "comment": "悪いけれど、今は推せない。"
+        },
+        {
+          "queen": "remiremi",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "runa",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "shingeki-noa",
+          "round": "final",
+          "vote": "NO CALL"
+        },
+        {
+          "queen": "yamatorino",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "yuipis",
+          "round": "final",
+          "vote": "NOTHING",
+          "comment": "ファーストでは推したけど、覚悟が見えなかった。"
+        }
+      ],
+      "sources": [
+        "https://www.youtube.com/watch?v=iETjq8CqPwQ",
+        "https://ninki-jyun.com/lastcall-goukaku/"
+      ]
+    },
+    {
+      "id": "002",
+      "title": "甘えんな！親・金・子どもを全て失った元風●嬢の最後の挑戦。【LAST CALL （ラストコール）#002】",
+      "airedAt": "2026-01-11",
+      "youtubeId": "dLnhXXrJGRQ",
+      "cinderella": "hayama-midori",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=dLnhXXrJGRQ",
+        "https://ninki-jyun.com/lastcall-goukaku/"
+      ]
+    },
+    {
+      "id": "003",
+      "title": "90kg無職が人気キャバ嬢を夢見る現実─それは努力不足という名の\"甘え\"でしかない【LAST CALL（ラストコール） #003】",
+      "airedAt": "2026-01-18",
+      "youtubeId": "OUtqWyfx1Rs",
+      "cinderella": "fukuda-aika",
+      "votes": [
+        {
+          "queen": "airi",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "first",
+          "vote": "NOTHING",
+          "comment": "見た目から変えていかないと。"
+        },
+        {
+          "queen": "assun",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "himeka",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "first",
+          "vote": "LAST CALL",
+          "comment": "ハングリー精神を感じる。"
+        },
+        {
+          "queen": "minami-yuzu",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "neomaru",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "nijiho",
+          "round": "first",
+          "vote": "NO CALL"
+        },
+        {
+          "queen": "remiremi",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "runa",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "shingeki-noa",
+          "round": "first",
+          "vote": "NO CALL",
+          "comment": "この子は伸びない。"
+        },
+        {
+          "queen": "yamatorino",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "yuipis",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "airi",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "final",
+          "vote": "NOTHING",
+          "comment": "意気込みは伝わるが、まだ判断できない。"
+        },
+        {
+          "queen": "assun",
+          "round": "final",
+          "vote": "LAST CALL",
+          "comment": "後半の決意を信じてみたい。"
+        },
+        {
+          "queen": "himeka",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "minami-yuzu",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "neomaru",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "nijiho",
+          "round": "final",
+          "vote": "LAST CALL",
+          "comment": "迷ったけど、この子の本気を見たい。"
+        },
+        {
+          "queen": "remiremi",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "runa",
+          "round": "final",
+          "vote": "LAST CALL",
+          "comment": "心の強さに賭ける。"
+        },
+        {
+          "queen": "shingeki-noa",
+          "round": "final",
+          "vote": "NO CALL",
+          "comment": "覚悟だけでは商売にならない。"
+        },
+        {
+          "queen": "yamatorino",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "yuipis",
+          "round": "final",
+          "vote": "LAST CALL"
+        }
+      ],
+      "sources": [
+        "https://www.youtube.com/watch?v=OUtqWyfx1Rs",
+        "https://ninki-jyun.com/lastcall-goukaku/",
+        "https://nlab.itmedia.co.jp/cont/articles/3703045/"
+      ]
+    },
+    {
+      "id": "004",
+      "title": "全員NOTHINGの衝撃。他責思考アラサー都落ちキャバ嬢にHIMEKA「興味わかない」【LAST CALL（ラストコール）#004】",
+      "airedAt": "2026-01-25",
+      "youtubeId": "CztJF9wjZkg",
+      "cinderella": "toyoda-rika",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=CztJF9wjZkg",
+        "https://ninki-jyun.com/lastcall-goukaku/"
+      ]
+    },
+    {
+      "id": "005",
+      "title": "女として認められたい…初の\"男性シンデレラ\"に突きつけられた女の世界の現実【LAST CALL（ラストコール）#005】",
+      "airedAt": "2026-02-01",
+      "youtubeId": "4dcreu2sQME",
+      "cinderella": "chisato",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=4dcreu2sQME",
+        "https://ninki-jyun.com/lastcall-goukaku/"
+      ]
+    },
+    {
+      "id": "006",
+      "title": "ローランドが激怒…現役青山学院大学生の母に最終通告「二度と言わないで」【LAST CALL（ラストコール）#006】",
+      "airedAt": "2026-02-08",
+      "youtubeId": "4qCU0k0u4kY",
+      "cinderella": "kobayashi-ryoka",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=4qCU0k0u4kY",
+        "https://x.com/mizoguchi_yuji/status/2020469659544535158"
+      ]
+    },
+    {
+      "id": "007",
+      "title": "BreakingDownオーディション？\"私のほうが可愛い\"発言から場外乱闘に発展？シンデレラVS人気キャバ嬢【LAST CALL（ラストコール）#007】",
+      "airedAt": "2026-02-15",
+      "youtubeId": "oFolz45TFjQ",
+      "cinderella": "007-cinderella",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=oFolz45TFjQ"
+      ]
+    },
+    {
+      "id": "008",
+      "title": "\"水商売失格\"ローランドが失望…NOと言えない川崎の現役キャバ嬢【LAST CALL（ラストコール）#008】",
+      "airedAt": "2026-02-22",
+      "youtubeId": "oDqJkzGR89w",
+      "cinderella": "yuna",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=oDqJkzGR89w",
+        "https://ninki-jyun.com/lastcall-goukaku/"
+      ]
+    },
+    {
+      "id": "009",
+      "title": "『枕してるんじゃない？』自称\"処女\"アイドルが語る業界の裏側。BreakingDown戦士が痛客で参戦。【LASTCALL(ラストコール）#009】",
+      "airedAt": "2026-03-01",
+      "youtubeId": "UFhLaMKbI84",
+      "cinderella": "satsuki-riria",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=UFhLaMKbI84",
+        "https://ninki-jyun.com/lastcall-goukaku/",
+        "https://ninki-jyun.com/lastcallitakyaku/"
+      ]
+    },
+    {
+      "id": "010",
+      "title": "BreakingDown和田Pがにじほにブチギレ―番組史上最悪の空気にキャバ嬢も怒りをぶつける。【LASTCALL(ラストコール）#010】",
+      "airedAt": "2026-03-08",
+      "youtubeId": "_NtvQLENbLo",
+      "cinderella": "aoyama-serina",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=_NtvQLENbLo",
+        "https://ninki-jyun.com/lastcall-goukaku/",
+        "https://ninki-jyun.com/lastcallitakyaku/"
+      ]
+    },
+    {
+      "id": "012",
+      "title": "帰国子女ミスコンファイナリスト美女 私はスターの素質ある ビッグマウスにスターキャバ嬢激怒【LASTCALL(ラストコール）#012】",
+      "airedAt": "2026-03-22",
+      "youtubeId": "1OH3kURCxiI",
+      "cinderella": "tsukishiro-reia",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=1OH3kURCxiI",
+        "https://ninki-jyun.com/lastcall-goukaku/"
+      ]
+    },
+    {
+      "id": "013",
+      "title": "1年後\"億女\"…元アイドル×夜職サラブレッドにレジェンドキャバ嬢騒然【LASTCALL(ラストコール）#013】",
+      "airedAt": "2026-03-29",
+      "youtubeId": "g9xvsTqwi1s",
+      "cinderella": "hoshino-ria",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=g9xvsTqwi1s",
+        "https://mayu-roro.com/hoshino-ria-lastcall-kawaii-profile/",
+        "https://strong-wind8.com/hoshino-ria-idol/"
+      ]
+    },
+    {
+      "id": "014",
+      "title": "懲役4年…覚醒剤で全て失った女の\"ラストチャンス\"にローランドが激怒【LASTCALL(ラストコール）#014 】",
+      "airedAt": "2026-04-05",
+      "youtubeId": "zyp5KNGZqN0",
+      "cinderella": "emma",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=zyp5KNGZqN0",
+        "https://ninki-jyun.com/lastcall-goukaku/"
+      ]
+    },
+    {
+      "id": "015",
+      "title": "ダイヤの原石 絶賛美女登場も、クイーン同士の確執が露わに激論勃発【LASTCALL(ラストコール）#015】",
+      "airedAt": "2026-04-12",
+      "youtubeId": "1wvt6ZjM23A",
+      "cinderella": "hashimoto-hina",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=1wvt6ZjM23A",
+        "https://ninki-jyun.com/lastcall-goukaku/"
+      ]
+    },
+    {
+      "id": "017",
+      "title": "性加害を受けた幼少期⋯AV女優からキャバ嬢に転身しオンリーワンを目指すロシアハーフ美女【LASTCALL(ラストコール）#017】",
+      "airedAt": "2026-04-26",
+      "youtubeId": "D2qTwAbMgYY",
+      "cinderella": "017-cinderella",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=D2qTwAbMgYY",
+        "https://x.com/lastcall_krnk/status/2048399388310208872"
+      ]
+    },
+    {
+      "id": "018",
+      "title": "圧倒的ビジュアルNo.1 青森育ちの純真ガールが流した涙の理由。「あっすんvs和田」第2ラウンド勃発【LASTCALL(ラストコール）#018】",
+      "airedAt": "2026-05-03",
+      "youtubeId": "daGHVq4Pp3k",
+      "cinderella": "018-cinderella",
+      "votes": [],
+      "sources": [
+        "https://www.youtube.com/watch?v=daGHVq4Pp3k"
+      ]
+    },
+    {
+      "id": "019",
+      "title": "寿命わずか…吉原６年連続No.1ソープ嬢が進撃のノアに『私を働かせて』【LASTCALL(ラストコール）#019】",
+      "airedAt": "2026-05-10",
+      "youtubeId": "IzqtJiai3J0",
+      "cinderella": "yoshihara-yumeji",
+      "votes": [
+        {
+          "queen": "airi",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "assun",
+          "round": "first",
+          "vote": "LAST CALL",
+          "comment": "実績がすごい。"
+        },
+        {
+          "queen": "himeka",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "minami-yuzu",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "neomaru",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "nijiho",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "remiremi",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "runa",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "shingeki-noa",
+          "round": "first",
+          "vote": "NO CALL",
+          "comment": "業種が違いすぎる。"
+        },
+        {
+          "queen": "yamatorino",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "yuipis",
+          "round": "first",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "airi",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "assun",
+          "round": "final",
+          "vote": "NOTHING",
+          "comment": "後半の答えで迷いが出てしまった。"
+        },
+        {
+          "queen": "himeka",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "final",
+          "vote": "LAST CALL",
+          "comment": "あの覚悟をキャバ嬢の世界でも見たい。"
+        },
+        {
+          "queen": "minami-yuzu",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "final",
+          "vote": "NOTHING",
+          "comment": "うちでは扱いきれない。"
+        },
+        {
+          "queen": "neomaru",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "nijiho",
+          "round": "final",
+          "vote": "NO CALL",
+          "comment": "申し訳ないけれど、ノーコール。"
+        },
+        {
+          "queen": "remiremi",
+          "round": "final",
+          "vote": "LAST CALL"
+        },
+        {
+          "queen": "runa",
+          "round": "final",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "shingeki-noa",
+          "round": "final",
+          "vote": "NO CALL",
+          "comment": "進撃のノアとしては、この子は推せない。"
+        },
+        {
+          "queen": "yamatorino",
+          "round": "final",
+          "vote": "NOTHING",
+          "comment": "ファーストは推したけど、最後の答えで気持ちが冷めた。"
+        },
+        {
+          "queen": "yuipis",
+          "round": "final",
+          "vote": "LAST CALL"
+        }
+      ],
+      "sources": [
+        "https://www.youtube.com/watch?v=IzqtJiai3J0",
+        "https://mayu-roro.com/yoshihara-yumeji-wiki-profile-lastcall/",
+        "https://coki.jp/article/column/77724/"
+      ]
+    }
+  ]
+}

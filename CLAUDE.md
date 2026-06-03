@@ -26,15 +26,15 @@ There are no unit tests. The build itself is the verification step: Content Coll
 
 ### Content Collections are the data layer (`src/content.config.ts`)
 
-Three collections, all loaded by `glob({ pattern: "**/*.json", base: ... })`:
+**All data lives in one file: `src/data/lastcall.json`.** It has three top-level arrays (`queens`, `cinderellas`, `episodes`), and `content.config.ts` uses **inline loaders** (`loader: () => data.queens.map(...)`) — not `glob()` — to slice that single file into three Content Collections. Editing any episode, vote, or SNS link means editing this one file. (週次メンテの実務手順は [`MAINTENANCE.md`](./MAINTENANCE.md)。)
 
-| Collection | Path | Shape |
-|------------|------|-------|
-| `episodes` | `src/content/episodes/NNN.json` | YouTube ID, title, airedAt, `cinderella: reference("cinderellas")`, `votes: { queen: reference("queens"), round, vote, comment }[]` |
-| `cinderellas` | `src/content/cinderellas/<slug>.json` | name, age, episodeId, `result: "pass" \| "fail"`, sns |
-| `queens` | `src/content/queens/<slug>.json` | name, age, area, store, sns (the 14 fixed queens) |
+| Collection | Array | Shape |
+|------------|-------|-------|
+| `episodes` | `episodes[]` | `id`, YouTube ID, title, airedAt, `cinderella: reference("cinderellas")`, `votes: { queen: reference("queens"), round, vote, comment }[]` |
+| `cinderellas` | `cinderellas[]` | `slug`, name, age, episodeId, `result: "pass" \| "fail"`, sns |
+| `queens` | `queens[]` | `slug`, name, age, area, store, sns (the 14 fixed queens) |
 
-The reference graph is **episode → cinderella + votes[].queen**. When editing a JSON, the file id (its basename without extension) is the reference key. Examples: `cinderella: "fukuda-aika"` looks for `src/content/cinderellas/fukuda-aika.json`.
+The reference graph is **episode → cinderella + votes[].queen**. The **`slug`** field (queens/cinderellas) and the **`id`** field (episodes) are the reference key **and** the URL slug — the inline loader maps `slug`/`id` to the Astro entry `.id`. Examples: `cinderella: "fukuda-aika"` resolves to the `cinderellas[]` entry whose `slug` is `"fukuda-aika"`. A wrong slug/id fails `npm run build`. **Do not re-introduce per-file JSON under `src/content/`** — that directory was removed; the single file is the source of truth.
 
 Vote details for individual queens are currently empty in most episodes (`votes: []`). The schema accepts `vote: "LAST CALL" | "NOTHING" | "NO CALL" | "ABSENT"` and `round: "first" | "final"` (defaults to `"final"` when omitted). The site treats `votes: []` as "未確認 (unrecorded)" per-queen — see VoteTable below.
 
@@ -199,5 +199,5 @@ These are project-specific, not generic rules:
 
 - **No AI-generated prose.** The schema retains `summary` / `background` / `bio` as optional, but historical entries were removed because paraphrases from aggregator sites introduced factual drift. Only re-add these fields with verified, citable text — never let me speculatively summarize an unseen episode.
 - **No performer photos.** Only YouTube thumbnails (program-issued) and YouTube embed iframes. Hosting Instagram/personal photos infringes 著作権 + 肖像権 + パブリシティ権 simultaneously — this was researched and ruled out. SNS links only.
-- **新エピソード追加手順**: create `src/content/episodes/NNN.json` + `src/content/cinderellas/<slug>.json`, reference the cinderella from the episode's `cinderella` field, push to `main`. Schema violation fails the build before deploy. 票データを入れる際は各クイーン × 2 票（`round: "first"` と `"final"`）が原則。記録の取れたラウンドだけ部分的に入れても OK（未記載は `UNKNOWN` 表示）。
+- **新エピソード追加手順**: edit the single file `src/data/lastcall.json` — append a `cinderellas[]` entry (with `slug`) and an `episodes[]` entry whose `cinderella` field references that `slug`, then push to `main`. Schema violation fails the build before deploy. 票データを入れる際は各クイーン × 2 票（`round: "first"` と `"final"`）が原則。記録の取れたラウンドだけ部分的に入れても OK（未記載は `UNKNOWN` 表示）。詳細手順は `MAINTENANCE.md`。
 - **YouTube metadata via yt-dlp**: when batch-importing episode info, `uv tool install yt-dlp` and run `yt-dlp --flat-playlist --no-warnings --print "%(id)s|%(title)s|%(upload_date)s" "https://www.youtube.com/playlist?list=PLyVYYMYzNpmC183bSMhXXo04dhzYUEebI"` against the official playlist.

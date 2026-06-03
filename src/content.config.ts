@@ -1,5 +1,5 @@
 import { defineCollection, reference, z } from "astro:content";
-import { glob } from "astro/loaders";
+import data from "./data/lastcall.json";
 
 const snsSchema = z
   .object({
@@ -12,7 +12,9 @@ const snsSchema = z
   .default({});
 
 const queens = defineCollection({
-  loader: glob({ pattern: "**/*.json", base: "src/content/queens" }),
+  // 単一ファイル src/data/lastcall.json の queens 配列をスライス供給する inline loader。
+  // 各エントリの slug を Astro エントリ id（= URL スラッグ / 参照キー）に割り当てる。
+  loader: () => data.queens.map(({ slug, ...rest }) => ({ id: slug, ...rest })),
   schema: z.object({
     name: z.string(),
     nameKana: z.string().optional(),
@@ -25,7 +27,7 @@ const queens = defineCollection({
 });
 
 const cinderellas = defineCollection({
-  loader: glob({ pattern: "**/*.json", base: "src/content/cinderellas" }),
+  loader: () => data.cinderellas.map(({ slug, ...rest }) => ({ id: slug, ...rest })),
   schema: z.object({
     name: z.string(),
     age: z.number().int().positive().optional(),
@@ -37,7 +39,8 @@ const cinderellas = defineCollection({
 });
 
 const episodes = defineCollection({
-  loader: glob({ pattern: "**/*.json", base: "src/content/episodes" }),
+  // episodes は各エントリが自前の id（"001" 等）を持つのでそのまま Astro エントリ id に使う。
+  loader: () => data.episodes.map((e) => ({ ...e })),
   schema: z.object({
     id: z.string(),
     title: z.string(),

@@ -232,7 +232,7 @@ const hasAnyVote = votes.length > 0;
 
   {finalTally.unknown > 0 && (
     <p class="text-[11px] text-[var(--color-text-subtle)] tracking-wide">
-      「未確認」は本編未視聴のため個別投票が未記録のクイーンです。<code class="text-[var(--color-text-muted)]">src/content/episodes/{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1] ?? "<ID>"}.json</code> の <code class="text-[var(--color-text-muted)]">votes</code> に <code class="text-[var(--color-text-muted)]">round: "first" | "final"</code> 指定で追加してください。
+      「未確認」は本編未視聴のため個別投票が未記録のクイーンです。<code class="text-[var(--color-text-muted)]">src/data/lastcall.json</code> の <code class="text-[var(--color-text-muted)]">episodes</code>（id <code class="text-[var(--color-text-muted)]">{Astro.url.pathname.match(/episodes\/(\d+)/)?.[1] ?? "<ID>"}</code>）の <code class="text-[var(--color-text-muted)]">votes</code> に <code class="text-[var(--color-text-muted)]">round: "first" | "final"</code> 指定で追加してください。
     </p>
   )}
 </section>
