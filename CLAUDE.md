@@ -20,6 +20,8 @@ npm run typecheck  # astro check — runs Zod schema validation + .astro TS chec
 
 There are no unit tests. The build itself is the verification step: Content Collections run Zod schemas at build time, so a malformed JSON or a broken `reference()` will fail `npm run build`.
 
+データ運用の実務手順（票データの入れ方・SNS リンクの追加基準・現状の欠落チェックリスト）は [`MAINTENANCE.md`](./MAINTENANCE.md) を参照。
+
 ## Architecture
 
 ### Content Collections are the data layer (`src/content.config.ts`)
