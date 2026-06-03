@@ -45,9 +45,15 @@ const queenFinalStats = (queenId: string) => {
 const queenStatsAll = queens.map((j) => queenFinalStats(j.id));
 
 // マトリクス列 = いずれかの回のラインナップに出たクイーンのみ（回ごと可変）
-const matrixQueens = queens.filter((j) =>
-  episodes.some((ep) => ep.data.lineup.some((ref) => ref.id === j.id))
-);
+// 並び順: 出演回数の多い順（左）→ 同数は slug 昇順
+const appearanceCount = (queenId: string) =>
+  episodes.filter((ep) => ep.data.lineup.some((ref) => ref.id === queenId)).length;
+const matrixQueens = queens
+  .filter((j) => episodes.some((ep) => ep.data.lineup.some((ref) => ref.id === j.id)))
+  .sort((a, b) => {
+    const d = appearanceCount(b.id) - appearanceCount(a.id);
+    return d !== 0 ? d : a.id.localeCompare(b.id);
+  });
 
 const matrix = episodes.map((ep) => {
   const lineupIds = new Set(ep.data.lineup.map((ref) => ref.id));
@@ -239,11 +245,11 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
       {/* Legend */}
       <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
         <span class="text-[var(--color-text-muted)]">ファースト:</span>
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="LIKE" size="xs" round="first" spoiler={false} /> LIKE</span>
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="NOTHING" size="xs" round="first" spoiler={false} /> NOTHING</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="LIKE" size="xs" round="first" spoiler={false} /></span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="NOTHING" size="xs" round="first" spoiler={false} /></span>
         <span class="text-[var(--color-text-muted)] ml-1">最終:</span>
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="合格" size="xs" round="final" spoiler={false} /> 合格</span>
-        <span class="inline-flex items-center gap-1.5"><VoteChip vote="不合格" size="xs" round="final" spoiler={false} /> 不合格</span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="合格" size="xs" round="final" spoiler={false} /></span>
+        <span class="inline-flex items-center gap-1.5"><VoteChip vote="不合格" size="xs" round="final" spoiler={false} /></span>
         <span class="inline-flex items-center gap-1.5"><VoteChip vote="UNKNOWN" size="xs" spoiler={false} /> 未確認</span>
         <span>上=ファースト / 下=最終</span>
       </div>
@@ -276,6 +282,7 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
               <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-0 z-20 bg-[var(--color-surface)]">回</th>
               <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-[60px] z-20 bg-[var(--color-surface)]">シンデレラ</th>
               <th scope="col" class="text-center font-medium px-3 py-3 whitespace-nowrap">結果</th>
+              <th scope="col" class="text-center font-medium px-3 py-3 whitespace-nowrap">票数<div class="text-[9px] text-[var(--color-text-subtle)] font-normal">最終</div></th>
               {matrixQueens.map((j) => (
                 <th scope="col" data-qcol={j.id} class="text-center font-medium px-2 py-3 whitespace-nowrap">
                   <a href={siteLink(`/queens/${j.id}/`)} class="hover:text-[var(--color-gold-bright)] transition inline-block max-w-[64px] truncate text-[11px]">
@@ -316,6 +323,11 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
                       <SpoilerBadge result={result} variant="pill-mini" ariaPrefix={cinderella.name} />
                     ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                   </td>
+                  <td class="px-3 py-2.5 align-middle min-w-[120px]">
+                    {recorded > 0 ? (
+                      <DivergingBar pass={passCount} fail={failCount} size="sm" spoilerLevel="result" showLabels={true} />
+                    ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                  </td>
                   {cells.map((cell, ji) => (
                     <td data-qcol={matrixQueens[ji].id} class="px-1.5 py-2 text-center align-middle">
                       {cell.inLineup ? (
@@ -352,6 +364,11 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
                       })}
                       aria-label="合格率（非表示）"
                     ><span class="lc-payload-content"></span></span>
+                  ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                </td>
+                <td class="px-3 py-2 align-middle min-w-[120px]">
+                  {overallRecorded > 0 ? (
+                    <DivergingBar pass={overallPass} fail={overallFail} size="sm" spoilerLevel="result" showLabels={true} />
                   ) : <span class="text-[var(--color-text-subtle)]">—</span>}
                 </td>
                 {queenStats.map((t, ji) => (

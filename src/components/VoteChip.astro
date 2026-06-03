@@ -12,11 +12,12 @@ interface Props {
 
 const { vote, size = "sm", round, queenName, spoiler = true } = Astro.props;
 
+// 固定幅 pill（値に依存しない幅。非表示プレートの幅で結果が漏れないよう「不合格」「LIKE」が収まる幅で統一）
 const sizePx: Record<NonNullable<Props["size"]>, { box: string; text: string }> = {
-  xs: { box: "w-4 h-4", text: "text-[8px]" },
-  sm: { box: "w-6 h-6", text: "text-[10px]" },
-  md: { box: "w-8 h-8", text: "text-[11px]" },
-  lg: { box: "w-10 h-10", text: "text-xs" },
+  xs: { box: "w-[2.4rem] h-[1.1rem]", text: "text-[8px]" },
+  sm: { box: "w-[2.9rem] h-[1.35rem]", text: "text-[10px]" },
+  md: { box: "w-[3.4rem] h-[1.6rem]", text: "text-[11px]" },
+  lg: { box: "w-[4rem] h-[1.9rem]", text: "text-xs" },
 };
 
 const variants: Record<VoteValue, string> = {
@@ -29,10 +30,10 @@ const variants: Record<VoteValue, string> = {
 };
 
 const labels: Record<VoteValue, string> = {
-  LIKE: "♥",
+  LIKE: "LIKE",
   NOTHING: "NO",
-  合格: "合",
-  不合格: "否",
+  合格: "合格",
+  不合格: "不合格",
   UNKNOWN: "?",
 };
 
@@ -44,7 +45,7 @@ const ariaLabel = (() => {
   return parts.join(" / ");
 })();
 
-const baseClass = "inline-flex items-center justify-center rounded-full font-bold leading-none tracking-tight transition-transform";
+const baseClass = "inline-flex items-center justify-center rounded-md font-bold leading-none tracking-tight transition-transform";
 
 // UNKNOWN は元から判別不能 (?) なので occlusion 不要。
 // それ以外で spoiler=true なら payload 化 (SSR では本値・aria・class を出さない)

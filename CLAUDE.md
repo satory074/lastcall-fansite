@@ -60,7 +60,7 @@ The episode's overall 合否 verdict is **`episode.cinderella.result`** (`"pass"
 集計表示は共通ルールに従う:
 
 - **VoteTable** (`src/components/VoteTable.astro`): ラウンド別 DivergingBar 2 本（ファースト=LIKE/NOTHING、最終=合格/不合格）+ 「ファースト→最終で判定を変えたクイーン N 名」。空 lineup は「ラインナップ未記録」表示。
-- **マトリクス** (`src/pages/people.astro`): 列=全エピソードの lineup の和集合。lineup 外のセルは空欄。末尾 `<tfoot>` 累計行（クイーン別 合格率）。
+- **マトリクス** (`src/pages/people.astro`): クイーン列=全エピソードの lineup の和集合、**並び順は出演回数の多い順→同数は slug 昇順**（`matrixQueens` の sort）。「結果」の右に**票数列**（各回の最終ジャッジ合否を `DivergingBar` で表示、`spoilerLevel="result"`）。lineup 外のセルは空欄。末尾 `<tfoot>` 累計行（票数列=全体集計バー、クイーン別 合格率）。
 - **クイーンプロフィール** (`src/pages/queens/[slug].astro`): そのクイーンが lineup に含まれる回のみの履歴 + 「合格率 X%（Y / Z）」+ 判定変更回数。
 
 合格率は **`round === "final"` の `合格` 票のみで集計**。ファーストコールはコンテキスト表示で結果には影響させない。
@@ -130,7 +130,7 @@ The matrix in `src/pages/people.astro` is a hand-rolled `<table>` with `position
 
 When showing vote data anywhere, use these shared primitives in `src/components/` (all wire through the v2 payload-first occlusion automatically):
 
-- **`VoteChip.astro`** — single round chip for one queen × one round. Colored circle: gold = `LIKE`(♥)/`合格`(合), dark gray = `NOTHING`/`不合格`, dashed = `UNKNOWN`. `VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN"`. Use `size: "xs" | "sm" | "md" | "lg"` and `round` for aria. `spoiler={false}` for legends.
+- **`VoteChip.astro`** — single round chip for one queen × one round. **固定幅の角丸テキスト pill**（丸ではない。値で幅が変わると非表示プレートの横幅で結果が漏れるため、各 `size` は値非依存の固定幅）: gold = `LIKE`/`合格`, dark gray = `NOTHING`(NO)/`不合格`, dashed = `UNKNOWN`(?). ラベルは語そのもの（`LIKE`/`NO`/`合格`/`不合格`）。`VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN"`. Use `size: "xs" | "sm" | "md" | "lg"` and `round` for aria. `spoiler={false}` for legends.
 - **`VoteSignature.astro`** — horizontal strip of chips for one axis. Use `forQueen` for the per-queen time-series fingerprint (episodes where she's in the lineup), `forEpisode` for the lineup row. Set `round: "first" | "final" | "both"`.
 - **`DivergingBar.astro`** — pass/fail tally as a center-axis horizontal bar (gold right, dark gray left). Use anywhere a "X 票 vs Y 票" count appears. Auto-handles the `合格率 %` label.
 - **`StatCard.astro`** — large numeric stat with eyebrow + sublabel (used in season-averages dashboards on queen profiles and the matrix banner).

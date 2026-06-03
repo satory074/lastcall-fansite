@@ -34,14 +34,14 @@ const failClass: Record<Variant, string> = {
 const sizeClass: Record<Variant, string> = {
   pill: "font-display tracking-[0.2em] text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur inline-flex items-center justify-center",
   "pill-large": "font-display tracking-[0.22em] text-[11px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center justify-center",
-  "pill-mini": "inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider",
+  "pill-mini": "inline-flex items-center justify-center min-w-[3.2rem] px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider",
   feature: "font-display tracking-[0.18em] text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center justify-center shrink-0",
 };
 
 const defaultLabel: Record<Variant, Record<Result, string>> = {
   pill: { pass: "合格", fail: "不合格" },
   "pill-large": { pass: "合格", fail: "不合格" },
-  "pill-mini": { pass: "合", fail: "否" },
+  "pill-mini": { pass: "合格", fail: "不合格" },
   feature: { pass: "合格", fail: "不合格" },
 };
 
