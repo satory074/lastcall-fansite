@@ -97,6 +97,17 @@
   .legend { font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
   .toolbar { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
   .tallypill { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  /* 票セレクトの色分け（サイトの色規則に準拠: 合格=ゴールド / NOTHING=ダークグレー） */
+  select.vsel { font-weight: 600; }
+  select.vsel.v-lc { background: var(--gold); color: #1b1b22; border-color: var(--gold); }
+  select.vsel.v-no { background: var(--gray); color: #fff; border-color: var(--gray); }
+  select.vsel.v-noc { background: #fff; color: var(--gray); border-color: var(--gray); }
+  select.vsel.v-ab { background: repeating-linear-gradient(45deg,#e4e4ea,#e4e4ea 4px,#fff 4px,#fff 8px); color: #555; }
+  /* YouTube取得行・サムネ */
+  .yt-row { display: flex; gap: 6px; align-items: center; }
+  .yt-row input { flex: 1; }
+  img.thumb { display: block; width: 100%; max-width: 320px; border-radius: 8px; border: 1px solid var(--line); margin: 2px 0 4px; }
+  .note { font-size: 12px; color: var(--muted); margin: 4px 2px 0; }
 
   details.preview { margin: 0; border-top: 1px solid var(--line); background: var(--panel); }
   details.preview > summary { padding: 8px 16px; cursor: pointer; font-size: 12.5px; color: var(--muted); user-select: none; }
@@ -295,9 +306,10 @@ function addItem(coll) {
     const next = (ids.length ? Math.max(...ids) + 1 : 1).toString().padStart(3, "0");
     item = { id: next, title: "", airedAt: "", youtubeId: "", cinderella: "", votes: [], sources: [] };
   } else if (coll === "cinderellas") {
-    item = { slug: "", name: "", nameKana: "", age: undefined, episodeId: "", result: "fail", sns: {} };
+    // result / episodeId はエピソードのフォームで設定（既定値はスキーマ充足のため）
+    item = { slug: "", name: "", episodeId: "", result: "fail", sns: {} };
   } else {
-    item = { slug: "", name: "", nameKana: "", age: undefined, area: "", store: "", sns: {} };
+    item = { slug: "", name: "", sns: {} };
   }
   state[coll].push(item);
   selected[coll] = state[coll].length - 1;
@@ -359,7 +371,7 @@ function textInput(obj, key, { type = "text", placeholder = "", bad = false, on 
   inp.addEventListener("input", () => {
     let v = inp.value;
     if (type === "number") v = v === "" ? undefined : Number(v);
-    if (v === "" && (key === "nameKana" || key === "area" || key === "store" || key === "summary" || key === "background" || key === "bio")) delete obj[key];
+    if (v === "" && (key === "nameKana" || key === "area" || key === "store" || key === "storeUrl" || key === "summary" || key === "background" || key === "bio")) delete obj[key];
     else obj[key] = v;
     // 入力中はフォーカスを保つため detail を再描画しない（一覧/プレビュー/件数のみ更新）
     if (on) on(); else { renderListLight(); renderPreview(); renderStatus(); }
@@ -436,11 +448,69 @@ function renderDetail() {
 function renderEpisode(detail, ep) {
   const fs = el("fieldset", {}, el("legend", {}, "エピソード"));
   fs.append(field("id", textInput(ep, "id", { placeholder: "020", bad: !ep.id }), { req: true, hint: "回番号。URL /episodes/{id}/ になる。3桁ゼロ埋め推奨" }));
-  fs.append(field("title", textInput(ep, "title", { placeholder: "YouTubeの動画タイトル", bad: !ep.title }), { req: true }));
-  fs.append(field("airedAt", textInput(ep, "airedAt", { type: "date" }), { hint: "配信日 YYYY-MM-DD" }));
-  fs.append(field("youtubeId", textInput(ep, "youtubeId", { placeholder: "iETjq8CqPwQ", bad: !ep.youtubeId }), { req: true, hint: "watch?v= の後ろの動画ID" }));
+  fs.append(field("title", textInput(ep, "title", { placeholder: "YouTubeから自動取得されます", bad: !ep.title }), { req: true }));
+  fs.append(field("airedAt", textInput(ep, "airedAt", { type: "date" }), { hint: "配信日 YYYY-MM-DD（YouTubeから自動取得）" }));
+
+  // youtubeId + 「YouTubeから取得」ボタン + サムネ
+  const ytInput = textInput(ep, "youtubeId", { placeholder: "iETjq8CqPwQ", bad: !ep.youtubeId });
+  const fetchBtn = el("button", { class: "mini", onclick: () => fetchYouTube(true) }, "YouTubeから取得");
+  fs.append(field("youtubeId", el("div", { class: "yt-row" }, ytInput, fetchBtn), { req: true, hint: "watch?v= の後ろの動画ID。入力すると title/airedAt を自動取得" }));
+  const thumb = el("img", { class: "thumb", alt: "thumbnail" });
+  thumb.addEventListener("error", () => { thumb.style.display = "none"; });
+  const updateThumb = () => {
+    if (ep.youtubeId) { thumb.style.display = ""; thumb.src = "https://img.youtube.com/vi/" + ep.youtubeId + "/hqdefault.jpg"; }
+    else thumb.style.display = "none";
+  };
+  fs.append(thumb); updateThumb();
+  ytInput.addEventListener("input", updateThumb);
+  ytInput.addEventListener("blur", () => { if (ep.youtubeId && !ep.title) fetchYouTube(false); });
+
+  async function fetchYouTube(force) {
+    if (!ep.youtubeId) { if (force) toast("先に youtubeId を入力してください"); return; }
+    try {
+      const r = await fetch("/api/youtube?id=" + encodeURIComponent(ep.youtubeId), { cache: "no-store" });
+      if (!r.ok) throw new Error("status " + r.status);
+      const j = await r.json();
+      if (j.title) ep.title = j.title;
+      if (j.airedAt) ep.airedAt = j.airedAt;
+      renderListLight(); renderPreview(); renderStatus(); renderDetail();
+      toast("YouTubeから取得しました（" + (j.via || "?") + "）");
+    } catch {
+      toast("取得できませんでした。`npm run edit` で開くと自動取得できます");
+    }
+  }
+
+  // 合否（参照先シンデレラの result を読み書き）— renderVerdict は cinderella select より先に定義
+  const verdictWrap = el("div");
+  const renderVerdict = () => {
+    verdictWrap.innerHTML = "";
+    const cin = state.cinderellas.find(c => c.slug === ep.cinderella);
+    const sel = el("select");
+    [["", "—（シンデレラ未選択）"], ["pass", "LAST CALL（合格）"], ["fail", "NO CALL（不合格）"]].forEach(([v, l]) => sel.append(el("option", { value: v }, l)));
+    sel.disabled = !cin;
+    sel.value = cin ? (cin.result || "") : "";
+    sel.addEventListener("change", () => {
+      if (!cin) return;
+      cin.result = sel.value || "fail";
+      cin.episodeId = ep.id;           // 出演回を自動リンク
+      renderListLight(); renderPreview(); renderStatus();
+    });
+    verdictWrap.append(sel);
+  };
+
   const cinOpts = ["", ...state.cinderellas.map(c => c.slug)];
-  fs.append(field("cinderella", selectInput(ep, "cinderella", cinOpts, { labels: s => s === "" ? "—（未選択）" : (s + "  " + (state.cinderellas.find(c => c.slug === s)?.name || "?")) }), { req: true, hint: "この回の志願者（シンデレラのslug）" }));
+  const cinSelect = selectInput(ep, "cinderella", cinOpts, {
+    labels: s => s === "" ? "—（未選択）" : (s + "  " + (state.cinderellas.find(c => c.slug === s)?.name || "?")),
+    on: () => {
+      const cin = state.cinderellas.find(c => c.slug === ep.cinderella);
+      if (cin) cin.episodeId = ep.id; // 出演回を自動リンク
+      renderListLight(); renderPreview(); renderStatus(); renderVerdict();
+    },
+  });
+  fs.append(field("cinderella", cinSelect, { req: true, hint: "この回の志願者（シンデレラのslug）" }));
+  fs.append(field("合否", verdictWrap, { hint: "このシンデレラの結果。LAST CALL=合格 / NO CALL=不合格" }));
+  renderVerdict();
+
   fs.append(field("summary", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = ep.summary ?? ""; t.addEventListener("input", () => { if (t.value.trim()) ep.summary = t.value; else delete ep.summary; renderPreview(); }); return t; })()));
   detail.append(fs);
 
@@ -467,7 +537,8 @@ function votesFieldset(ep) {
   fs.append(el("div", { class: "legend" },
     span("dot lc", "LAST CALL = 推す"), span("dot no", "NOTHING = 推さない"),
     span("dot noc", "NO CALL = 強い不可"), span("dot ab", "ABSENT = 欠席"),
-    el("span", {}, "空 = 未記録（出力されません）")));
+    el("span", {}, "空 = 未記録（出力されません）"),
+    el("span", {}, "※ コメントは保持のみ・編集不可")));
 
   // 現在の票を queen×round マップに展開
   const map = {}; // slug -> {first, final, firstC, finalC}
@@ -499,31 +570,24 @@ function votesFieldset(ep) {
     el("button", { class: "mini", onclick: () => { state.queens.forEach(q => { map[q.slug] = { first: "", final: "", firstC: "", finalC: "" }; }); commit(); renderDetail(); } }, "全員未記録にリセット"),
     el("span", { class: "tallypill", id: "tally" })));
 
+  const colorClass = v => v === "LAST CALL" ? "v-lc" : v === "NOTHING" ? "v-no" : v === "NO CALL" ? "v-noc" : v === "ABSENT" ? "v-ab" : "";
   const voteSelect = (slug, r) => {
-    const s = el("select");
+    const s = el("select", { class: ("vsel " + colorClass(map[slug][r])).trim() });
     VOTE_OPTIONS.forEach(o => s.append(el("option", { value: o }, o === "" ? "— 未記録" : o)));
     s.value = map[slug][r];
-    s.addEventListener("change", () => { map[slug][r] = s.value; commit(); });
+    s.addEventListener("change", () => { map[slug][r] = s.value; s.className = ("vsel " + colorClass(s.value)).trim(); commit(); });
     return s;
-  };
-  const commentInput = (slug, r) => {
-    const i = el("input", { type: "text", placeholder: "コメント（任意）", value: map[slug][r + "C"] });
-    i.addEventListener("input", () => { map[slug][r + "C"] = i.value; commit(); });
-    return i;
   };
 
   const table = el("table", { class: "votes" });
   table.append(el("thead", {}, el("tr", {},
-    el("th", {}, "クイーン"), el("th", {}, "ファースト"), el("th", {}, "first コメント"),
-    el("th", {}, "最終"), el("th", {}, "final コメント"))));
+    el("th", {}, "クイーン"), el("th", {}, "ファースト"), el("th", {}, "最終"))));
   const tb = el("tbody");
   state.queens.forEach(q => {
     tb.append(el("tr", {},
       el("td", { class: "qname" }, q.name || q.slug),
       el("td", {}, voteSelect(q.slug, "first")),
-      el("td", {}, commentInput(q.slug, "first")),
-      el("td", {}, voteSelect(q.slug, "final")),
-      el("td", {}, commentInput(q.slug, "final"))));
+      el("td", {}, voteSelect(q.slug, "final"))));
   });
   table.append(tb);
   fs.append(table);
@@ -541,23 +605,23 @@ function renderCinderella(detail, c) {
   const fs = el("fieldset", {}, el("legend", {}, "シンデレラ（志願者）"));
   fs.append(field("slug", textInput(c, "slug", { placeholder: "yamada-hanako", bad: !c.slug || !SLUG_RE.test(c.slug) }), { req: true, hint: "半角英数とハイフン。参照キー兼URL" }));
   fs.append(field("name", textInput(c, "name", { bad: !c.name }), { req: true }));
-  fs.append(field("nameKana", textInput(c, "nameKana", { placeholder: "やまだ はなこ" })));
   fs.append(field("age", textInput(c, "age", { type: "number" })));
-  fs.append(field("episodeId", selectInput(c, "episodeId", ["", ...state.episodes.map(e => e.id)], { labels: s => s === "" ? "—" : "第" + s + "回" }), { req: true, hint: "出演回の id" }));
-  fs.append(field("result", selectInput(c, "result", ["pass", "fail"], { labels: s => s === "pass" ? "pass（合格）" : "fail（不合格）" }), { req: true }));
-  fs.append(field("background", (() => { const t = el("textarea", { placeholder: "（任意・検証済みテキストのみ）" }); t.value = c.background ?? ""; t.addEventListener("input", () => { if (t.value.trim()) c.background = t.value; else delete c.background; renderPreview(); }); return t; })()));
   detail.append(fs);
   detail.append(snsFieldset(c));
+  // result / episodeId はエピソードのフォームで設定（合否セレクト＋cinderella選択で自動リンク）
+  const ep = state.episodes.find(e => e.cinderella === c.slug);
+  detail.append(el("p", { class: "note" },
+    "合否（result）と出演回（episodeId）はエピソードのフォームで設定します。"
+    + (ep ? "（現在: 第" + ep.id + "回 / " + (c.result === "pass" ? "LAST CALL 合格" : c.result === "fail" ? "NO CALL 不合格" : "未設定") + "）"
+          : "（まだどのエピソードからも参照されていません）")));
 }
 
 function renderQueen(detail, q) {
   const fs = el("fieldset", {}, el("legend", {}, "クイーン"));
   fs.append(field("slug", textInput(q, "slug", { placeholder: "kisaragi-rei", bad: !q.slug || !SLUG_RE.test(q.slug) }), { req: true, hint: "半角英数とハイフン。参照キー兼URL。" + QUEEN_ROSTER_NOTE }));
   fs.append(field("name", textInput(q, "name", { bad: !q.name }), { req: true }));
-  fs.append(field("nameKana", textInput(q, "nameKana", { placeholder: "きさらぎ れい" })));
-  fs.append(field("age", textInput(q, "age", { type: "number" })));
-  fs.append(field("area", textInput(q, "area", { placeholder: "六本木" })));
-  fs.append(field("store", textInput(q, "store", { placeholder: "クラブリオ" })));
+  fs.append(field("store", textInput(q, "store", { placeholder: "クラブリオ" }), { hint: "店名" }));
+  fs.append(field("storeUrl", textInput(q, "storeUrl", { type: "url", placeholder: "https://…（お店のURL・任意）", bad: q.storeUrl && !/^https?:\/\//.test(q.storeUrl) }), { hint: "店舗の公式サイト/SNS等。空ならリンク無し" }));
   fs.append(field("bio", (() => { const t = el("textarea", { placeholder: "（任意）" }); t.value = q.bio ?? ""; t.addEventListener("input", () => { if (t.value.trim()) q.bio = t.value; else delete q.bio; renderPreview(); }); return t; })()));
   detail.append(fs);
   detail.append(snsFieldset(q));
@@ -581,10 +645,8 @@ function validateItem(coll, item, idx) {
     else if (!SLUG_RE.test(item.slug)) w.push("slug は半角英数とハイフンのみ");
     else if (state[coll].some((x, i) => i !== idx && x.slug === item.slug)) w.push("slug «" + item.slug + "» が重複");
     if (!item.name) w.push("name が未入力");
-    if (coll === "cinderellas") {
-      if (!item.episodeId) w.push("episodeId が未入力");
-      if (item.result !== "pass" && item.result !== "fail") w.push("result は pass / fail");
-    }
+    // cinderella の result / episodeId はエピソードのフォームで設定するため、ここでは必須にしない
+    if (coll === "queens" && item.storeUrl && !/^https?:\/\//.test(item.storeUrl)) w.push("storeUrl はURL形式に");
     for (const k of SNS_KEYS) if (item.sns?.[k] && !/^https?:\/\//.test(item.sns[k])) w.push("sns." + k + " はURL形式に");
   }
   return w;

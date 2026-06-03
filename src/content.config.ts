@@ -21,6 +21,7 @@ const queens = defineCollection({
     age: z.number().int().positive().optional(),
     area: z.string().optional(),
     store: z.string().optional(),
+    storeUrl: z.string().url().optional(),
     bio: z.string().optional(),
     sns: snsSchema,
   }),

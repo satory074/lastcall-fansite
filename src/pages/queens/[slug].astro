@@ -122,7 +122,15 @@ const personSchema = {
         <div class="text-sm text-[var(--color-text-muted)] tracking-wide flex flex-wrap gap-x-3 gap-y-1">
           {queen.data.age && <span>{queen.data.age}歳</span>}
           {queen.data.area && <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">{queen.data.area}</span>}
-          {queen.data.store && <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">{queen.data.store}</span>}
+          {queen.data.store && (
+            <span class="before:content-['·'] before:mr-3 before:text-[var(--color-border-strong)]">
+              {queen.data.storeUrl ? (
+                <a href={queen.data.storeUrl} target="_blank" rel="noopener nofollow" class="underline decoration-dotted underline-offset-2 hover:text-[var(--color-gold)] transition-colors">{queen.data.store}</a>
+              ) : (
+                queen.data.store
+              )}
+            </span>
+          )}
         </div>
       </div>
     </header>

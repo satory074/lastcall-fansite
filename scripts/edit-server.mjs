@@ -11,7 +11,7 @@ import { createServer } from "node:http";
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join, normalize, extname } from "node:path";
-import { exec } from "node:child_process";
+import { exec, spawn } from "node:child_process";
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url))); // プロジェクト直下
 const DATA = join(ROOT, "src/data/lastcall.json");
@@ -69,6 +69,23 @@ const server = createServer(async (req, res) => {
       return send(res, 405, "Method Not Allowed");
     }
 
+    // --- YouTube メタ取得（title + airedAt + thumbnail） ---
+    if (path === "/api/youtube") {
+      const id = url.searchParams.get("id") || "";
+      if (!/^[A-Za-z0-9_-]{6,15}$/.test(id)) return send(res, 400, "invalid video id");
+      const thumbnail = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      const watch = `https://www.youtube.com/watch?v=${id}`;
+      // 1) yt-dlp（title + upload_date）
+      const yt = await ytDlp(id, watch);
+      if (yt) return send(res, 200, JSON.stringify({ ...yt, thumbnail, via: "yt-dlp" }), MIME[".json"]);
+      // 2) oEmbed フォールバック（title のみ）
+      try {
+        const r = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(watch)}&format=json`);
+        if (r.ok) { const j = await r.json(); return send(res, 200, JSON.stringify({ title: j.title || "", airedAt: null, thumbnail, via: "oembed" }), MIME[".json"]); }
+      } catch {}
+      return send(res, 502, JSON.stringify({ error: "取得失敗（yt-dlp も oEmbed も不可）", thumbnail }), MIME[".json"]);
+    }
+
     if (path === "/" ) {
       res.writeHead(302, { Location: EDITOR_PATH });
       return res.end();
@@ -88,6 +105,30 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// yt-dlp で title と upload_date を取得。未インストール/失敗時は null。
+function ytDlp(id, watch) {
+  return new Promise((resolve) => {
+    let out = "", done = false;
+    const finish = (v) => { if (!done) { done = true; resolve(v); } };
+    let child;
+    try {
+      child = spawn("yt-dlp", ["--no-warnings", "--skip-download", "--print", "%(title)s", "--print", "%(upload_date)s", watch], { stdio: ["ignore", "pipe", "ignore"] });
+    } catch { return finish(null); }
+    const timer = setTimeout(() => { try { child.kill(); } catch {} finish(null); }, 20000);
+    child.on("error", () => { clearTimeout(timer); finish(null); }); // ENOENT 等
+    child.stdout.on("data", (d) => (out += d));
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code !== 0) return finish(null);
+      const lines = out.trim().split("\n");
+      const title = (lines[0] || "").trim();
+      const ud = (lines[1] || "").trim(); // YYYYMMDD
+      const airedAt = /^\d{8}$/.test(ud) ? `${ud.slice(0, 4)}-${ud.slice(4, 6)}-${ud.slice(6, 8)}` : null;
+      finish(title ? { title, airedAt } : null);
+    });
+  });
+}
+
 function openBrowser(url) {
   const cmd = process.platform === "darwin" ? "open"
     : process.platform === "win32" ? "start \"\""
@@ -95,19 +136,24 @@ function openBrowser(url) {
   exec(`${cmd} "${url}"`, () => {});
 }
 
-function listen(port) {
-  server.once("error", (err) => {
-    if (err.code === "EADDRINUSE" && port < START_PORT + 20) listen(port + 1);
-    else { console.error(err); process.exit(1); }
-  });
-  server.listen(port, () => {
-    const url = `http://localhost:${port}${EDITOR_PATH}`;
-    console.log("\n  LAST CALL データエディタを起動しました");
-    console.log("  → " + url);
-    console.log("  （データは自動で読み込まれます。編集後は「保存」でファイルに直接書き戻し）");
-    console.log("  終了: Ctrl+C\n");
-    if (!process.env.NO_OPEN) openBrowser(url);
-  });
+function onError(err) {
+  if (err.code === "EADDRINUSE") {
+    const next = (server.__port || START_PORT) + 1;
+    if (next < START_PORT + 20) return listen(next);
+  }
+  console.error(err); process.exit(1);
 }
+function onListening() {
+  const url = `http://localhost:${server.__port}${EDITOR_PATH}`;
+  console.log("\n  LAST CALL データエディタを起動しました");
+  console.log("  → " + url);
+  console.log("  （データは自動で読み込まれます。編集後は「保存」でファイルに直接書き戻し）");
+  console.log("  終了: Ctrl+C\n");
+  if (!process.env.NO_OPEN) openBrowser(url);
+}
+// リスナーは一度だけ登録（再試行で多重登録しないよう listen() の外で）
+server.on("error", onError);
+server.on("listening", onListening);
+function listen(port) { server.__port = port; server.listen(port); }
 
 listen(START_PORT);
