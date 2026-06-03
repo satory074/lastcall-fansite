@@ -18,8 +18,6 @@ const queens = defineCollection({
   schema: z.object({
     name: z.string(),
     nameKana: z.string().optional(),
-    age: z.number().int().positive().optional(),
-    area: z.string().optional(),
     store: z.string().optional(),
     storeUrl: z.string().url().optional(),
     sns: snsSchema,

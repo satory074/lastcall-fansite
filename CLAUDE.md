@@ -31,7 +31,7 @@ There are no unit tests. The build itself is the verification step: Content Coll
 | Collection | Array | Shape |
 |------------|-------|-------|
 | `episodes` | `episodes[]` | `id`, YouTube ID, title, airedAt, `cinderella: { name, age?, result: "pass" \| "fail", sns, background? }` (embedded object), `lineup: reference("queens")[]` (出演クイーン), `votes: { queen: reference("queens"), round, vote }[]` |
-| `queens` | `queens[]` | `slug`, name, age, area, store, storeUrl?, sns (master roster of all queens) |
+| `queens` | `queens[]` | `slug`, name, nameKana?, store, storeUrl?, sns (master roster of all queens) |
 
 The reference graph is **episode → lineup[].queen + votes[].queen** (cinderella is now a plain embedded object, not a reference). The queen **`slug`** and the episode **`id`** are the reference key **and** URL slug — the inline loader maps them to the Astro entry `.id`. A wrong slug/id fails `npm run build`. **Do not re-introduce per-file JSON under `src/content/`, the `cinderellas` collection, or a `/cinderellas/` route** — all were removed; the single file + episode-embedded cinderella is the source of truth.
 

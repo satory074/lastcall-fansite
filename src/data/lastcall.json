@@ -4,8 +4,6 @@
       "slug": "airi",
       "name": "あいり",
       "nameKana": "あいり",
-      "age": 25,
-      "area": "銀座",
       "store": "UNJOUR TOKYO",
       "sns": {
         "instagram": "https://www.instagram.com/airi_el12/",
@@ -17,8 +15,6 @@
       "slug": "aizawa-emiri",
       "name": "愛沢えみり",
       "nameKana": "あいざわ えみり",
-      "age": 37,
-      "area": "歌舞伎町",
       "store": "FOURTY FIVE TOKYO",
       "sns": {
         "instagram": "https://www.instagram.com/emiri_aizawa/",
@@ -30,8 +26,6 @@
       "slug": "assun",
       "name": "あっすん",
       "nameKana": "あっすん",
-      "age": 30,
-      "area": "名古屋・錦",
       "store": "GLAMOROUS OVER",
       "sns": {
         "x": "https://x.com/1005Assunsun",
@@ -43,8 +37,6 @@
       "slug": "himeka",
       "name": "HIMEKA",
       "nameKana": "ひめか",
-      "age": 25,
-      "area": "北新地",
       "store": "CLUB REIMS",
       "sns": {
         "instagram": "https://www.instagram.com/hmk_queen/",
@@ -56,8 +48,6 @@
       "slug": "kisaragi-rei",
       "name": "如月れい",
       "nameKana": "きさらぎ れい",
-      "age": 27,
-      "area": "六本木",
       "store": "CLUB RIO ROPPONGI",
       "sns": {
         "instagram": "https://www.instagram.com/_reitsun_/",
@@ -66,11 +56,9 @@
       "storeUrl": "https://roppongi.clubrio.jp/"
     },
     {
-      "slug": "minami-yuzu",
+      "slug": "minami-yuzuzu",
       "name": "南柚子",
       "nameKana": "みなみ ゆず",
-      "age": 27,
-      "area": "ススキノ",
       "store": "BARCELONA Leicester",
       "sns": {
         "instagram": "https://www.instagram.com/minami_yuzuzu/",
@@ -82,8 +70,6 @@
       "slug": "momose-tomo",
       "name": "桃瀬とも",
       "nameKana": "ももせ とも",
-      "age": 39,
-      "area": "ススキノ（出身）",
       "store": "T-STYLE ROPPONGI",
       "sns": {
         "instagram": "https://www.instagram.com/tomomomose0627/",
@@ -95,8 +81,6 @@
       "slug": "neomaru",
       "name": "ねおまる",
       "nameKana": "ねおまる",
-      "age": 24,
-      "area": "歌舞伎町",
       "store": "POSEIDON CLUB SHINJUKU",
       "sns": {
         "instagram": "https://www.instagram.com/neomaru_7/"
@@ -107,7 +91,6 @@
       "slug": "nijiho",
       "name": "にじほ",
       "nameKana": "にじほ",
-      "age": 26,
       "sns": {
         "instagram": "https://www.instagram.com/inu_wanwan_inu_wanwan/"
       },
@@ -118,8 +101,6 @@
       "slug": "remiremi",
       "name": "れみれみ",
       "nameKana": "れみれみ",
-      "age": 27,
-      "area": "六本木",
       "store": "VENET TOKYO ROPPONGI",
       "sns": {
         "instagram": "https://www.instagram.com/remiremi122/",
@@ -131,8 +112,6 @@
       "slug": "runa",
       "name": "るな",
       "nameKana": "るな（ぶるな）",
-      "age": 29,
-      "area": "北新地",
       "store": "CLUB NILS",
       "sns": {
         "instagram": "https://www.instagram.com/runa_nils/",
@@ -141,11 +120,9 @@
       "storeUrl": "https://club-nils.jp.net/index.html"
     },
     {
-      "slug": "shingeki-noa",
+      "slug": "shingeki-no-noa",
       "name": "進撃のノア",
       "nameKana": "しんげきのノア",
-      "age": 31,
-      "area": "北新地（元）",
       "sns": {
         "instagram": "https://www.instagram.com/shingeki_noa/",
         "youtube": "https://www.youtube.com/@shingekinoa3485"
@@ -154,11 +131,9 @@
       "storeUrl": "https://club-reims.jp.net/"
     },
     {
-      "slug": "yamatorino",
+      "slug": "yamato-rino",
       "name": "ヤマトリノ",
       "nameKana": "やまとりの",
-      "age": 29,
-      "area": "歌舞伎町",
       "store": "JUNGLE TOKYO ROPPONGI",
       "sns": {
         "x": "https://x.com/kintamabiyon",
@@ -167,11 +142,9 @@
       "storeUrl": "https://jungle-gt.com/"
     },
     {
-      "slug": "yuipis",
+      "slug": "yuipisu",
       "name": "ゆいぴす",
       "nameKana": "ゆいぴす",
-      "age": 24,
-      "area": "六本木",
       "store": "LIRIC TOKYO ROPPONGI",
       "sns": {
         "instagram": "https://www.instagram.com/yuipis18/",
@@ -219,7 +192,7 @@
           "vote": "LAST CALL"
         },
         {
-          "queen": "minami-yuzu",
+          "queen": "minami-yuzuzu",
           "round": "first",
           "vote": "NOTHING"
         },
@@ -249,17 +222,17 @@
           "vote": "NOTHING"
         },
         {
-          "queen": "shingeki-noa",
+          "queen": "shingeki-no-noa",
           "round": "first",
           "vote": "NOTHING"
         },
         {
-          "queen": "yamatorino",
+          "queen": "yamato-rino",
           "round": "first",
           "vote": "NOTHING"
         },
         {
-          "queen": "yuipis",
+          "queen": "yuipisu",
           "round": "first",
           "vote": "LAST CALL"
         },
@@ -289,7 +262,7 @@
           "vote": "合格"
         },
         {
-          "queen": "minami-yuzu",
+          "queen": "minami-yuzuzu",
           "round": "final",
           "vote": "不合格"
         },
@@ -319,17 +292,17 @@
           "vote": "不合格"
         },
         {
-          "queen": "shingeki-noa",
+          "queen": "shingeki-no-noa",
           "round": "final",
           "vote": "不合格"
         },
         {
-          "queen": "yamatorino",
+          "queen": "yamato-rino",
           "round": "final",
           "vote": "不合格"
         },
         {
-          "queen": "yuipis",
+          "queen": "yuipisu",
           "round": "final",
           "vote": "不合格"
         }
@@ -340,15 +313,15 @@
         "assun",
         "himeka",
         "kisaragi-rei",
-        "minami-yuzu",
+        "minami-yuzuzu",
         "momose-tomo",
         "neomaru",
         "nijiho",
         "remiremi",
         "runa",
-        "shingeki-noa",
-        "yamatorino",
-        "yuipis"
+        "shingeki-no-noa",
+        "yamato-rino",
+        "yuipisu"
       ]
     },
     {
@@ -403,7 +376,7 @@
           "vote": "LAST CALL"
         },
         {
-          "queen": "minami-yuzu",
+          "queen": "minami-yuzuzu",
           "round": "first",
           "vote": "NOTHING"
         },
@@ -433,17 +406,17 @@
           "vote": "NOTHING"
         },
         {
-          "queen": "shingeki-noa",
+          "queen": "shingeki-no-noa",
           "round": "first",
           "vote": "NOTHING"
         },
         {
-          "queen": "yamatorino",
+          "queen": "yamato-rino",
           "round": "first",
           "vote": "LAST CALL"
         },
         {
-          "queen": "yuipis",
+          "queen": "yuipisu",
           "round": "first",
           "vote": "LAST CALL"
         },
@@ -473,7 +446,7 @@
           "vote": "合格"
         },
         {
-          "queen": "minami-yuzu",
+          "queen": "minami-yuzuzu",
           "round": "final",
           "vote": "不合格"
         },
@@ -503,17 +476,17 @@
           "vote": "合格"
         },
         {
-          "queen": "shingeki-noa",
+          "queen": "shingeki-no-noa",
           "round": "final",
           "vote": "不合格"
         },
         {
-          "queen": "yamatorino",
+          "queen": "yamato-rino",
           "round": "final",
           "vote": "合格"
         },
         {
-          "queen": "yuipis",
+          "queen": "yuipisu",
           "round": "final",
           "vote": "合格"
         }
@@ -524,15 +497,15 @@
         "assun",
         "himeka",
         "kisaragi-rei",
-        "minami-yuzu",
+        "minami-yuzuzu",
         "momose-tomo",
         "neomaru",
         "nijiho",
         "remiremi",
         "runa",
-        "shingeki-noa",
-        "yamatorino",
-        "yuipis"
+        "shingeki-no-noa",
+        "yamato-rino",
+        "yuipisu"
       ]
     },
     {
@@ -762,7 +735,7 @@
           "vote": "LAST CALL"
         },
         {
-          "queen": "minami-yuzu",
+          "queen": "minami-yuzuzu",
           "round": "first",
           "vote": "NOTHING"
         },
@@ -792,17 +765,17 @@
           "vote": "NOTHING"
         },
         {
-          "queen": "shingeki-noa",
+          "queen": "shingeki-no-noa",
           "round": "first",
           "vote": "NOTHING"
         },
         {
-          "queen": "yamatorino",
+          "queen": "yamato-rino",
           "round": "first",
           "vote": "LAST CALL"
         },
         {
-          "queen": "yuipis",
+          "queen": "yuipisu",
           "round": "first",
           "vote": "LAST CALL"
         },
@@ -832,7 +805,7 @@
           "vote": "合格"
         },
         {
-          "queen": "minami-yuzu",
+          "queen": "minami-yuzuzu",
           "round": "final",
           "vote": "不合格"
         },
@@ -862,17 +835,17 @@
           "vote": "不合格"
         },
         {
-          "queen": "shingeki-noa",
+          "queen": "shingeki-no-noa",
           "round": "final",
           "vote": "不合格"
         },
         {
-          "queen": "yamatorino",
+          "queen": "yamato-rino",
           "round": "final",
           "vote": "不合格"
         },
         {
-          "queen": "yuipis",
+          "queen": "yuipisu",
           "round": "final",
           "vote": "合格"
         }
@@ -883,15 +856,15 @@
         "assun",
         "himeka",
         "kisaragi-rei",
-        "minami-yuzu",
+        "minami-yuzuzu",
         "momose-tomo",
         "neomaru",
         "nijiho",
         "remiremi",
         "runa",
-        "shingeki-noa",
-        "yamatorino",
-        "yuipis"
+        "shingeki-no-noa",
+        "yamato-rino",
+        "yuipisu"
       ]
     }
   ]

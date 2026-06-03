@@ -40,13 +40,12 @@ export async function GET() {
   }
 
   for (const j of queens) {
-    const sub = [j.data.area, j.data.store].filter(Boolean).join(" · ");
     items.push({
       type: "queen",
       label: j.data.name,
-      sub: sub || "クイーン",
+      sub: j.data.store || "クイーン",
       url: siteLink(`/queens/${j.id}/`),
-      terms: `${j.data.name} ${j.data.nameKana ?? ""} ${j.data.area ?? ""} ${j.data.store ?? ""} ${j.id}`.toLowerCase(),
+      terms: `${j.data.name} ${j.data.nameKana ?? ""} ${j.data.store ?? ""} ${j.id}`.toLowerCase(),
     });
   }
 

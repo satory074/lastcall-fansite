@@ -159,11 +159,10 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
     <section id="queens" class="space-y-6 scroll-mt-24">
       <h2 class="section-eyebrow">Queens <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{queens.length} 名</span></h2>
       <div class="lc-listctl flex flex-wrap items-center gap-2 text-[11px]" hidden data-grid="lc-grid-queens">
-        <input type="search" autocomplete="off" data-listfilter placeholder="名前・エリアで絞り込み…" class="flex-1 min-w-[10rem] max-w-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-3 py-1.5 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:border-[var(--color-border-strong)]" />
+        <input type="search" autocomplete="off" data-listfilter placeholder="名前・店名で絞り込み…" class="flex-1 min-w-[10rem] max-w-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-3 py-1.5 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:border-[var(--color-border-strong)]" />
         <label class="flex items-center gap-1.5 text-[var(--color-text-subtle)]">並べ替え
           <select data-listsort class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-2.5 py-1.5 text-[var(--color-text-muted)] focus:outline-none">
             <option value="name">名前順</option>
-            <option value="age">年齢順</option>
           </select>
         </label>
         <span data-listcount class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
@@ -174,15 +173,13 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
           return (
             <div
               class="lc-pcard contents"
-              data-name={`${j.data.name} ${j.data.nameKana ?? ""} ${j.data.area ?? ""} ${j.data.store ?? ""}`}
+              data-name={`${j.data.name} ${j.data.nameKana ?? ""} ${j.data.store ?? ""}`}
               data-sortname={j.data.nameKana ?? j.data.name}
-              data-age={j.data.age ?? 0}
             >
               <PersonCard
                 name={j.data.name}
                 href={siteLink(`/queens/${j.id}/`)}
-                subtitle={j.data.area ?? j.data.store}
-                meta={j.data.age ? `${j.data.age}歳` : undefined}
+                subtitle={j.data.store}
                 sns={j.data.sns}
               >
                 {s.recorded > 0 && (
