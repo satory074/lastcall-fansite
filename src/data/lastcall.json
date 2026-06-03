@@ -516,7 +516,7 @@
         {
           "queen": "airi",
           "round": "first",
-          "vote": "LIKE"
+          "vote": "NOTHING"
         },
         {
           "queen": "aizawa-emiri",
@@ -546,22 +546,17 @@
         {
           "queen": "momose-tomo",
           "round": "first",
-          "vote": "LIKE"
+          "vote": "NOTHING"
         },
         {
           "queen": "neomaru",
-          "round": "first",
-          "vote": "LIKE"
-        },
-        {
-          "queen": "nijiho",
           "round": "first",
           "vote": "NOTHING"
         },
         {
           "queen": "remiremi",
           "round": "first",
-          "vote": "LIKE"
+          "vote": "NOTHING"
         },
         {
           "queen": "runa",
@@ -571,7 +566,7 @@
         {
           "queen": "shingeki-no-noa",
           "round": "first",
-          "vote": "NOTHING"
+          "vote": "LIKE"
         },
         {
           "queen": "yamato-rino",
@@ -591,7 +586,7 @@
         {
           "queen": "aizawa-emiri",
           "round": "final",
-          "vote": "不合格"
+          "vote": "合格"
         },
         {
           "queen": "assun",
@@ -611,20 +606,15 @@
         {
           "queen": "minami-yuzuzu",
           "round": "final",
-          "vote": "不合格"
+          "vote": "合格"
         },
         {
           "queen": "momose-tomo",
           "round": "final",
-          "vote": "合格"
+          "vote": "不合格"
         },
         {
           "queen": "neomaru",
-          "round": "final",
-          "vote": "合格"
-        },
-        {
-          "queen": "nijiho",
           "round": "final",
           "vote": "合格"
         },
@@ -636,12 +626,12 @@
         {
           "queen": "runa",
           "round": "final",
-          "vote": "合格"
+          "vote": "不合格"
         },
         {
           "queen": "shingeki-no-noa",
           "round": "final",
-          "vote": "不合格"
+          "vote": "合格"
         },
         {
           "queen": "yamato-rino",
@@ -663,7 +653,6 @@
         "minami-yuzuzu",
         "momose-tomo",
         "neomaru",
-        "nijiho",
         "remiremi",
         "runa",
         "shingeki-no-noa",
