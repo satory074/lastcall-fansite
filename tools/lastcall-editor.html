@@ -486,17 +486,11 @@ function renderEpisode(detail, ep) {
   detail.append(cfs);
   detail.append(snsFieldset(cin));
 
-  // sources
+  // sources（外部出典のみ。YouTube は youtubeId から自動でリンクされるため入れない）
   if (!Array.isArray(ep.sources)) ep.sources = [];
-  const sfs = el("fieldset", {}, el("legend", {}, "sources（出典URL）"));
+  const sfs = el("fieldset", {}, el("legend", {}, "sources（外部出典URL）"));
+  sfs.append(el("p", { class: "note" }, "ニュース・本人SNS・プロフィール等の出典。YouTube動画は youtubeId から自動リンクされるので入れない。"));
   const list = inlineUrlList(ep.sources, () => { renderPreview(); renderStatus(); });
-  sfs.append(el("div", { class: "toolbar" },
-    el("button", { class: "mini", onclick: () => {
-      if (!ep.youtubeId) { toast("先に youtubeId を入力してください"); return; }
-      const u = "https://www.youtube.com/watch?v=" + ep.youtubeId;
-      if (!ep.sources.includes(u)) ep.sources.push(u);
-      list.redraw(); renderPreview();
-    } }, "YouTube URLを補完")));
   sfs.append(list.wrap);
   detail.append(sfs);
 
