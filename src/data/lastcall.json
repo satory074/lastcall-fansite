@@ -159,8 +159,8 @@
         "instagram": "https://www.instagram.com/caru__gram/",
         "tiktok": "https://www.tiktok.com/@carua_1018"
       },
-      "store": "CLUB REIMS",
-      "storeUrl": "https://club-reims.jp.net/"
+      "store": "CLUB RAISE",
+      "storeUrl": "https://club-raise.jp.net/"
     },
     {
       "slug": "suzune-rin",
@@ -190,6 +190,15 @@
       },
       "store": "CLUB A",
       "storeUrl": "https://club-a.jp.net/"
+    },
+    {
+      "slug": "sakurai-miyako",
+      "name": "桜伊みやこ",
+      "sns": {
+        "instagram": "https://www.instagram.com/miya02ko/"
+      },
+      "store": "LIRIC TOKYO ROPPONGI",
+      "storeUrl": "https://liric-tokyo-roppongi.jp/index.html"
     }
   ],
   "episodes": [
@@ -1042,7 +1051,8 @@
         "age": 21,
         "result": "pass",
         "sns": {
-          "instagram": "http://instagram.com/ryoka_kobayashi"
+          "instagram": "http://instagram.com/ryoka_kobayashi",
+          "x": "https://x.com/Ryoka_LASTCALL"
         }
       },
       "votes": [
@@ -1808,8 +1818,175 @@
           "instagram": "https://www.instagram.com/emena_999x/"
         }
       },
-      "votes": [],
-      "lineup": []
+      "votes": [
+        {
+          "queen": "airi",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "minami-yuzuzu",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "neomaru",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "nijiho",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "remiremi",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "runa",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "shingeki-no-noa",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "yamato-rino",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "yuipisu",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "suzune-rin",
+          "round": "first",
+          "vote": "NOTHING"
+        },
+        {
+          "queen": "yui",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "riri",
+          "round": "first",
+          "vote": "LIKE"
+        },
+        {
+          "queen": "airi",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "aizawa-emiri",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "kisaragi-rei",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "minami-yuzuzu",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "momose-tomo",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "neomaru",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "nijiho",
+          "round": "final",
+          "vote": "合格"
+        },
+        {
+          "queen": "remiremi",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "runa",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "shingeki-no-noa",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "yamato-rino",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "yuipisu",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "suzune-rin",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "yui",
+          "round": "final",
+          "vote": "不合格"
+        },
+        {
+          "queen": "riri",
+          "round": "final",
+          "vote": "不合格"
+        }
+      ],
+      "lineup": [
+        "airi",
+        "aizawa-emiri",
+        "kisaragi-rei",
+        "minami-yuzuzu",
+        "momose-tomo",
+        "neomaru",
+        "nijiho",
+        "remiremi",
+        "runa",
+        "shingeki-no-noa",
+        "yamato-rino",
+        "yuipisu",
+        "suzune-rin",
+        "yui",
+        "riri"
+      ]
     },
     {
       "id": "013",
