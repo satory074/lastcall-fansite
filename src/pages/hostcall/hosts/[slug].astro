@@ -1,0 +1,18 @@
+---
+// HOSTCALL ホスト（審査員）個別プロフィール。本体は show 対応の共有コンポーネント QueenProfile に集約。
+// データ未投入時は getStaticPaths が空配列を返すため、このルートは何も emit しない（ビルドは緑）。
+import QueenProfile from "../../../components/QueenProfile.astro";
+import { rosterForShow } from "../../../lib/show";
+
+export async function getStaticPaths() {
+  const hosts = await rosterForShow("hostcall");
+  return hosts.map((j) => ({
+    params: { slug: j.id },
+    props: { queen: j },
+  }));
+}
+
+const { queen } = Astro.props;
+---
+
+<QueenProfile queen={queen} />

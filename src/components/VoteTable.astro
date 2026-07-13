@@ -1,7 +1,7 @@
 ---
 import { getEntries } from "astro:content";
 import type { CollectionEntry } from "astro:content";
-import { siteLink } from "../lib/url";
+import { rosterHref, showMeta, type Show } from "../lib/show";
 import VoteChip from "./VoteChip.astro";
 import DivergingBar from "./DivergingBar.astro";
 import SpoilerBadge from "./SpoilerBadge.astro";
@@ -10,9 +10,11 @@ interface Props {
   lineup: CollectionEntry<"episodes">["data"]["lineup"];
   votes: CollectionEntry<"episodes">["data"]["votes"];
   cinderellaResult?: "pass" | "fail";
+  show?: Show;
 }
 
-const { lineup, votes, cinderellaResult } = Astro.props;
+const { lineup, votes, cinderellaResult, show = "lastcall" } = Astro.props;
+const meta = showMeta(show);
 
 type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
 
@@ -36,7 +38,7 @@ const rows: Row[] = lineupQueens.map((j) => {
   return {
     queenId: j.id,
     queenName: j.data.name,
-    queenHref: siteLink(`/queens/${j.id}/`),
+    queenHref: rosterHref(show, j.id),
     first: { vote: (f ? f.vote : "UNKNOWN") as VoteValue },
     final: { vote: (l ? l.vote : "UNKNOWN") as VoteValue },
   };
@@ -72,9 +74,9 @@ const hasAnyVote = votes.length > 0;
 <section class="space-y-6">
   <header class="flex flex-wrap items-end justify-between gap-3">
     <div class="space-y-1">
-      <h2 class="section-eyebrow">Queens &amp; Votes</h2>
+      <h2 class="section-eyebrow">{meta.rosterLabelEn} &amp; Votes</h2>
       <p class="text-xs text-[var(--color-text-muted)] tracking-wide">
-        出演クイーン {hasLineup ? `${rows.length} 名` : ""} × 2 ラウンド（ファーストコール / 最終ジャッジ）
+        出演{meta.rosterLabel} {hasLineup ? `${rows.length} 名` : ""} × 2 ラウンド（ファーストコール / 最終ジャッジ）
       </p>
     </div>
     {displayResult && (
@@ -160,7 +162,7 @@ const hasAnyVote = votes.length > 0;
             <table class="min-w-full text-sm">
               <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
                 <tr>
-                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">クイーン</th>
+                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">{meta.rosterLabel}</th>
                   <th class="text-center font-medium px-3 py-2 whitespace-nowrap">First</th>
                   <th class="text-center font-medium px-3 py-2 whitespace-nowrap">Final</th>
                 </tr>
@@ -195,7 +197,7 @@ const hasAnyVote = votes.length > 0;
     </Fragment>
   ) : (
     <p class="text-sm text-[var(--color-text-muted)] tracking-wide card p-5">
-      出演クイーンのラインナップが未記録です。<code class="text-[var(--color-text-muted)]">npm run edit</code> のエディタでラインナップと票を入力してください。
+      出演{meta.rosterLabel}のラインナップが未記録です。<code class="text-[var(--color-text-muted)]">npm run edit</code> のエディタでラインナップと票を入力してください。
     </p>
   )}
 </section>

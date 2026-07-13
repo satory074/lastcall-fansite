@@ -11,11 +11,16 @@ const snsSchema = z
   })
   .default({});
 
+// 番組（show）次元。既定 "lastcall" により既存エントリは JSON 無編集で lastcall として検証が通る。
+// HOSTCALL のエントリは show: "hostcall" を明示する。ラベル/色は src/lib/show.ts と globals.css が担う。
+const showSchema = z.enum(["lastcall", "hostcall"]).default("lastcall");
+
 const queens = defineCollection({
   // 単一ファイル src/data/lastcall.json の queens 配列をスライス供給する inline loader。
   // 各エントリの slug を Astro エントリ id（= URL スラッグ / 参照キー）に割り当てる。
   loader: () => data.queens.map(({ slug, ...rest }) => ({ id: slug, ...rest })),
   schema: z.object({
+    show: showSchema,
     name: z.string(),
     nameKana: z.string().optional(),
     store: z.string().optional(),
@@ -38,6 +43,7 @@ const episodes = defineCollection({
   loader: () => data.episodes.map((e) => ({ ...e })),
   schema: z.object({
     id: z.string(),
+    show: showSchema,
     title: z.string(),
     airedAt: z.coerce.date(),
     youtubeId: z.string(),

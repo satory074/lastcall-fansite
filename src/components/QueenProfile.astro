@@ -1,0 +1,282 @@
+---
+import type { CollectionEntry } from "astro:content";
+import Layout from "./Layout.astro";
+import SnsLinks from "./SnsLinks.astro";
+import StatCard from "./StatCard.astro";
+import VoteSignature from "./VoteSignature.astro";
+import VoteChip from "./VoteChip.astro";
+import DivergingBar from "./DivergingBar.astro";
+import StructuredData from "./StructuredData.astro";
+import {
+  episodesForShow,
+  showMeta,
+  episodeHref,
+  peopleHref,
+  rosterAbsUrl,
+} from "../lib/show";
+
+interface Props {
+  queen: CollectionEntry<"queens">;
+}
+
+const { queen } = Astro.props;
+const show = queen.data.show;
+const meta = showMeta(show);
+const rosterSingularEn = meta.rosterLabelEn.replace(/s$/, ""); // Queens -> Queen / Hosts -> Host
+
+const episodes = (await episodesForShow(show)).sort(
+  (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
+);
+
+type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格";
+
+type HistoryRow = {
+  episode: CollectionEntry<"episodes">;
+  cinderellaName: string;
+  round: "first" | "final";
+  vote: VoteValue;
+};
+
+const history: HistoryRow[] = [];
+for (const ep of episodes) {
+  const votesForQueen = ep.data.votes.filter((vv) => vv.queen.id === queen.id);
+  if (votesForQueen.length === 0) continue;
+  const c = ep.data.cinderella; // 埋め込み済み
+  for (const round of ["first", "final"] as const) {
+    const v = votesForQueen.find((vv) => vv.round === round);
+    if (!v) continue;
+    history.push({
+      episode: ep,
+      cinderellaName: c.name,
+      round,
+      vote: v.vote as VoteValue,
+    });
+  }
+}
+
+const firstList = history.filter((h) => h.round === "first");
+const finalList = history.filter((h) => h.round === "final");
+const firstTally = {
+  lastCall: firstList.filter((h) => h.vote === "LIKE").length,
+  nothing: firstList.filter((h) => h.vote === "NOTHING").length,
+  total: firstList.length,
+};
+const finalTally = {
+  pass: finalList.filter((h) => h.vote === "合格").length,
+  fail: finalList.filter((h) => h.vote === "不合格").length,
+  total: finalList.length,
+};
+
+const passCount = finalTally.pass;
+const failCount = finalTally.fail;
+const total = passCount + failCount;
+const passRate = total > 0 ? Math.round((passCount / total) * 100) : null;
+
+const flipped = (() => {
+  const byEp = new Map<string, { first?: HistoryRow; final?: HistoryRow }>();
+  for (const h of history) {
+    const slot = byEp.get(h.episode.data.id) ?? {};
+    slot[h.round] = h;
+    byEp.set(h.episode.data.id, slot);
+  }
+  let count = 0;
+  for (const slot of byEp.values()) {
+    if (!slot.first || !slot.final) continue;
+    const firstPass = slot.first.vote === "LIKE";
+    const finalPass = slot.final.vote === "合格";
+    if (firstPass !== finalPass) count++;
+  }
+  return count;
+})();
+
+// Person。合格率・投票傾向は含めない（スポイラー防止）。
+const sameAs = Object.values(queen.data.sns).filter(Boolean);
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: queen.data.name,
+  jobTitle: meta.rosterLabel,
+  url: rosterAbsUrl(show, queen.id),
+  ...(sameAs.length > 0 ? { sameAs } : {}),
+};
+---
+
+<Layout
+  title={queen.data.name}
+  description={`${meta.brand} ${meta.rosterLabel}「${queen.data.name}」のプロフィール、合格率、全回投票履歴。`}
+  breadcrumbs={[
+    { label: "出演者・審査一覧", href: peopleHref(show) },
+    { label: queen.data.name },
+  ]}
+  show={show}
+>
+  <StructuredData slot="head" schema={personSchema} />
+  <article class="max-w-5xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-12">
+    <header class="space-y-5">
+      <p class="eyebrow">{rosterSingularEn}</p>
+      <div class="space-y-2">
+        <h1 class="font-display-serif text-[2.25rem] sm:text-[3.25rem] leading-[1.05] text-[var(--color-text)]">
+          {queen.data.name}
+          {queen.data.nameKana && queen.data.nameKana !== queen.data.name && (
+            <span class="text-base font-sans text-[var(--color-text-muted)] ml-3 align-middle">
+              {queen.data.nameKana}
+            </span>
+          )}
+        </h1>
+        {queen.data.store && (
+          <div class="text-sm text-[var(--color-text-muted)] tracking-wide">
+            {queen.data.storeUrl ? (
+              <a href={queen.data.storeUrl} target="_blank" rel="noopener nofollow" class="underline decoration-dotted underline-offset-2 hover:text-[var(--color-gold)] transition-colors">{queen.data.store}</a>
+            ) : (
+              queen.data.store
+            )}
+          </div>
+        )}
+      </div>
+    </header>
+
+    {/* Season Averages — stat cards + diverging bar */}
+    {total > 0 && (
+      <section class="space-y-5">
+        <h2 class="section-eyebrow">Season Averages</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <StatCard
+            label="合格判定率"
+            value={passRate !== null ? `${passRate}%` : "—"}
+            sublabel={`${passCount} / ${total}`}
+            accent="gold"
+            spoiler
+            spoilerLevel="vote"
+          />
+          <StatCard
+            label="合格"
+            value={finalTally.pass}
+            sublabel="最終ジャッジ"
+            accent="gold"
+            spoiler
+            spoilerLevel="vote"
+          />
+          <StatCard
+            label="不合格"
+            value={finalTally.fail}
+            sublabel="最終ジャッジ"
+            spoiler
+            spoilerLevel="vote"
+          />
+          <StatCard
+            label="判定変更"
+            value={flipped}
+            sublabel="ファースト → 最終"
+            spoiler
+            spoilerLevel="vote"
+          />
+        </div>
+        <div class="card p-5 sm:p-6 space-y-4">
+          <DivergingBar
+            pass={finalTally.pass}
+            fail={finalTally.fail}
+            label="最終ジャッジの傾向"
+            size="lg"
+            spoilerLevel="vote"
+          />
+          <DivergingBar
+            pass={firstTally.lastCall}
+            fail={firstTally.nothing}
+            label="ファーストコールの傾向"
+            size="sm"
+            spoilerLevel="vote"
+            terms={{ pass: "LIKE", fail: "NOTHING" }}
+          />
+        </div>
+      </section>
+    )}
+
+    {/* Vote Signature — across all episodes */}
+    {total > 0 && (
+      <section class="space-y-3">
+        <h2 class="section-eyebrow">Vote Signature <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">時系列 · 全 {episodes.length} 回</span></h2>
+        <div class="card p-4 sm:p-5">
+          <VoteSignature forQueen={queen} round="both" size="sm" linkTo="episode" />
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
+          <span class="text-[var(--color-text-muted)]">First:</span>
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="LIKE" size="xs" round="first" spoiler={false} />
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="NOTHING" size="xs" round="first" spoiler={false} />
+          </span>
+          <span class="text-[var(--color-text-muted)] ml-1">Final:</span>
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="合格" size="xs" round="final" spoiler={false} />
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <VoteChip vote="不合格" size="xs" round="final" spoiler={false} />
+          </span>
+          <span>上=First · 下=Final</span>
+        </div>
+      </section>
+    )}
+
+    <section class="space-y-3">
+      <h2 class="section-eyebrow">SNS</h2>
+      <SnsLinks sns={queen.data.sns} />
+    </section>
+
+    {/* Comments / detail table */}
+    {history.length > 0 && (
+      <section class="space-y-3">
+        <h2 class="section-eyebrow">Voting History</h2>
+        <details class="card group">
+          <summary class="px-5 sm:px-6 py-3 cursor-pointer list-none flex items-center justify-between gap-3 text-sm select-none">
+            <span class="inline-flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition group-open:rotate-90" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+              票の詳細
+            </span>
+            <span class="text-[10px] text-[var(--color-text-subtle)] tracking-wider uppercase">
+              {history.length} 票
+            </span>
+          </summary>
+          <div class="border-t border-[var(--color-border)] overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
+                <tr>
+                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">回</th>
+                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">{meta.candidateLabel}</th>
+                  <th class="text-left font-medium px-3 py-2 whitespace-nowrap">ラウンド</th>
+                  <th class="text-center font-medium px-3 py-2 whitespace-nowrap">投票</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((h) => (
+                  <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <a href={episodeHref(show, h.episode.data.id)} class="hover:text-[var(--color-gold-bright)] transition tabular-nums">
+                        #{h.episode.data.id}
+                      </a>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-[var(--color-text-muted)]">{h.cinderellaName}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-xs text-[var(--color-text-muted)]">
+                      {h.round === "first" ? "ファースト" : "最終"}
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                      <VoteChip vote={h.vote} size="sm" round={h.round} queenName={queen.data.name} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+    )}
+
+    {history.length === 0 && (
+      <section class="card p-6 text-center text-sm text-[var(--color-text-muted)]">
+        この{meta.rosterLabel}の投票履歴データを準備中です。
+      </section>
+    )}
+  </article>
+</Layout>

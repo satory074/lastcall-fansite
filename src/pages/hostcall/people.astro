@@ -1,0 +1,7 @@
+---
+// HOSTCALL の出演者・審査一覧。本体は show 対応の共有コンポーネント PeopleView に集約。
+// データ未投入時は PeopleView 側の「Coming soon」空状態を描画する。
+import PeopleView from "../../components/PeopleView.astro";
+---
+
+<PeopleView show="hostcall" />

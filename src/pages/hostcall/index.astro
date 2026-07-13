@@ -1,0 +1,130 @@
+---
+import Layout from "../../components/Layout.astro";
+import EpisodeCard from "../../components/EpisodeCard.astro";
+import StatCard from "../../components/StatCard.astro";
+import StructuredData from "../../components/StructuredData.astro";
+import { episodesForShow, rosterForShow, showMeta, homeHref, homeAbsUrl, peopleHref } from "../../lib/show";
+
+const show = "hostcall" as const;
+const meta = showMeta(show);
+
+const episodes = (await episodesForShow(show)).sort(
+  (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
+);
+const hosts = await rosterForShow(show);
+const latest = episodes[0];
+const rest = episodes.slice(1);
+
+const latestUpdate = latest
+  ? latest.data.airedAt.toISOString().slice(0, 10).replace(/-/g, ".")
+  : null;
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: `${meta.brand} 非公式ファンサイト`,
+  url: homeAbsUrl(show),
+  inLanguage: "ja",
+  description: meta.description,
+};
+---
+
+<Layout show={show}>
+  <StructuredData slot="head" schema={websiteSchema} />
+  {/* Hero */}
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[90%] h-[70%] rounded-full blur-[140px] opacity-40 bg-[var(--color-gold-deep)]"></div>
+    </div>
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-20 sm:pt-28 pb-16 sm:pb-24 relative">
+      <div class="space-y-8 sm:space-y-10">
+        <div class="space-y-3 sm:space-y-4">
+          <p class="eyebrow">
+            Unofficial Fan Archive
+            <span class="mx-2 text-[var(--color-border-strong)]">·</span>
+            {latestUpdate ? `Last update ${latestUpdate}` : meta.airDay}
+            <span class="mx-2 text-[var(--color-border-strong)]">·</span>
+            {episodes.length} Episodes
+          </p>
+          <h1
+            class="font-display-serif text-[var(--color-text)] leading-[0.9] tracking-tight"
+            style="font-size: clamp(3.5rem, 12vw, 9rem);"
+          >
+            <span class="block">{meta.brandParts[0]}</span>
+            <span class="block text-[var(--color-gold)] italic">{meta.brandParts[1]}</span>
+          </h1>
+        </div>
+        <div class="max-w-2xl space-y-5">
+          <p class="text-sm sm:text-base text-[var(--color-text-muted)] leading-[1.85]">
+            YouTube 配信のホストオーディション番組
+            <a href="https://lastcall.jp/" target="_blank" rel="noopener" class="text-[var(--color-text)] underline decoration-[var(--color-border-strong)] hover:decoration-[var(--color-gold)]">HOSTCALL</a>
+            の各回・出演ホスト・審査結果を、<span class="text-[var(--color-text)]">回ごと</span>・<span class="text-[var(--color-text)]">ホストごと</span>に横断できる索引として整理。
+            <span class="text-[var(--color-text)]">LAST CALL</span> の姉妹番組（放送 {meta.airDay}）。
+          </p>
+          <div class="flex flex-wrap gap-3 pt-1">
+            <a
+              href={peopleHref(show)}
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--color-gold)] text-black text-sm font-semibold tracking-wide hover:bg-[var(--color-gold-bright)] transition"
+            >
+              出演者・審査一覧
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <a
+              href={homeHref("lastcall")}
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--color-border-strong)] text-sm text-[var(--color-text-muted)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition"
+            >
+              姉妹番組 LAST CALL
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 hairline"></div>
+  </section>
+
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20 space-y-20 sm:space-y-24">
+    {/* Stats strip */}
+    <section class="grid grid-cols-3 gap-3 sm:gap-5 -mt-4">
+      <StatCard label="Episodes" value={episodes.length} sublabel="配信済み回数" />
+      <StatCard label="Candidates" value={episodes.length} sublabel="登場した候補者" />
+      <StatCard label="Hosts" value={hosts.length} sublabel="ホスト陣" />
+    </section>
+
+    {episodes.length === 0 ? (
+      <section class="card p-10 sm:p-14 text-center space-y-4">
+        <p class="eyebrow">Coming soon</p>
+        <p class="font-display-serif text-xl sm:text-2xl text-[var(--color-text)]">
+          HOSTCALL のアーカイブは準備中です
+        </p>
+        <p class="text-sm text-[var(--color-text-muted)] leading-relaxed max-w-md mx-auto">
+          各回の配信後、出演ホスト・候補者・2 ラウンド審査の投票結果を順次追加します。
+          先行して <a href={homeHref("lastcall")} class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)]">LAST CALL</a> のアーカイブをご覧ください。
+        </p>
+      </section>
+    ) : (
+      <Fragment>
+        {latest && (
+          <section id="latest" class="space-y-6 scroll-mt-24">
+            <div class="flex items-end justify-between gap-3">
+              <h2 class="section-eyebrow">Latest Episode</h2>
+              <span class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)] tabular-nums">#{latest.data.id}</span>
+            </div>
+            <EpisodeCard episode={latest} variant="feature" />
+          </section>
+        )}
+        {rest.length > 0 && (
+          <section id="episodes" class="space-y-6 scroll-mt-24">
+            <h2 class="section-eyebrow">Archive</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+              {rest.map((ep) => (
+                <EpisodeCard episode={ep} />
+              ))}
+            </div>
+          </section>
+        )}
+      </Fragment>
+    )}
+  </div>
+</Layout>

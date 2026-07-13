@@ -1,16 +1,10 @@
 ---
-import { getCollection } from "astro:content";
-import Layout from "../../components/Layout.astro";
-import YouTubeEmbed from "../../components/YouTubeEmbed.astro";
-import VoteTable from "../../components/VoteTable.astro";
-import SnsLinks from "../../components/SnsLinks.astro";
-import EpisodeCard from "../../components/EpisodeCard.astro";
-import SpoilerBadge from "../../components/SpoilerBadge.astro";
-import StructuredData from "../../components/StructuredData.astro";
-import { youtubeUrl, youtubeThumb, absUrl } from "../../lib/url";
+// LAST CALL 各回の詳細。本体は show 対応の共有コンポーネント EpisodeDetail に集約。
+import EpisodeDetail from "../../components/EpisodeDetail.astro";
+import { episodesForShow } from "../../lib/show";
 
 export async function getStaticPaths() {
-  const episodes = await getCollection("episodes");
+  const episodes = await episodesForShow("lastcall");
   return episodes.map((episode) => ({
     params: { id: episode.data.id },
     props: { episode },
@@ -18,129 +12,6 @@ export async function getStaticPaths() {
 }
 
 const { episode } = Astro.props;
-const cinderella = episode.data.cinderella; // エピソードに埋め込み済み
-const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
-
-const allEpisodes = (await getCollection("episodes")).sort(
-  (a, b) => a.data.airedAt.getTime() - b.data.airedAt.getTime()
-);
-const idx = allEpisodes.findIndex((e) => e.data.id === episode.data.id);
-const prev = idx > 0 ? allEpisodes[idx - 1] : null;
-const next = idx >= 0 && idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : null;
-
-const cleanTitle = episode.data.title.replace(/【LAST.*$/, "").trim();
-const transitionName = `ep-${episode.data.id}-thumb`;
-
-// VideoObject。合否・投票・スコアは含めない（検索結果でのネタバレ防止）。
-const videoSchema = {
-  "@context": "https://schema.org",
-  "@type": "VideoObject",
-  name: `第${episode.data.id}回 ${cleanTitle}`,
-  description: episode.data.summary ?? episode.data.title,
-  uploadDate: episode.data.airedAt.toISOString(),
-  thumbnailUrl: youtubeThumb(episode.data.youtubeId),
-  embedUrl: `https://www.youtube-nocookie.com/embed/${episode.data.youtubeId}`,
-  contentUrl: youtubeUrl(episode.data.youtubeId),
-  url: absUrl(`/episodes/${episode.data.id}/`),
-  inLanguage: "ja",
-};
 ---
 
-<Layout
-  title={`#${episode.data.id} ${cleanTitle}`}
-  description={episode.data.summary ?? episode.data.title}
-  ogImage={youtubeThumb(episode.data.youtubeId)}
-  breadcrumbs={[{ label: `第${episode.data.id}回 ${cleanTitle}` }]}
->
-  <StructuredData slot="head" schema={videoSchema} />
-  <article class="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-14">
-    <header class="space-y-5">
-      <div class="flex flex-wrap items-center gap-2.5">
-        <p class="eyebrow">Episode #{episode.data.id}</p>
-        <span class="text-[10px] tracking-[0.2em] uppercase text-[var(--color-text-subtle)] tabular-nums">
-          {dateLabel}
-        </span>
-        <SpoilerBadge result={cinderella.result} variant="pill-large" ariaPrefix={cinderella.name} />
-      </div>
-      <h1 class="font-display-serif text-2xl sm:text-[2.5rem] leading-[1.2] text-[var(--color-text)]">
-        {cleanTitle}
-      </h1>
-      <div class="text-xs text-[var(--color-text-subtle)] tracking-wider">
-        <a
-          href={youtubeUrl(episode.data.youtubeId)}
-          target="_blank"
-          rel="noopener"
-          class="inline-flex items-center gap-1.5 underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.546 15.568V8.432L15.818 12z"/>
-          </svg>
-          YouTube で視聴
-        </a>
-      </div>
-    </header>
-
-    {episode.data.summary && (
-      <p
-        class="lc-occluded relative block text-sm sm:text-base leading-[1.85] text-[var(--color-text)]"
-        data-occlusion="block"
-        data-spoiler-level="comment"
-        data-spoiler-payload={JSON.stringify({ text: episode.data.summary, aria: "Summary" })}
-        aria-label="Summary（非表示）"
-      ><span class="lc-payload-content"></span></p>
-    )}
-
-    <section class="space-y-4">
-      <h2 class="section-eyebrow">Video</h2>
-      <div style={`view-transition-name: ${transitionName};`}>
-        <YouTubeEmbed videoId={episode.data.youtubeId} title={episode.data.title} />
-      </div>
-    </section>
-
-    <section class="space-y-4">
-      <h2 class="section-eyebrow">Cinderella</h2>
-      <div class="card p-6 sm:p-8 space-y-5">
-        <div class="flex flex-wrap items-baseline justify-between gap-3">
-          <h3 class="font-display-serif text-2xl sm:text-3xl">
-            {cinderella.name}
-            {cinderella.age && (
-              <span class="text-sm font-sans text-[var(--color-text-muted)] ml-3 tabular-nums">{cinderella.age}歳</span>
-            )}
-          </h3>
-          <SpoilerBadge result={cinderella.result} variant="pill-large" label={cinderella.result === "pass" ? "合格" : "不合格"} ariaPrefix={cinderella.name} />
-        </div>
-        {cinderella.background && (
-          <p
-            class="lc-occluded relative block text-sm leading-[1.85] text-[var(--color-text-muted)]"
-            data-occlusion="block"
-            data-spoiler-level="comment"
-            data-spoiler-payload={JSON.stringify({ text: cinderella.background, aria: "Background" })}
-            aria-label="Background（非表示）"
-          ><span class="lc-payload-content"></span></p>
-        )}
-        <SnsLinks sns={cinderella.sns} size="sm" />
-      </div>
-    </section>
-
-    <VoteTable lineup={episode.data.lineup} votes={episode.data.votes} cinderellaResult={cinderella.result} />
-
-    <nav class="pt-6 border-t border-[var(--color-border)] grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {prev ? (
-        <div class="space-y-2">
-          <div class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)]">
-            ← Prev · #{prev.data.id}
-          </div>
-          <EpisodeCard episode={prev} variant="compact" />
-        </div>
-      ) : <span class="hidden sm:block" />}
-      {next ? (
-        <div class="space-y-2 sm:text-right">
-          <div class="text-[10px] tracking-[0.24em] uppercase text-[var(--color-text-subtle)]">
-            Next · #{next.data.id} →
-          </div>
-          <EpisodeCard episode={next} variant="compact" />
-        </div>
-      ) : <span class="hidden sm:block" />}
-    </nav>
-  </article>
-</Layout>
+<EpisodeDetail episode={episode} />

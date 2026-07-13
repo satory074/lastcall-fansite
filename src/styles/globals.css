@@ -50,6 +50,9 @@
 }
 
 html {
+  /* このサイトは常時ダーク。color-scheme を宣言することで Chrome の Auto Dark Mode
+     （force-dark）による二重反転＝アクセント色の paint 層での破壊を防ぐ。 */
+  color-scheme: dark;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
@@ -68,7 +71,7 @@ body {
   /* radial gradient (gold glow) + 微細ノイズで質感を出す。
      ノイズは SVG turbulence の data-URL、mix-blend-mode で滲ませる */
   background:
-    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(212, 175, 55, 0.06), transparent 60%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, color-mix(in srgb, var(--color-gold) 6%, transparent), transparent 60%),
     var(--color-bg);
   position: relative;
 }
@@ -153,7 +156,7 @@ a:hover {
               box-shadow var(--duration-base) var(--ease-out-soft);
 }
 .card:hover {
-  border-color: rgba(212, 175, 55, 0.5);
+  border-color: color-mix(in srgb, var(--color-gold) 50%, transparent);
   box-shadow: 0 12px 36px -10px var(--color-gold-glow),
               0 2px 6px -2px rgba(0, 0, 0, 0.4);
 }
@@ -367,6 +370,23 @@ html.show-spoilers .spoiler-block {
 :root {
   --color-bg-elevated: var(--color-surface);
   --color-bg-card: var(--color-card);
+}
+
+/* -------------------------------------------------------------------
+   デュアルブランド — 番組別アクセント（[data-show] は <html> に SSR 出力）
+
+   LAST CALL = ゴールド（既定, @theme）。HOSTCALL = プラチナ。
+   生の --color-gold* を丸ごと差し替えることで、既存コンポーネントと
+   スポイラー payload 内の var(--color-gold) 直書きまで一括で再着色される
+   （コンポーネント無改修）。--color-fail はグレーのまま両番組共通。
+   ------------------------------------------------------------------- */
+:root[data-show="hostcall"] {
+  --color-gold: #c9d3e0;
+  --color-gold-bright: #e8eef6;
+  --color-gold-deep: #7c8794;
+  --color-gold-glow: rgba(201, 211, 224, 0.14);
+  --color-pass: var(--color-gold);
+  --color-pass-bg: rgba(201, 211, 224, 0.08);
 }
 
 /* -------------------------------------------------------------------

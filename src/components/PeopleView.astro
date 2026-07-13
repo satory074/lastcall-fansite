@@ -1,0 +1,607 @@
+---
+import Layout from "./Layout.astro";
+import PersonCard from "./PersonCard.astro";
+import VoteChip from "./VoteChip.astro";
+import DivergingBar from "./DivergingBar.astro";
+import StatCard from "./StatCard.astro";
+import SpoilerBadge from "./SpoilerBadge.astro";
+import {
+  episodesForShow,
+  rosterForShow,
+  showMeta,
+  episodeHref,
+  rosterHref,
+  type Show,
+} from "../lib/show";
+
+interface Props {
+  show?: Show;
+}
+const { show = "lastcall" } = Astro.props;
+const meta = showMeta(show);
+
+// 全ロスター（マスタ。グリッド表示用）— show でスライス
+const queens = (await rosterForShow(show)).sort((a, b) =>
+  a.data.name.localeCompare(b.data.name, "ja")
+);
+
+// エピソード（新しい順）。シンデレラは埋め込み済み。
+const episodes = (await episodesForShow(show)).sort(
+  (a, b) => b.data.airedAt.getTime() - a.data.airedAt.getTime()
+);
+
+// 候補者一覧（出演回順）= エピソードから導出
+const cinderellaList = [...episodes]
+  .sort((a, b) => a.data.id.localeCompare(b.data.id))
+  .map((ep) => ({ ep, c: ep.data.cinderella }));
+
+type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
+type Cell = {
+  inLineup: boolean;
+  first: { vote: VoteValue };
+  final: { vote: VoteValue };
+};
+
+// ロスター別の最終ジャッジ集計（出演回のみ）
+const queenFinalStats = (queenId: string) => {
+  let pass = 0;
+  let fail = 0;
+  for (const ep of episodes) {
+    const v = ep.data.votes.find((vv) => vv.queen.id === queenId && vv.round === "final");
+    if (v?.vote === "合格") pass++;
+    else if (v?.vote === "不合格") fail++;
+  }
+  const recorded = pass + fail;
+  return { pass, fail, recorded, passRate: recorded > 0 ? Math.round((pass / recorded) * 100) : null };
+};
+const queenStatsAll = queens.map((j) => queenFinalStats(j.id));
+
+// ロスター別のファースト集計（LIKE/NOTHING、出演回のみ）
+const queenFirstStats = (queenId: string) => {
+  let like = 0;
+  let nothing = 0;
+  for (const ep of episodes) {
+    const v = ep.data.votes.find((vv) => vv.queen.id === queenId && vv.round === "first");
+    if (v?.vote === "LIKE") like++;
+    else if (v?.vote === "NOTHING") nothing++;
+  }
+  const recorded = like + nothing;
+  return { like, nothing, recorded, likeRate: recorded > 0 ? Math.round((like / recorded) * 100) : null };
+};
+
+// マトリクス列 = いずれかの回のラインナップに出たロスターのみ（回ごと可変）
+// 並び順: 出演回数の多い順（左）→ 同数は slug 昇順
+const appearanceCount = (queenId: string) =>
+  episodes.filter((ep) => ep.data.lineup.some((ref) => ref.id === queenId)).length;
+const matrixQueens = queens
+  .filter((j) => episodes.some((ep) => ep.data.lineup.some((ref) => ref.id === j.id)))
+  .sort((a, b) => {
+    const d = appearanceCount(b.id) - appearanceCount(a.id);
+    return d !== 0 ? d : a.id.localeCompare(b.id);
+  });
+
+const matrix = episodes.map((ep) => {
+  const lineupIds = new Set(ep.data.lineup.map((ref) => ref.id));
+  const cells: Cell[] = matrixQueens.map((j) => {
+    const f = ep.data.votes.find((v) => v.queen.id === j.id && v.round === "first");
+    const l = ep.data.votes.find((v) => v.queen.id === j.id && v.round === "final");
+    return {
+      inLineup: lineupIds.has(j.id),
+      first: { vote: (f ? f.vote : "UNKNOWN") as VoteValue },
+      final: { vote: (l ? l.vote : "UNKNOWN") as VoteValue },
+    };
+  });
+  const passCount = cells.filter((c) => c.final.vote === "合格").length;
+  const failCount = cells.filter((c) => c.final.vote === "不合格").length;
+  return { episode: ep, cinderella: ep.data.cinderella, cells, passCount, failCount };
+});
+
+// マトリクス tfoot 用（列のロスターのみ）。最終=合格率、ファースト=LIKE率
+const queenStats = matrixQueens.map((j) => queenFinalStats(j.id));
+const queenFirstStatsArr = matrixQueens.map((j) => queenFirstStats(j.id));
+
+// 全体集計（最終）
+const overallEpisodes = matrix.length;
+const overallPass = matrix.reduce((acc, m) => acc + m.passCount, 0);
+const overallFail = matrix.reduce((acc, m) => acc + m.failCount, 0);
+const overallRecorded = overallPass + overallFail;
+const overallPassRate = overallRecorded > 0 ? Math.round((overallPass / overallRecorded) * 100) : null;
+
+// 全体集計（ファースト = LIKE/NOTHING）
+const overallLike = queenFirstStatsArr.reduce((acc, t) => acc + t.like, 0);
+const overallNothing = queenFirstStatsArr.reduce((acc, t) => acc + t.nothing, 0);
+const overallFirstRecorded = overallLike + overallNothing;
+const overallLikeRate = overallFirstRecorded > 0 ? Math.round((overallLike / overallFirstRecorded) * 100) : null;
+
+// 番組としての"合否"回数 (1 episode = 1 verdict)
+const passEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "pass").length;
+const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail").length;
+---
+
+<Layout
+  title="出演者・審査一覧"
+  description={`${meta.brand} の全${meta.candidateLabel}・出演${meta.rosterLabel}・各回の審査結果マトリックスを一覧。`}
+  show={show}
+>
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-16 space-y-16">
+    <header class="space-y-5">
+      <p class="eyebrow">People &amp; Votes</p>
+      <h1 class="font-display-serif text-[2.25rem] sm:text-[3.5rem] leading-[1.05] text-[var(--color-text)]">出演者・審査一覧</h1>
+      <p class="text-sm text-[var(--color-text-muted)] leading-relaxed max-w-2xl">
+        全 <span class="text-[var(--color-text)] tabular-nums">{episodes.length}</span> 回の{meta.candidateLabel}
+        <span class="mx-1.5 text-[var(--color-border-strong)]">·</span>
+        出演{meta.rosterLabel}（回ごと可変）
+        <span class="mx-1.5 text-[var(--color-border-strong)]">·</span>
+        2 ラウンド審査の投票マトリックス。
+      </p>
+      {episodes.length > 0 && (
+        <nav class="flex flex-wrap gap-2 text-xs pt-1">
+          <a href="#cinderellas" class="px-3 py-1.5 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">
+            {meta.candidateLabel}
+          </a>
+          <a href="#queens" class="px-3 py-1.5 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">
+            {meta.rosterLabel}
+          </a>
+          <a href="#matrix" class="px-3 py-1.5 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">
+            審査マトリックス
+          </a>
+        </nav>
+      )}
+    </header>
+
+    {episodes.length === 0 ? (
+      <section class="card p-10 sm:p-14 text-center space-y-4">
+        <p class="eyebrow">Coming soon</p>
+        <p class="font-display-serif text-xl sm:text-2xl text-[var(--color-text)]">
+          {meta.brand} のデータは準備中です
+        </p>
+        <p class="text-sm text-[var(--color-text-muted)] leading-relaxed max-w-md mx-auto">
+          出演{meta.rosterLabel}・{meta.candidateLabel}・各回の審査結果は、配信後に順次追加されます。
+        </p>
+      </section>
+    ) : (
+      <Fragment>
+        {/* Cinderellas / Candidates */}
+        <section id="cinderellas" class="space-y-6 scroll-mt-24">
+          <div class="flex flex-wrap items-end justify-between gap-3">
+            <h2 class="section-eyebrow">{meta.candidateLabelEn} <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">出演回順 · {cinderellaList.length} 名</span></h2>
+            <span
+              class="lc-occluded relative text-[11px] text-[var(--color-text-muted)] tracking-wide"
+              data-occlusion="text"
+              data-spoiler-level="result"
+              data-spoiler-payload={JSON.stringify({
+                html:
+                  `合格 <span class=\"text-[var(--color-gold)] font-semibold\">${passEpisodes}</span>` +
+                  `<span class=\"mx-1 text-[var(--color-border-strong)]\">/</span>` +
+                  `不合格 <span class=\"font-semibold\">${failEpisodes}</span>`,
+                aria: `合格 ${passEpisodes} / 不合格 ${failEpisodes}`,
+              })}
+              aria-label="合否カウント（非表示）"
+            ><span class="lc-payload-content"></span></span>
+          </div>
+          <div class="lc-listctl flex flex-wrap items-center gap-2 text-[11px]" hidden data-grid="lc-grid-cinderellas">
+            <input type="search" autocomplete="off" data-listfilter placeholder="名前で絞り込み…" class="flex-1 min-w-[10rem] max-w-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-3 py-1.5 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:border-[var(--color-border-strong)]" />
+            <label class="flex items-center gap-1.5 text-[var(--color-text-subtle)]">並べ替え
+              <select data-listsort class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-2.5 py-1.5 text-[var(--color-text-muted)] focus:outline-none">
+                <option value="ep">出演回順</option>
+                <option value="name">名前順</option>
+              </select>
+            </label>
+            <span data-listcount class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
+          </div>
+          <div id="lc-grid-cinderellas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {cinderellaList.map(({ ep, c }) => (
+              <div class="lc-pcard contents" data-name={c.name} data-ep={ep.data.id}>
+                <PersonCard
+                  name={c.name}
+                  href={episodeHref(show, ep.data.id)}
+                  subtitle={c.age ? `${c.age}歳` : undefined}
+                  meta={`#${ep.data.id} 出演`}
+                  badge={{
+                    label: c.result === "pass" ? "合格" : "不合格",
+                    tone: c.result === "pass" ? "pass" : "fail",
+                  }}
+                  sns={c.sns}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Queens / Hosts */}
+        <section id="queens" class="space-y-6 scroll-mt-24">
+          <h2 class="section-eyebrow">{meta.rosterLabelEn} <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{queens.length} 名</span></h2>
+          <div class="lc-listctl flex flex-wrap items-center gap-2 text-[11px]" hidden data-grid="lc-grid-queens">
+            <input type="search" autocomplete="off" data-listfilter placeholder="名前・店名で絞り込み…" class="flex-1 min-w-[10rem] max-w-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-3 py-1.5 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:border-[var(--color-border-strong)]" />
+            <label class="flex items-center gap-1.5 text-[var(--color-text-subtle)]">並べ替え
+              <select data-listsort class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-2.5 py-1.5 text-[var(--color-text-muted)] focus:outline-none">
+                <option value="name">名前順</option>
+              </select>
+            </label>
+            <span data-listcount class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
+          </div>
+          <div id="lc-grid-queens" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {queens.map((j, i) => {
+              const s = queenStatsAll[i];
+              return (
+                <div
+                  class="lc-pcard contents"
+                  data-name={`${j.data.name} ${j.data.nameKana ?? ""} ${j.data.store ?? ""}`}
+                  data-sortname={j.data.nameKana ?? j.data.name}
+                >
+                  <PersonCard
+                    name={j.data.name}
+                    href={rosterHref(show, j.id)}
+                    subtitle={j.data.store}
+                    sns={j.data.sns}
+                  >
+                    {s.recorded > 0 && (
+                      <Fragment slot="signature">
+                        <DivergingBar
+                          pass={s.pass}
+                          fail={s.fail}
+                          label="最終ジャッジ傾向"
+                          size="sm"
+                          spoilerLevel="vote"
+                          showLabels={true}
+                        />
+                      </Fragment>
+                    )}
+                  </PersonCard>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Voting Matrix — heatmap */}
+        <section id="matrix" class="space-y-6 scroll-mt-24">
+          <div class="space-y-3">
+            <h2 class="section-eyebrow">Voting Matrix <span class="text-[var(--color-text-subtle)] normal-case tracking-normal text-[10px] ml-2">{episodes.length} 回 × {matrixQueens.length} 名{meta.rosterLabel}</span></h2>
+            <p class="text-xs text-[var(--color-text-muted)] leading-relaxed max-w-2xl">
+              縦=各回（新しい順）・横={meta.rosterLabel}。各セルは上段=<span class="text-[var(--color-text)]">ファーストコール</span> / 下段=<span class="text-[var(--color-text)]">最終ジャッジ</span>。空欄はその回のラインナップ外、点線輪郭は出演したが票未記録のセル。
+            </p>
+          </div>
+
+          {/* Overall stats banner */}
+          {overallRecorded > 0 && (
+            <div class="card p-5 sm:p-6 space-y-5">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <StatCard label="Episodes" value={overallEpisodes} sublabel="配信済み" />
+                <StatCard
+                  label="合格率"
+                  value={overallPassRate !== null ? `${overallPassRate}%` : "—"}
+                  sublabel={`${overallPass} / ${overallRecorded} 票`}
+                  accent="gold"
+                  spoiler
+                  spoilerLevel="result"
+                />
+                <StatCard label="合格" value={overallPass} sublabel="最終 合格票" accent="gold" spoiler spoilerLevel="result" />
+                <StatCard label="不合格" value={overallFail} sublabel="最終 不合格票" spoiler spoilerLevel="result" />
+              </div>
+              <DivergingBar
+                pass={overallPass}
+                fail={overallFail}
+                label="全エピソードの最終ジャッジ合計"
+                size="lg"
+                spoilerLevel="result"
+              />
+            </div>
+          )}
+
+          {/* Legend */}
+          <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] text-[var(--color-text-subtle)] tracking-wider">
+            <span class="text-[var(--color-text-muted)]">ファースト:</span>
+            <span class="inline-flex items-center gap-1.5"><VoteChip vote="LIKE" size="xs" round="first" spoiler={false} /></span>
+            <span class="inline-flex items-center gap-1.5"><VoteChip vote="NOTHING" size="xs" round="first" spoiler={false} /></span>
+            <span class="text-[var(--color-text-muted)] ml-1">最終:</span>
+            <span class="inline-flex items-center gap-1.5"><VoteChip vote="合格" size="xs" round="final" spoiler={false} /></span>
+            <span class="inline-flex items-center gap-1.5"><VoteChip vote="不合格" size="xs" round="final" spoiler={false} /></span>
+            <span class="inline-flex items-center gap-1.5"><VoteChip vote="UNKNOWN" size="xs" spoiler={false} /> 未確認</span>
+            <span>上=ファースト / 下=最終</span>
+          </div>
+
+          {/* ロスターフィルタ: 列を絞ってモバイルの横幅を圧縮（JSで制御、未対応時は全表示のまま） */}
+          <div id="lc-matrix-filter" class="space-y-2.5" hidden data-total={matrixQueens.length}>
+            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+              <span class="text-[var(--color-text-subtle)] tracking-wider">{meta.rosterLabel}を絞り込む</span>
+              <span id="lc-jcount" class="text-[var(--color-text-subtle)] tabular-nums" aria-live="polite"></span>
+              <button type="button" data-jall="on" class="ml-auto px-2.5 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">全員</button>
+              <button type="button" data-jall="off" class="px-2.5 py-1 rounded-full border border-[var(--color-border)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition">全解除</button>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              {matrixQueens.map((j) => (
+                <button
+                  type="button"
+                  class="lc-qchip px-2.5 py-1 rounded-full border text-[11px] tracking-wide transition"
+                  data-qchip={j.id}
+                  aria-pressed="true"
+                >{j.data.name}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Heatmap matrix */}
+          <div class="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+            <table class="text-xs lc-matrix">
+              <thead class="bg-[var(--color-surface)] text-[var(--color-text-muted)]">
+                <tr>
+                  <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-0 z-20 bg-[var(--color-surface)]">回</th>
+                  <th scope="col" class="text-left font-medium px-3 py-3 whitespace-nowrap sticky left-[60px] z-20 bg-[var(--color-surface)]">{meta.candidateLabel}</th>
+                  <th scope="col" class="text-center font-medium px-3 py-3 whitespace-nowrap">結果</th>
+                  <th scope="col" class="text-center font-medium px-3 py-3 whitespace-nowrap">票数<div class="text-[9px] text-[var(--color-text-subtle)] font-normal">最終</div></th>
+                  {matrixQueens.map((j) => (
+                    <th scope="col" data-qcol={j.id} class="text-center font-medium px-2 py-3 whitespace-nowrap">
+                      <a href={rosterHref(show, j.id)} class="hover:text-[var(--color-gold-bright)] transition inline-block max-w-[64px] truncate text-[11px]">
+                        {j.data.name}
+                      </a>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {matrix.map(({ episode, cinderella, cells, passCount, failCount }) => {
+                  const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
+                  const recorded = passCount + failCount;
+                  const calcResult: "pass" | "fail" | null =
+                    recorded > 0 ? (passCount >= Math.ceil(recorded / 2) ? "pass" : "fail") : null;
+                  const result = calcResult ?? cinderella.result ?? null;
+                  return (
+                    <tr class="border-t border-[var(--color-border)] hover:bg-[color-mix(in_oklab,var(--color-gold)_3%,transparent)] transition">
+                      <td class="px-3 py-2.5 whitespace-nowrap sticky left-0 z-10 bg-[var(--color-card)]">
+                        <a
+                          href={episodeHref(show, episode.data.id)}
+                          class="text-[var(--color-gold)] hover:text-[var(--color-gold-bright)] transition font-semibold tabular-nums"
+                        >
+                          #{episode.data.id}
+                        </a>
+                        <div class="text-[9px] text-[var(--color-text-subtle)] tabular-nums">{dateLabel.slice(5)}</div>
+                      </td>
+                      <td class="px-3 py-2.5 whitespace-nowrap sticky left-[60px] z-10 bg-[var(--color-card)]">
+                        <a
+                          href={episodeHref(show, episode.data.id)}
+                          class="text-[var(--color-text)] hover:text-[var(--color-gold-bright)] transition text-[12px]"
+                        >
+                          {cinderella.name}
+                        </a>
+                      </td>
+                      <td class="px-3 py-2.5 text-center whitespace-nowrap">
+                        {result ? (
+                          <SpoilerBadge result={result} variant="pill-mini" ariaPrefix={cinderella.name} />
+                        ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                      </td>
+                      <td class="px-3 py-2.5 align-middle min-w-[120px]">
+                        {recorded > 0 ? (
+                          <DivergingBar pass={passCount} fail={failCount} size="sm" spoilerLevel="result" showLabels={true} flip stacked showRate={false} />
+                        ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                      </td>
+                      {cells.map((cell, ji) => (
+                        <td data-qcol={matrixQueens[ji].id} class="px-1.5 py-2 text-center align-middle">
+                          {cell.inLineup ? (
+                            <div class="inline-flex flex-col items-center gap-0.5">
+                              <VoteChip vote={cell.first.vote} size="sm" round="first" queenName={matrixQueens[ji].data.name} />
+                              <VoteChip vote={cell.final.vote} size="sm" round="final" queenName={matrixQueens[ji].data.name} />
+                            </div>
+                          ) : (
+                            <span class="text-[var(--color-text-subtle)] text-[10px]">·</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {(queenStats.some((t) => t.recorded > 0) || queenFirstStatsArr.some((t) => t.recorded > 0)) && (
+                <tfoot class="border-t-2 border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text-muted)]">
+                  {/* ファースト累計（LIKE率） */}
+                  <tr>
+                    <th scope="row" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 z-10 bg-[var(--color-surface)]">
+                      累計
+                      <div class="text-[9px] text-[var(--color-text-subtle)] font-normal">ファースト</div>
+                    </th>
+                    <td class="px-3 py-2 text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap sticky left-[60px] z-10 bg-[var(--color-surface)]">LIKE率（ファースト）</td>
+                    <td class="px-3 py-2 text-center text-[10px] whitespace-nowrap">
+                      {overallLikeRate !== null ? (
+                        <span
+                          class="lc-occluded relative inline-block"
+                          data-occlusion="text"
+                          data-spoiler-level="vote"
+                          data-spoiler-payload={JSON.stringify({
+                            html: `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${overallLikeRate}</span><span class=\"text-[var(--color-text-subtle)]\">%</span>`,
+                            aria: `LIKE率 ${overallLikeRate}%`,
+                          })}
+                          aria-label="LIKE率（非表示）"
+                        ><span class="lc-payload-content"></span></span>
+                      ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                    </td>
+                    <td class="px-3 py-2 align-middle min-w-[120px]">
+                      {overallFirstRecorded > 0 ? (
+                        <DivergingBar pass={overallLike} fail={overallNothing} size="sm" spoilerLevel="vote" showLabels={true} flip stacked showRate={false} terms={{ pass: "LIKE", fail: "NOTHING" }} />
+                      ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                    </td>
+                    {queenFirstStatsArr.map((t, ji) => (
+                      <td data-qcol={matrixQueens[ji].id} class="px-1.5 py-2 text-center align-middle">
+                        {t.recorded === 0 ? (
+                          <span class="text-[10px] text-[var(--color-text-subtle)]">—</span>
+                        ) : (
+                          <div
+                            class="lc-occluded relative inline-flex flex-col items-center text-[10px] leading-tight"
+                            data-occlusion="text"
+                            data-spoiler-level="vote"
+                            data-spoiler-payload={JSON.stringify({
+                              html:
+                                `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${t.likeRate ?? 0}%</span>` +
+                                `<span class=\"text-[var(--color-text-subtle)] tabular-nums text-[9px]\">${t.like}/${t.recorded}</span>`,
+                              aria: `LIKE率 ${t.likeRate ?? 0}% (${t.like}/${t.recorded})`,
+                            })}
+                            aria-label="ロスター別LIKE率（非表示）"
+                          ><span class="lc-payload-content inline-flex flex-col items-center"></span></div>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                  {/* 最終累計（合格率） */}
+                  <tr class="border-t border-[var(--color-border)]">
+                    <th scope="row" class="text-left font-medium px-3 py-2 whitespace-nowrap sticky left-0 z-10 bg-[var(--color-surface)]">
+                      累計
+                      <div class="text-[9px] text-[var(--color-text-subtle)] font-normal">最終</div>
+                    </th>
+                    <td class="px-3 py-2 text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap sticky left-[60px] z-10 bg-[var(--color-surface)]">合格率（最終）</td>
+                    <td class="px-3 py-2 text-center text-[10px] whitespace-nowrap">
+                      {overallPassRate !== null ? (
+                        <span
+                          class="lc-occluded relative inline-block"
+                          data-occlusion="text"
+                          data-spoiler-level="result"
+                          data-spoiler-payload={JSON.stringify({
+                            html: `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${overallPassRate}</span><span class=\"text-[var(--color-text-subtle)]\">%</span>`,
+                            aria: `合格率 ${overallPassRate}%`,
+                          })}
+                          aria-label="合格率（非表示）"
+                        ><span class="lc-payload-content"></span></span>
+                      ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                    </td>
+                    <td class="px-3 py-2 align-middle min-w-[120px]">
+                      {overallRecorded > 0 ? (
+                        <DivergingBar pass={overallPass} fail={overallFail} size="sm" spoilerLevel="result" showLabels={true} flip stacked showRate={false} />
+                      ) : <span class="text-[var(--color-text-subtle)]">—</span>}
+                    </td>
+                    {queenStats.map((t, ji) => (
+                      <td data-qcol={matrixQueens[ji].id} class="px-1.5 py-2 text-center align-middle">
+                        {t.recorded === 0 ? (
+                          <span class="text-[10px] text-[var(--color-text-subtle)]">—</span>
+                        ) : (
+                          <div
+                            class="lc-occluded relative inline-flex flex-col items-center text-[10px] leading-tight"
+                            data-occlusion="text"
+                            data-spoiler-level="vote"
+                            data-spoiler-payload={JSON.stringify({
+                              html:
+                                `<span class=\"text-[var(--color-gold)] font-bold tabular-nums\">${t.passRate ?? 0}%</span>` +
+                                `<span class=\"text-[var(--color-text-subtle)] tabular-nums text-[9px]\">${t.pass}/${t.recorded}</span>`,
+                              aria: `合格率 ${t.passRate ?? 0}% (${t.pass}/${t.recorded})`,
+                            })}
+                            aria-label="ロスター別合格率（非表示）"
+                          ><span class="lc-payload-content inline-flex flex-col items-center"></span></div>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </section>
+      </Fragment>
+    )}
+  </div>
+</Layout>
+
+<script>
+  // ロスターフィルタ: 列(th/td[data-qcol])を表示/非表示にしてマトリクス幅を圧縮。
+  // JS が動く環境でのみフィルタUIを出す（未対応時は全列表示のまま）。
+  (function initMatrixFilter() {
+    const panel = document.getElementById("lc-matrix-filter");
+    const table = document.querySelector<HTMLTableElement>("table.lc-matrix");
+    if (!panel || !table) return;
+    panel.hidden = false;
+
+    const chips = Array.from(panel.querySelectorAll<HTMLButtonElement>(".lc-qchip"));
+    const counter = document.getElementById("lc-jcount");
+    const total = chips.length;
+
+    const setChipStyle = (chip: HTMLButtonElement, on: boolean) => {
+      chip.classList.toggle("border-[var(--color-gold)]", on);
+      chip.classList.toggle("bg-[color-mix(in_oklab,var(--color-gold)_14%,transparent)]", on);
+      chip.classList.toggle("text-[var(--color-gold-bright)]", on);
+      chip.classList.toggle("border-[var(--color-border)]", !on);
+      chip.classList.toggle("text-[var(--color-text-subtle)]", !on);
+    };
+
+    const setColumn = (id: string, on: boolean) => {
+      for (const cell of table.querySelectorAll<HTMLElement>(`[data-qcol="${id}"]`)) {
+        cell.classList.toggle("lc-col-off", !on);
+      }
+    };
+
+    const updateCount = () => {
+      const shown = chips.filter((c) => c.getAttribute("aria-pressed") === "true").length;
+      if (counter) counter.textContent = `表示中 ${shown} / ${total}`;
+    };
+
+    const applyChip = (chip: HTMLButtonElement, on: boolean) => {
+      chip.setAttribute("aria-pressed", String(on));
+      setChipStyle(chip, on);
+      setColumn(chip.dataset.qchip ?? "", on);
+    };
+
+    for (const chip of chips) {
+      setChipStyle(chip, true);
+      chip.addEventListener("click", () => {
+        applyChip(chip, chip.getAttribute("aria-pressed") !== "true");
+        updateCount();
+      });
+    }
+    for (const btn of panel.querySelectorAll<HTMLButtonElement>("[data-jall]")) {
+      btn.addEventListener("click", () => {
+        const on = btn.dataset.jall === "on";
+        for (const chip of chips) applyChip(chip, on);
+        updateCount();
+      });
+    }
+    updateCount();
+  })();
+
+  // 候補者 / ロスターグリッドのテキスト絞り込み + 並べ替え（スポイラー非依存）。
+  (function initListControls() {
+    const controls = Array.from(document.querySelectorAll<HTMLElement>(".lc-listctl"));
+    for (const ctl of controls) {
+      const grid = document.getElementById(ctl.dataset.grid ?? "");
+      if (!grid) continue;
+      ctl.hidden = false;
+      const items = Array.from(grid.querySelectorAll<HTMLElement>(".lc-pcard"));
+      const filterEl = ctl.querySelector<HTMLInputElement>("[data-listfilter]");
+      const sortEl = ctl.querySelector<HTMLSelectElement>("[data-listsort]");
+      const countEl = ctl.querySelector<HTMLElement>("[data-listcount]");
+      const total = items.length;
+
+      const apply = () => {
+        const q = (filterEl?.value ?? "").trim().toLowerCase();
+        let shown = 0;
+        for (const it of items) {
+          const hay = (it.dataset.name ?? "").toLowerCase();
+          const match = !q || hay.includes(q);
+          it.style.display = match ? "" : "none";
+          if (match) shown++;
+        }
+        const mode = sortEl?.value ?? "";
+        if (mode) {
+          const sorted = [...items].sort((a, b) => {
+            if (mode === "age") return Number(a.dataset.age ?? 0) - Number(b.dataset.age ?? 0);
+            if (mode === "ep") return (a.dataset.ep ?? "").localeCompare(b.dataset.ep ?? "");
+            const an = a.dataset.sortname ?? a.dataset.name ?? "";
+            const bn = b.dataset.sortname ?? b.dataset.name ?? "";
+            return an.localeCompare(bn, "ja");
+          });
+          for (const it of sorted) grid.appendChild(it);
+        }
+        if (countEl) countEl.textContent = q ? `${shown} / ${total}` : "";
+      };
+
+      filterEl?.addEventListener("input", apply);
+      sortEl?.addEventListener("change", apply);
+    }
+  })();
+</script>
+
+<style>
+  /* Sticky shadow on left columns for visual separation when scrolling */
+  .lc-matrix th[scope="col"]:nth-child(2),
+  .lc-matrix td:nth-child(2) {
+    box-shadow: 1px 0 0 var(--color-border);
+  }
+  /* ロスターフィルタで非表示にした列 */
+  .lc-matrix .lc-col-off {
+    display: none;
+  }
+</style>

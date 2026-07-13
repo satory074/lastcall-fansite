@@ -1,7 +1,7 @@
 ---
 import { getCollection, getEntries } from "astro:content";
 import type { CollectionEntry } from "astro:content";
-import { siteLink } from "../lib/url";
+import { episodeHref, rosterHref } from "../lib/show";
 import VoteChip from "./VoteChip.astro";
 
 type VoteValue = "LIKE" | "NOTHING" | "合格" | "不合格" | "UNKNOWN";
@@ -68,7 +68,7 @@ if (forQueen) {
     const l = ep.data.votes.find((v) => v.queen.id === forQueen.id && v.round === "final");
     cells.push({
       key: ep.data.id,
-      href: linkTo === "episode" || linkTo === undefined ? siteLink(`/episodes/${ep.data.id}/`) : null,
+      href: linkTo === "episode" || linkTo === undefined ? episodeHref(ep.data.show, ep.data.id) : null,
       label: `#${ep.data.id}`,
       sublabel: ep.data.airedAt.toISOString().slice(5, 10),
       votes: [
@@ -86,7 +86,7 @@ if (forQueen) {
     const l = forEpisode.data.votes.find((v) => v.queen.id === j.id && v.round === "final");
     cells.push({
       key: j.id,
-      href: linkTo === "queen" || linkTo === undefined ? siteLink(`/queens/${j.id}/`) : null,
+      href: linkTo === "queen" || linkTo === undefined ? rosterHref(j.data.show, j.id) : null,
       label: j.data.name,
       votes: [
         { round: "first", vote: (f?.vote as VoteValue | undefined) ?? "UNKNOWN" },

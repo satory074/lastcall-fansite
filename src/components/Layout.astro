@@ -1,5 +1,6 @@
 ---
 import "../styles/globals.css";
+import { SHOWS, SHOW_META, showMeta, type Show } from "../lib/show";
 
 interface Crumb {
   label: string;
@@ -11,19 +12,24 @@ interface Props {
   description?: string;
   ogImage?: string;
   breadcrumbs?: Crumb[];
+  /** このページが属する番組。ヘッダー配色（data-show）・ブランド・ナビを切り替える。既定 lastcall。 */
+  show?: Show;
 }
 
 const {
-  title = "LAST CALL 非公式ファンサイト",
-  description = "YouTubeオーディション番組「LAST CALL（ラストコール）」の各回・出演者・投票結果をまとめる非公式ファンサイトです。",
+  title,
+  description,
   ogImage = "/lastcall-fansite/og-default.png",
   breadcrumbs,
+  show = "lastcall",
 } = Astro.props;
 
+const meta = showMeta(show);
+const siteName = `${meta.brand} 非公式ファンサイト`;
+const resolvedTitle = title ?? siteName;
+const resolvedDescription = description ?? meta.description;
 const fullTitle =
-  title === "LAST CALL 非公式ファンサイト"
-    ? title
-    : `${title} | LAST CALL 非公式ファンサイト`;
+  resolvedTitle === siteName ? resolvedTitle : `${resolvedTitle} | ${siteName}`;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImageUrl = new URL(ogImage, Astro.site).toString();
@@ -33,7 +39,7 @@ const ogImageUrl = new URL(ogImage, Astro.site).toString();
 const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 
 const nav = [
-  { href: "/people/", label: "出演者・審査一覧" },
+  { href: `${meta.basePath}/people/`, label: "出演者・審査一覧" },
   { href: "/about/", label: "このサイトについて" },
 ];
 
@@ -43,7 +49,7 @@ const currentPath = Astro.url.pathname.replace(base, "") || "/";
 
 // パンくず: 先頭に「ホーム」を補い、視覚表示と BreadcrumbList JSON-LD を生成。
 const crumbs: Crumb[] = breadcrumbs
-  ? [{ label: "ホーム", href: linkOf("/") }, ...breadcrumbs]
+  ? [{ label: "ホーム", href: linkOf(`${meta.basePath}/`) }, ...breadcrumbs]
   : [];
 const breadcrumbSchema =
   crumbs.length > 0
@@ -61,23 +67,23 @@ const breadcrumbSchema =
 ---
 
 <!doctype html>
-<html lang="ja" data-base={base}>
+<html lang="ja" data-base={base} data-show={show}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>{fullTitle}</title>
-    <meta name="description" content={description} />
+    <meta name="description" content={resolvedDescription} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href={linkOf("/favicon.svg")} type="image/svg+xml" />
     <link rel="apple-touch-icon" href={linkOf("/favicon.svg")} />
     <link
       rel="alternate"
       type="application/rss+xml"
-      title="LAST CALL 非公式ファンサイト — 新着エピソード"
+      title="LAST CALL / HOSTCALL 非公式アーカイブ — 新着エピソード"
       href={linkOf("/rss.xml")}
     />
     <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={resolvedDescription} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImageUrl} />
@@ -126,9 +132,9 @@ const breadcrumbSchema =
     </a>
     <header class="border-b border-[var(--color-border)] sticky top-0 z-50 backdrop-blur-xl bg-[color-mix(in_oklab,var(--color-bg)_75%,transparent)]">
       <div class="max-w-6xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-3 sm:gap-4">
-        <a href={linkOf("/")} class="flex items-center gap-3 group shrink-0">
+        <a href={linkOf(`${meta.basePath}/`)} class="flex items-center gap-3 group shrink-0">
           <span class="font-display tracking-[0.32em] text-base sm:text-lg font-bold text-[var(--color-text)] group-hover:text-[var(--color-gold-bright)] transition">
-            LAST<span class="text-[var(--color-gold)]">·</span>CALL
+            {meta.brandParts[0]}<span class="text-[var(--color-gold)]">·</span>{meta.brandParts[1]}
           </span>
           <span class="hidden sm:inline text-[10px] tracking-[0.2em] uppercase text-[var(--color-text-subtle)] px-2 py-0.5 border border-[var(--color-border)] rounded-full">
             Unofficial Archive
@@ -154,6 +160,30 @@ const breadcrumbSchema =
               );
             })}
           </nav>
+          {/* 番組スイッチャー（デスクトップ）— 相手番組ホームへの実リンク。SSR で配色（data-show）が確定 */}
+          <div
+            class="hidden md:inline-flex items-stretch rounded-full border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-bg)_60%,transparent)] p-0.5 text-[11px]"
+            role="group"
+            aria-label="番組を切り替え"
+          >
+            {SHOWS.map((s) => {
+              const active = s === show;
+              return (
+                <a
+                  href={linkOf(`${SHOW_META[s].basePath}/`)}
+                  aria-current={active ? "page" : undefined}
+                  class:list={[
+                    "px-3 py-1.5 rounded-full tracking-wider transition whitespace-nowrap",
+                    active
+                      ? "bg-[var(--color-gold)] text-black font-semibold"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
+                  ]}
+                >
+                  {SHOW_META[s].brand}
+                </a>
+              );
+            })}
+          </div>
           {/* グローバル検索 */}
           <button
             type="button"
@@ -208,7 +238,32 @@ const breadcrumbSchema =
         </div>
       </div>
       <nav class="md:hidden border-t border-[var(--color-border)]">
-        <div class="max-w-6xl mx-auto px-4 py-2 flex gap-4 overflow-x-auto text-sm">
+        <div class="max-w-6xl mx-auto px-4 py-2 flex items-center gap-3 overflow-x-auto text-sm">
+          {/* 番組スイッチャー（モバイル） */}
+          <div
+            class="inline-flex items-stretch rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-[10px] shrink-0"
+            role="group"
+            aria-label="番組を切り替え"
+          >
+            {SHOWS.map((s) => {
+              const active = s === show;
+              return (
+                <a
+                  href={linkOf(`${SHOW_META[s].basePath}/`)}
+                  aria-current={active ? "page" : undefined}
+                  class:list={[
+                    "px-2.5 py-1 rounded-full tracking-wider transition whitespace-nowrap",
+                    active
+                      ? "bg-[var(--color-gold)] text-black font-semibold"
+                      : "text-[var(--color-text-muted)]",
+                  ]}
+                >
+                  {SHOW_META[s].brand}
+                </a>
+              );
+            })}
+          </div>
+          <span class="w-px self-stretch bg-[var(--color-border)] shrink-0" aria-hidden="true"></span>
           {nav.map((item) => {
             const active = item.href === "/" ? currentPath === "/" : currentPath.startsWith(item.href);
             return (
@@ -260,7 +315,7 @@ const breadcrumbSchema =
             id="lc-search-input"
             type="search"
             autocomplete="off"
-            placeholder="回・シンデレラ・クイーンを検索…"
+            placeholder="回・出演者・審査員を検索…"
             class="flex-1 bg-transparent text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none"
           />
           <kbd class="hidden sm:block text-[10px] text-[var(--color-text-subtle)] border border-[var(--color-border)] rounded px-1.5 py-0.5">Esc</kbd>
@@ -280,6 +335,7 @@ const breadcrumbSchema =
           <p class="font-display tracking-[0.32em] text-[var(--color-text-muted)] uppercase text-[10px]">Disclaimer</p>
           <p class="text-[var(--color-text-muted)] leading-relaxed">
             本サイトは <a href="https://lastcall.jp/" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">LAST CALL（ラストコール）</a>
+            および姉妹番組 <a href="https://lastcall.jp/" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">HOSTCALL（ホストコール）</a>
             の非公式ファンサイトです。番組・出演者・運営とは無関係。画像・動画は公式YouTube（<a href="https://www.youtube.com/@LASTCALL_OFFICIAL" class="underline decoration-[var(--color-border-strong)] hover:text-[var(--color-gold-bright)] hover:decoration-[var(--color-gold)]" target="_blank" rel="noopener">@LASTCALL_OFFICIAL</a>）の埋め込み・リンクのみ。
           </p>
         </div>
@@ -456,7 +512,7 @@ const breadcrumbSchema =
     <script>
       // グローバル検索: ビルド時生成の /search-index.json を初回オープン時に取得し、
       // 名前・回・属性の部分一致で絞り込む。合否などのスポイラーは索引に含まれない。
-      type SearchItem = { type: string; label: string; sub: string; url: string; terms: string };
+      type SearchItem = { type: string; typeLabel?: string; show?: string; label: string; sub: string; url: string; terms: string };
       const overlay = document.getElementById("lc-search");
       const openBtn = document.getElementById("lc-search-open");
       const input = document.getElementById("lc-search-input") as HTMLInputElement | null;
@@ -496,7 +552,7 @@ const breadcrumbSchema =
             .map(
               (m) =>
                 `<li><a href="${m.url}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-[color-mix(in_oklab,var(--color-gold)_8%,transparent)] transition">
-                  <span class="shrink-0 text-[9px] tracking-wider uppercase text-[var(--color-text-subtle)] border border-[var(--color-border)] rounded px-1.5 py-0.5">${TYPE_LABEL[m.type] ?? m.type}</span>
+                  <span class="shrink-0 text-[9px] tracking-wider uppercase text-[var(--color-text-subtle)] border border-[var(--color-border)] rounded px-1.5 py-0.5">${m.typeLabel ?? TYPE_LABEL[m.type] ?? m.type}</span>
                   <span class="min-w-0"><span class="block text-sm text-[var(--color-text)] truncate">${m.label}</span><span class="block text-[11px] text-[var(--color-text-subtle)] truncate">${m.sub}</span></span>
                 </a></li>`
             )

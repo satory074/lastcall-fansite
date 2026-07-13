@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-非公式 (unofficial) fan archive for the YouTube audition show **LAST CALL (ラストコール)**. The site indexes every aired episode (each episode = one shinderella 志願者, embedded), the master roster of queens, and — for each episode's **variable queen lineup** — each queen's vote across two rounds (ファーストコール: `LIKE` / `NOTHING` → 最終ジャッジ: `合格` / `不合格`). Live at https://satory074.github.io/lastcall-fansite/.
+非公式 (unofficial) fan archive for **two sibling YouTube audition shows** by the same producers (channel @LASTCALL_OFFICIAL): **LAST CALL (ラストコール)** — キャバ嬢 audition, ゴールド brand — and **HOSTCALL (ホストコール)** — 男性ホスト audition, プラチナ brand, launched 2026-06-29. The site indexes every aired episode (each episode = one candidate 志願者, embedded), the master roster of judges, and — for each episode's **variable judge lineup** — each judge's vote across two rounds (ファーストコール: `LIKE` / `NOTHING` → 最終ジャッジ: `合格` / `不合格`). Live at https://satory074.github.io/lastcall-fansite/.
+
+The two shows are one **dual-brand** site sharing all components/logic; a `show` dimension (`"lastcall" | "hostcall"`) separates their data, routes, and accent color. HOSTCALL は現状データ未投入の足場のみ（empty-state 表示、動的ルートは何も emit しない）。
 
 Stack: **Astro 5 + TypeScript + Tailwind v4** static site, deployed to GitHub Pages via Actions. No backend; all content is JSON in the repo.
 
@@ -24,16 +26,26 @@ There are no unit tests. The build itself is the verification step: Content Coll
 
 ## Architecture
 
+### Two-show dual-brand (`src/lib/show.ts` is the single source of truth)
+
+A `show: "lastcall" | "hostcall"` field lives on **every** episode and judge (Zod `.default("lastcall")` → existing entries validate with **no JSON edits**). `src/lib/show.ts` centralizes everything per-show and **must be the only place** show labels/paths/colors are defined:
+- `SHOW_META[show]` — brand, `brandParts` (LAST·CALL lockup split), `rosterLabel`/`rosterLabelEn`/`rosterPath` (クイーン/Queens/queens vs ホスト/Hosts/hosts), `candidateLabel`/`candidateTagEn` (シンデレラ/Cinderella vs 候補者/Challenger), `basePath` (`""` vs `/hostcall`), officialUrl, youtube. **HOSTCALL `candidateLabel` and `officialUrl` are TODO placeholders** — replace when the show's real terminology/URL is known.
+- Helpers: `episodesForShow(show)` / `rosterForShow(show)` (filter collections by show), `episodeHref`/`rosterHref`/`homeHref`/`peopleHref` (+ `*AbsUrl` for JSON-LD), `cleanTitle` (strips `【LAST…】`/`【HOST…】`). Never hardcode `/episodes/` or `/queens/` paths or the strings クイーン/シンデレラ — derive from `show`.
+
+**Roster stays ONE `queens` collection** (hosts live in it tagged `show:"hostcall"`), so `reference("queens")` keeps build-time validation across both shows. Because it's a single collection, **episode `id`s and judge `slug`s must be globally unique across the two shows** (a hostcall ep `"001"` cannot collide with a lastcall ep `"001"`). Labels are derived from `show`, never denormalized onto the judge.
+
+**Dual-brand color** (`src/styles/globals.css`): `<html data-show={show}>` (SSR, set by `Layout`'s `show` prop). LAST CALL = gold (`@theme` default). `:root[data-show="hostcall"]` **overrides the raw `--color-gold*` vars** to platinum (`#c9d3e0` / bright `#e8eef6` / deep `#7c8794`) + `--color-pass`. This recolors every component and every spoiler `data-spoiler-payload` (which reference `var(--color-gold)` literally) with **zero per-component edits**. New chrome uses `var(--color-gold)` directly — an earlier `--color-accent` alias was removed (nested var alias was unreliable). `color-scheme: dark` on `html` stops Chrome Auto-Dark-Mode from re-inverting accents (the flag variant still can't be suppressed).
+
 ### Content Collections are the data layer (`src/content.config.ts`)
 
-**All data lives in one file: `src/data/lastcall.json`.** It has **two** top-level arrays (`queens`, `episodes`), and `content.config.ts` uses **inline loaders** (`loader: () => data.queens.map(...)`) — not `glob()` — to slice that single file into two Content Collections. The shinderella (志願者) is **embedded inside each episode** (1 episode = 1 cinderella), so there is no separate `cinderellas` collection. Editing any episode, cinderella, vote, lineup, or SNS link means editing this one file. (週次メンテの実務手順は [`MAINTENANCE.md`](./MAINTENANCE.md)。)
+**All data lives in one file: `src/data/lastcall.json`.** It has **two** top-level arrays (`queens`, `episodes`), and `content.config.ts` uses **inline loaders** (`loader: () => data.queens.map(...)`) — not `glob()` — to slice that single file into two Content Collections. The candidate (志願者) is **embedded inside each episode** (1 episode = 1 candidate), so there is no separate `cinderellas` collection. Editing any episode, candidate, vote, lineup, or SNS link means editing this one file. (週次メンテの実務手順は [`MAINTENANCE.md`](./MAINTENANCE.md)。)
 
 | Collection | Array | Shape |
 |------------|-------|-------|
-| `episodes` | `episodes[]` | `id`, YouTube ID, title, airedAt, `cinderella: { name, age?, result: "pass" \| "fail", sns, background? }` (embedded object), `lineup: reference("queens")[]` (出演クイーン), `votes: { queen: reference("queens"), round, vote }[]` |
-| `queens` | `queens[]` | `slug`, name, nameKana?, store, storeUrl?, sns (master roster of all queens) |
+| `episodes` | `episodes[]` | `id`, **`show`**, YouTube ID, title, airedAt, `cinderella: { name, age?, result: "pass" \| "fail", sns, background? }` (embedded object), `lineup: reference("queens")[]` (出演審査員), `votes: { queen: reference("queens"), round, vote }[]` |
+| `queens` | `queens[]` | `slug`, **`show`**, name, nameKana?, store, storeUrl?, sns (master roster of all judges, both shows) |
 
-The reference graph is **episode → lineup[].queen + votes[].queen** (cinderella is now a plain embedded object, not a reference). The queen **`slug`** and the episode **`id`** are the reference key **and** URL slug — the inline loader maps them to the Astro entry `.id`. A wrong slug/id fails `npm run build`. **Do not re-introduce per-file JSON under `src/content/`, the `cinderellas` collection, or a `/cinderellas/` route** — all were removed; the single file + episode-embedded cinderella is the source of truth.
+The reference graph is **episode → lineup[].queen + votes[].queen** (candidate is a plain embedded object, not a reference). The queen **`slug`** and the episode **`id`** are the reference key **and** URL slug — the inline loader maps them to the Astro entry `.id`. A wrong slug/id fails `npm run build`. **Do not re-introduce per-file JSON under `src/content/`, the `cinderellas` collection, a `/cinderellas/` route, or split hosts into a second collection** — all were removed/ruled out; the single file + single `queens` collection + episode-embedded candidate is the source of truth. The GUI editor (`npm run edit`) serializes the whole `state` object, so it **preserves** a manually-added `show` field through save (no data loss), though it has no `show` picker UI yet.
 
 ### Variable lineup & two-round vote model (ファーストコール / 最終ジャッジ)
 
@@ -69,19 +81,25 @@ The episode's overall 合否 verdict is **`episode.cinderella.result`** (`"pass"
 
 `src/components/VoteTable.astro` enumerates **`episode.lineup`** (resolved via `getEntries`) and shows **two rows/columns** per queen (ファースト / 最終). A lineup queen with no recorded vote renders an `UNKNOWN` placeholder; an empty lineup renders a "ラインナップ未記録" placeholder. The displayed verdict falls back to `episode.data.cinderella.result` — `<VoteTable lineup={episode.data.lineup} votes={episode.data.votes} cinderellaResult={episode.data.cinderella.result}>` is the wiring.
 
-### Pages are deliberately consolidated
+### Pages are deliberately consolidated + per-show routing
 
-After several iterations, the routes are:
+LAST CALL keeps its **existing paths** (back-compat/SEO); HOSTCALL mirrors them under a **`/hostcall/` prefix**:
 
-- `/` — hero + Latest Episode (feature card) + All Episodes grid (`#episodes` anchor)
-- `/episodes/[id]/` — detail page (video + embedded cinderella + lineup vote table + prev/next nav). **This is the cinderella's page too** — there is no separate cinderella route.
-- `/people/` — unified Cinderellas (derived from episodes, cards link to `/episodes/[id]/`) + Queens + **voting matrix** (`episodes × lineup-union` grid, sticky left columns, `<tfoot>` aggregate row)
-- `/queens/[slug]/` — individual queen profile detail page (no list index)
-- `/about/` — disclaimer, spoiler-toggle docs, deletion request policy
-- `/404` — custom not-found page (`src/pages/404.astro`); GitHub Pages serves `404.html`
-- `/rss.xml` (`src/pages/rss.xml.ts`) and `/search-index.json` (`src/pages/search-index.json.ts`) — non-HTML endpoints (see SEO & search below)
+| | LAST CALL | HOSTCALL |
+|---|---|---|
+| Home | `/` | `/hostcall/` |
+| People/matrix | `/people/` | `/hostcall/people/` |
+| Episode detail | `/episodes/[id]/` | `/hostcall/episodes/[id]/` |
+| Judge profile | `/queens/[slug]/` | `/hostcall/hosts/[slug]/` |
+| About (shared) | `/about/` | `/about/` |
 
-There is **no `/cinderellas/` route at all** (cinderella info lives on the episode page), and no `/episodes/` or `/queens/` index. The nav has only two top-level items: `出演者・審査一覧` and `このサイトについて`. Do not re-add those routes; the home page, `/people/`, and `/episodes/[id]/` cover them.
+**Page bodies are shared show-aware components** so LAST CALL/HOSTCALL pages are thin wrappers (each `getStaticPaths` filters via `episodesForShow`/`rosterForShow`; zero HOSTCALL data → dynamic routes emit nothing → build stays green):
+- `src/components/PeopleView.astro` (props `show`) — the whole `/people/` body incl. the voting matrix + its `<script>`/`<style>`. `people.astro` and `hostcall/people.astro` just render `<PeopleView show=.../>`. **This is the touchiest file** (matrix iterates `episodes × judges`, two stacked `<VoteChip>` per cell); one `episodesForShow(show)`/`rosterForShow(show)` filter at the top cascades correctly through everything.
+- `src/components/EpisodeDetail.astro` (props `episode`, derives show + neighbors) — the episode `<article>` + `<Layout>`.
+- `src/components/QueenProfile.astro` (props `queen`, derives show) — the judge `<article>` + `<Layout>`.
+- The home pages (`index.astro`, `hostcall/index.astro`) are bespoke (LAST CALL is rich editorial; HOSTCALL is a coming-soon hero) but filter queries to their show.
+
+Non-HTML endpoints (`/rss.xml`, `/search-index.json`) are **combined across both shows** (per-item show facet + brand-prefixed titles + per-show URLs). `/404`, `/about/` shared. There is still **no `/cinderellas/` route, and no `/episodes/` or `/queens/` list index**. The nav has two top-level items (`出演者・審査一覧`, `このサイトについて`) plus a **show switcher** (SSR `<a>` segments in `Layout` header + mobile nav; active segment uses `bg-[var(--color-gold)]`).
 
 ### SEO, discovery & search
 
@@ -203,5 +221,6 @@ These are project-specific, not generic rules:
 
 - **No AI-generated prose.** The schema retains `summary` (episode) / `background` (cinderella) as optional, but historical entries were removed because paraphrases from aggregator sites introduced factual drift. Only re-add these fields with verified, citable text — never let me speculatively summarize an unseen episode. (`bio` and per-episode `sources` were removed entirely.)
 - **No performer photos.** Only YouTube thumbnails (program-issued) and YouTube embed iframes. Hosting Instagram/personal photos infringes 著作権 + 肖像権 + パブリシティ権 simultaneously — this was researched and ruled out. SNS links only.
-- **新エピソード追加手順**: edit the single file `src/data/lastcall.json` — append one `episodes[]` entry with an **embedded `cinderella` object** (`name` + `result` 合否 + sns…), a `lineup` of出演クイーンの slug, and `votes` (first: LIKE/NOTHING, final: 合格/不合格), then push to `main`. Schema violation fails the build before deploy. 出演クイーンごとに最大2票（`round: "first"` と `"final"`）。lineup に入れたが票未記録は `UNKNOWN` 表示。**`npm run edit` の GUI エディタ推奨**（ラインナップをチェックして票を選ぶだけ）。詳細手順は `MAINTENANCE.md`。
+- **新エピソード追加手順**: edit the single file `src/data/lastcall.json` — append one `episodes[]` entry with an **embedded `cinderella` object** (`name` + `result` 合否 + sns…), a `lineup` of審査員の slug, and `votes` (first: LIKE/NOTHING, final: 合格/不合格), then push to `main`. Schema violation fails the build before deploy. 審査員ごとに最大2票（`round: "first"` と `"final"`）。lineup に入れたが票未記録は `UNKNOWN` 表示。**`npm run edit` の GUI エディタ推奨**（ラインナップをチェックして票を選ぶだけ）。詳細手順は `MAINTENANCE.md`。
+- **HOSTCALL データ投入手順**: same file, but add **`"show": "hostcall"`** to each new `episodes[]` entry AND to each new host added to `queens[]` (LAST CALL entries omit `show` and default to lastcall). Episode `id`s / host `slug`s **must not collide** with any LAST CALL id/slug (single collection). The GUI editor has no `show` picker yet but **preserves** a manually-added `show` field on save, so: hand-add `"show":"hostcall"` in the JSON, then use `npm run edit` for lineup/votes. Once data exists, `/hostcall/episodes/[id]/` and `/hostcall/hosts/[slug]/` emit automatically and recolor to platinum.
 - **YouTube metadata via yt-dlp**: when batch-importing episode info, `uv tool install yt-dlp` and run `yt-dlp --flat-playlist --no-warnings --print "%(id)s|%(title)s|%(upload_date)s" "https://www.youtube.com/playlist?list=PLyVYYMYzNpmC183bSMhXXo04dhzYUEebI"` against the official playlist.

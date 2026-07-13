@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { siteLink, youtubeThumb } from "../lib/url";
+import { youtubeThumb } from "../lib/url";
+import { episodeHref, showMeta, cleanTitle as cleanShowTitle } from "../lib/show";
 import SpoilerBadge from "./SpoilerBadge.astro";
 
 interface Props {
@@ -10,6 +11,8 @@ interface Props {
 
 const { episode, variant = "default" } = Astro.props;
 const cinderella = episode.data.cinderella; // エピソードに埋め込み済み
+const showMetaData = showMeta(episode.data.show);
+const candidateTag = showMetaData.candidateTagEn; // Cinderella / Challenger
 
 const finalVotes = episode.data.votes.filter((v) => v.round === "final");
 const pass = finalVotes.filter((v) => v.vote === "合格").length;
@@ -19,14 +22,14 @@ const voteResult = total > 0 ? (pass >= Math.ceil(total / 2) ? "pass" : "fail") 
 const result = voteResult ?? cinderella.result ?? null;
 
 const dateLabel = episode.data.airedAt.toISOString().slice(0, 10);
-const cleanTitle = episode.data.title.replace(/【LAST.*$/, "").replace(/\s*#\d+\s*$/, "").trim();
+const cleanTitle = cleanShowTitle(episode.data.title).replace(/\s*#\d+\s*$/, "").trim();
 
 // Unique transition name for cross-document view-transitions
 const transitionName = `ep-${episode.data.id}-thumb`;
 ---
 
 <a
-  href={siteLink(`/episodes/${episode.data.id}/`)}
+  href={episodeHref(episode.data.show, episode.data.id)}
   class:list={[
     "group block relative overflow-hidden card",
     variant === "feature" && "md:grid md:grid-cols-[1.5fr_1fr]",
@@ -95,7 +98,7 @@ const transitionName = `ep-${episode.data.id}-thumb`;
         {cleanTitle}
       </h3>
       <p class="text-[11px] text-[var(--color-text-muted)] truncate">
-        Cinderella · {cinderella.name}
+        {candidateTag} · {cinderella.name}
       </p>
     </div>
   )}
@@ -107,7 +110,7 @@ const transitionName = `ep-${episode.data.id}-thumb`;
         <div class="text-[10px] tracking-[0.28em] uppercase text-[var(--color-text-subtle)] tabular-nums flex items-center gap-2 flex-wrap">
           <span>{dateLabel}</span>
           <span class="text-[var(--color-border-strong)]">/</span>
-          <span class="text-[var(--color-text-muted)] normal-case tracking-[0.12em]">Cinderella · {cinderella.name}</span>
+          <span class="text-[var(--color-text-muted)] normal-case tracking-[0.12em]">{candidateTag} · {cinderella.name}</span>
         </div>
         <h3 class="font-display-serif text-[26px] sm:text-[34px] text-[var(--color-text)] leading-[1.2] group-hover:text-[var(--color-gold-bright)] transition">
           {cleanTitle}

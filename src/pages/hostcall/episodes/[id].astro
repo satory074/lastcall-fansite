@@ -1,0 +1,18 @@
+---
+// HOSTCALL 各回の詳細。本体は show 対応の共有コンポーネント EpisodeDetail に集約。
+// データ未投入時は getStaticPaths が空配列を返すため、このルートは何も emit しない（ビルドは緑）。
+import EpisodeDetail from "../../../components/EpisodeDetail.astro";
+import { episodesForShow } from "../../../lib/show";
+
+export async function getStaticPaths() {
+  const episodes = await episodesForShow("hostcall");
+  return episodes.map((episode) => ({
+    params: { id: episode.data.id },
+    props: { episode },
+  }));
+}
+
+const { episode } = Astro.props;
+---
+
+<EpisodeDetail episode={episode} />
