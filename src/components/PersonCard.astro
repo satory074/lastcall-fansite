@@ -17,24 +17,43 @@ interface Props {
   meta?: string;
   badge?: { label: string; tone: "pass" | "fail" | "neutral" };
   sns?: Sns;
+  avatar?: { src: string } | { initial: string };
 }
 
-const { name, href, subtitle, meta, badge, sns } = Astro.props;
+const { name, href, subtitle, meta, badge, sns, avatar } = Astro.props;
 const hasSignatureSlot = Astro.slots.has("signature");
 ---
 
 <article class="group relative card p-5 sm:p-6 flex flex-col gap-4">
   <div class="flex items-start justify-between gap-3">
-    <div class="min-w-0 space-y-1">
-      <h3 class="font-display-serif text-lg sm:text-xl text-[var(--color-text)] leading-tight">
-        <a href={href} class="group-hover:text-[var(--color-gold-bright)] transition before:absolute before:inset-0 before:rounded-[inherit]">
-          {name}
-        </a>
-      </h3>
-      <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] tracking-wider text-[var(--color-text-subtle)]">
-        {subtitle && <span>{subtitle}</span>}
-        {subtitle && meta && <span class="text-[var(--color-border-strong)]">·</span>}
-        {meta && <span>{meta}</span>}
+    <div class="flex items-start gap-3 min-w-0">
+      {avatar && ("src" in avatar ? (
+        <img
+          src={avatar.src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          class="shrink-0 h-12 w-12 rounded-full object-cover border border-[var(--color-border-strong)] bg-[var(--color-surface)]"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          class="shrink-0 h-12 w-12 rounded-full flex items-center justify-center font-display-serif text-lg leading-none border border-[var(--color-gold)] bg-[var(--color-gold-glow)] text-[var(--color-gold)]"
+        >
+          {avatar.initial}
+        </span>
+      ))}
+      <div class="min-w-0 space-y-1">
+        <h3 class="font-display-serif text-lg sm:text-xl text-[var(--color-text)] leading-tight">
+          <a href={href} class="group-hover:text-[var(--color-gold-bright)] transition before:absolute before:inset-0 before:rounded-[inherit]">
+            {name}
+          </a>
+        </h3>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] tracking-wider text-[var(--color-text-subtle)]">
+          {subtitle && <span>{subtitle}</span>}
+          {subtitle && meta && <span class="text-[var(--color-border-strong)]">·</span>}
+          {meta && <span>{meta}</span>}
+        </div>
       </div>
     </div>
     {badge && (

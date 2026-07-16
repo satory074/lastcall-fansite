@@ -9,8 +9,8 @@ export function youtubeUrl(id: string): string {
   return `https://www.youtube.com/watch?v=${id}`;
 }
 
-export function youtubeThumb(id: string): string {
-  return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+export function youtubeThumb(id: string, quality: "hq" | "mq" = "hq"): string {
+  return `https://i.ytimg.com/vi/${id}/${quality}default.jpg`;
 }
 
 const SITE_ORIGIN = "https://satory074.github.io";

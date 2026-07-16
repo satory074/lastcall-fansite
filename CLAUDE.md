@@ -142,6 +142,8 @@ Legacy `.spoiler` / `.spoiler-block` / `.show-spoilers` class names are kept as 
 
 `EpisodeCard` supports three `variant`s: `"default"` (image-led grid card), `"feature"` (large image + side panel, used for the latest episode hero), and `"compact"` (small thumb + text, used for prev/next nav). `PersonCard` exposes a named `signature` slot for embedding a `<DivergingBar>` or `<VoteSignature>` strip (e.g., on the queens list).
 
+`PersonCard` also takes an optional **`avatar`** prop — a discriminated union `{ src: string } | { initial: string }` — rendering a 48px circular avatar at the card's top-left. On `/people/` (`PeopleView.astro`) cinderella cards pass `{ src: youtubeThumb(ep.data.youtubeId, "mq") }` (円形にトリミングした番組公式サムネ; **`"mq"` quality is required** — the default `hqdefault` has black letterbox bars that a square crop would expose), while queen cards pass `{ initial: Array.from(name)[0] }` (a gold/platinum monogram badge styled with `var(--color-gold)`/`var(--color-gold-glow)`, so it auto-recolors per `data-show`). This is the legally-safe way to give performers a "profile icon" look **without hosting/hotlinking any Instagram/TikTok photo** (see 著作権/肖像権/パブリシティ権 guardrail below). The avatar is intentionally **not** `z-10`, so the card-wide `<a>::before` overlay stays on top and the avatar is part of the card's click target; it carries no spoiler markup (`alt=""` / `aria-hidden`).
+
 The matrix in `src/pages/people.astro` is a hand-rolled `<table>` with `position: sticky` on the left two columns. When changing the schema, the matrix is the most touchy place because it iterates `episodes × queens` and renders **two stacked `<VoteChip>` per cell** (上=ファーストコール / 下=最終ジャッジ).
 
 ### Vote visualization primitives — always reuse these
@@ -224,3 +226,23 @@ These are project-specific, not generic rules:
 - **新エピソード追加手順**: edit the single file `src/data/lastcall.json` — append one `episodes[]` entry with an **embedded `cinderella` object** (`name` + `result` 合否 + sns…), a `lineup` of審査員の slug, and `votes` (first: LIKE/NOTHING, final: 合格/不合格), then push to `main`. Schema violation fails the build before deploy. 審査員ごとに最大2票（`round: "first"` と `"final"`）。lineup に入れたが票未記録は `UNKNOWN` 表示。**`npm run edit` の GUI エディタ推奨**（ラインナップをチェックして票を選ぶだけ）。詳細手順は `MAINTENANCE.md`。
 - **HOSTCALL データ投入手順**: same file, but add **`"show": "hostcall"`** to each new `episodes[]` entry AND to each new host added to `queens[]` (LAST CALL entries omit `show` and default to lastcall). Episode `id`s / host `slug`s **must not collide** with any LAST CALL id/slug (single collection). The GUI editor has no `show` picker yet but **preserves** a manually-added `show` field on save, so: hand-add `"show":"hostcall"` in the JSON, then use `npm run edit` for lineup/votes. Once data exists, `/hostcall/episodes/[id]/` and `/hostcall/hosts/[slug]/` emit automatically and recolor to platinum.
 - **YouTube metadata via yt-dlp**: when batch-importing episode info, `uv tool install yt-dlp` and run `yt-dlp --flat-playlist --no-warnings --print "%(id)s|%(title)s|%(upload_date)s" "https://www.youtube.com/playlist?list=PLyVYYMYzNpmC183bSMhXXo04dhzYUEebI"` against the official playlist.
+
+
+---
+
+## 補足（親インデックス `../CLAUDE.md` から移行、2026-07-14）
+
+Astro 5, TypeScript, Tailwind v4, GitHub Pages 静的サイト。
+
+YouTube配信中のオーディション番組「LAST CALL」の各回・出演者（シンデレラ）・各回の出演クイーン（回ごと可変）の投票結果をまとめる非公式ファンサイト。
+
+```bash
+npm install
+npm run dev        # http://localhost:4321/lastcall-fansite/
+npm run build      # dist/ に静的ファイル生成
+npm run typecheck  # astro check
+```
+
+**データ管理**: 手動JSON。**全データは単一ファイル `src/data/lastcall.json`**（`queens`/`episodes` の2配列。シンデレラは各エピソードに埋め込み、出演クイーンは `episode.lineup` で回ごと指定）。`src/content.config.ts` の inline loader が2コレクションに分配（Zodスキーマ検証）。票はファースト=LIKE/NOTHING・最終=合格/不合格。`npm run edit` でGUI編集→「ファイルに保存」が楽。実務手順は `lastcall-fansite/MAINTENANCE.md`。
+
+**Gotcha**: PersonCardのカード全体クリック領域は `<a>::before` のオーバーレイで実現している（SNSリンクとのネスト `<a>` 回避のため）。Tailwind v4 のViteプラグインは型不一致があるため `astro.config.mjs` で `any` キャスト済。
