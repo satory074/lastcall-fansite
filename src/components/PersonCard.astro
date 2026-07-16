@@ -17,24 +17,47 @@ interface Props {
   meta?: string;
   badge?: { label: string; tone: "pass" | "fail" | "neutral" };
   sns?: Sns;
-  avatar?: { initial: string };
+  // Instagram を持つ人はIGアイコン＋リンク、無い人は名前頭文字のモノグラムにフォールバック。
+  avatar?: { instagram: string } | { initial: string };
 }
 
 const { name, href, subtitle, meta, badge, sns, avatar } = Astro.props;
 const hasSignatureSlot = Astro.slots.has("signature");
+
+// SnsLinks.astro の Instagram グリフと同一パス（アバターを48px円で描くため寸法だけ別扱い）。
+const INSTAGRAM_ICON =
+  "M12 2.16c3.2 0 3.584.012 4.85.07 1.17.054 1.805.249 2.227.413a3.71 3.71 0 0 1 1.382.9 3.71 3.71 0 0 1 .9 1.382c.164.422.359 1.057.413 2.227.058 1.266.07 1.65.07 4.848 0 3.2-.012 3.583-.07 4.849-.054 1.17-.249 1.805-.413 2.227a3.71 3.71 0 0 1-.9 1.382 3.71 3.71 0 0 1-1.382.9c-.422.164-1.057.359-2.227.413-1.266.058-1.65.07-4.85.07s-3.583-.012-4.849-.07c-1.17-.054-1.805-.249-2.227-.413a3.71 3.71 0 0 1-1.382-.9 3.71 3.71 0 0 1-.9-1.382c-.164-.422-.359-1.057-.413-2.227C2.172 15.583 2.16 15.2 2.16 12s.012-3.583.07-4.849c.054-1.17.249-1.805.413-2.227a3.71 3.71 0 0 1 .9-1.382 3.71 3.71 0 0 1 1.382-.9c.422-.164 1.057-.359 2.227-.413C8.417 2.172 8.8 2.16 12 2.16M12 0C8.741 0 8.332.014 7.053.072 5.775.13 4.905.333 4.14.63a5.875 5.875 0 0 0-2.126 1.384A5.875 5.875 0 0 0 .63 4.14C.333 4.905.13 5.775.072 7.053.014 8.332 0 8.741 0 12s.014 3.668.072 4.947c.058 1.278.261 2.148.558 2.913a5.875 5.875 0 0 0 1.384 2.126 5.875 5.875 0 0 0 2.126 1.384c.765.297 1.635.5 2.913.558C8.332 23.986 8.741 24 12 24s3.668-.014 4.947-.072c1.278-.058 2.148-.261 2.913-.558a5.875 5.875 0 0 0 2.126-1.384 5.875 5.875 0 0 0 1.384-2.126c.297-.765.5-1.635.558-2.913C23.986 15.668 24 15.259 24 12s-.014-3.668-.072-4.947c-.058-1.278-.261-2.148-.558-2.913a5.875 5.875 0 0 0-1.384-2.126A5.875 5.875 0 0 0 19.86.63c-.765-.297-1.635-.5-2.913-.558C15.668.014 15.259 0 12 0m0 5.838A6.162 6.162 0 1 0 18.162 12 6.162 6.162 0 0 0 12 5.838M12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4m6.406-11.845a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44";
+
+// アバターがIGリンクのときは下部SNS行から instagram を除いて二重表示を防ぐ。
+const igAvatar = avatar && "instagram" in avatar;
+const snsForLinks = igAvatar && sns ? { ...sns, instagram: undefined } : sns;
+const hasSnsLinks = !!snsForLinks && Object.values(snsForLinks).some(Boolean);
 ---
 
 <article class="group relative card p-5 sm:p-6 flex flex-col gap-4">
   <div class="flex items-start justify-between gap-3">
     <div class="flex items-start gap-3 min-w-0">
-      {avatar && (
+      {avatar && ("instagram" in avatar ? (
+        <a
+          href={avatar.instagram}
+          target="_blank"
+          rel="noopener nofollow"
+          aria-label={`${name} の Instagram`}
+          title="Instagram"
+          class="relative z-10 shrink-0 h-12 w-12 rounded-full flex items-center justify-center border border-[var(--color-gold)] bg-[var(--color-gold-glow)] text-[var(--color-gold)] hover:text-[var(--color-gold-bright)] hover:border-[var(--color-gold-bright)] transition"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+            <path d={INSTAGRAM_ICON} />
+          </svg>
+        </a>
+      ) : (
         <span
           aria-hidden="true"
           class="shrink-0 h-12 w-12 rounded-full flex items-center justify-center font-display-serif text-lg leading-none border border-[var(--color-gold)] bg-[var(--color-gold-glow)] text-[var(--color-gold)]"
         >
           {avatar.initial}
         </span>
-      )}
+      ))}
       <div class="min-w-0 space-y-1">
         <h3 class="font-display-serif text-lg sm:text-xl text-[var(--color-text)] leading-tight">
           <a href={href} class="group-hover:text-[var(--color-gold-bright)] transition before:absolute before:inset-0 before:rounded-[inherit]">
@@ -63,9 +86,9 @@ const hasSignatureSlot = Astro.slots.has("signature");
       <slot name="signature" />
     </div>
   )}
-  {sns && (
+  {hasSnsLinks && (
     <div class="relative z-10 mt-auto">
-      <SnsLinks sns={sns} size="sm" />
+      <SnsLinks sns={snsForLinks} size="sm" />
     </div>
   )}
 </article>
