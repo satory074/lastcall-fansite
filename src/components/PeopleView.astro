@@ -13,7 +13,6 @@ import {
   rosterHref,
   type Show,
 } from "../lib/show";
-import { youtubeThumb } from "../lib/url";
 
 interface Props {
   show?: Show;
@@ -198,7 +197,7 @@ const failEpisodes = episodes.filter((ep) => ep.data.cinderella.result === "fail
                   href={episodeHref(show, ep.data.id)}
                   subtitle={c.age ? `${c.age}歳` : undefined}
                   meta={`#${ep.data.id} 出演`}
-                  avatar={{ src: youtubeThumb(ep.data.youtubeId, "mq") }}
+                  avatar={{ initial: Array.from(c.name)[0] ?? "?" }}
                   badge={{
                     label: c.result === "pass" ? "合格" : "不合格",
                     tone: c.result === "pass" ? "pass" : "fail",
